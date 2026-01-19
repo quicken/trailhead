@@ -4,7 +4,7 @@
 
 This is Trailhead - a rainy Sunday experiment for building a functional micro-frontend shell with a focus on simple. A 21 KB vanilla TypeScript shell that lets you deploy many independent apps as scale without coordination, URL rewrites, or framework lock-in.
 
-**[Read the full story →](https://www.herdingbits.com/blog/building-trailhead-micro-frontend-framework)** | **[Try it live →](https://www.herdingbits.com/sample-code/trailhead)**
+**[Read the full story →](https://www.herdingbits.com/blog/building-trailhead-micro-frontend-framework)** | **[Try it live →](https://www.herdingbits.com/sample/trailhead)**
 
 ---
 
