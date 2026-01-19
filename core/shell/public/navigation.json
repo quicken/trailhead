@@ -1,0 +1,18 @@
+[
+  {
+    "id": "demo",
+    "path": "/demo",
+    "app": "demo",
+    "icon": "star",
+    "label": "Demo",
+    "order": 1
+  },
+  {
+    "id": "saas",
+    "path": "/saas",
+    "app": "saas",
+    "icon": "people",
+    "label": "SaaS Demo",
+    "order": 2
+  }
+]

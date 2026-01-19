@@ -1,0 +1,9 @@
+build/
+node_modules/
+*.code-workspace
+packages/\.directory
+dist/
+.directory
+dev_config.js
+.scannerwork
+**/coverage/

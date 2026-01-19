@@ -1,0 +1,18 @@
+{
+  "name": "@cfkit/vite-i18n-plugin",
+  "version": "1.0.0",
+  "description": "Build-time i18n plugin for Vite - zero runtime overhead",
+  "type": "module",
+  "main": "index.js",
+  "files": [
+    "index.js"
+  ],
+  "keywords": [
+    "vite",
+    "plugin",
+    "i18n",
+    "build-time"
+  ],
+  "author": "",
+  "license": "MIT"
+}

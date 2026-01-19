@@ -1,0 +1,14 @@
+{
+  "User Management": "Benutzerverwaltung",
+  "Manage your application users": "Verwalten Sie Ihre Anwendungsbenutzer",
+  "Load Users": "Benutzer laden",
+  "Loading users...": "Lade Benutzer...",
+  "Users loaded successfully": "Benutzer erfolgreich geladen",
+  "Failed to load users": "Fehler beim Laden der Benutzer",
+  "Are you sure you want to delete": "Möchten Sie wirklich löschen",
+  "Delete User": "Benutzer löschen",
+  "Deleting user...": "Lösche Benutzer...",
+  "User deleted successfully": "Benutzer erfolgreich gelöscht",
+  "Failed to delete user": "Fehler beim Löschen des Benutzers",
+  "No users loaded. Click 'Load Users' to get started.": "Keine Benutzer geladen. Klicken Sie auf 'Benutzer laden', um zu beginnen."
+}

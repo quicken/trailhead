@@ -1,0 +1,12 @@
+{
+  "index.html": {
+    "file": "shell.js",
+    "name": "main",
+    "src": "index.html",
+    "isEntry": true
+  },
+  "style.css": {
+    "file": "shell.css",
+    "src": "style.css"
+  }
+}

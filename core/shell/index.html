@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Application Shell</title>
+    
+    <!-- Shoelace Design System -->
+    <link rel="stylesheet" href="/shoelace/themes/light.css" />
+    
+    <!-- Shell Styles -->
+    <link rel="stylesheet" href="/src/shell.css" />
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div id="shell-sidebar">
+      <div id="shell-header">
+        <h2 id="shell-title">Application</h2>
+        <button id="shell-collapse" class="shell-icon-btn">
+          <span class="shell-icon">☰</span>
+        </button>
+      </div>
+      <nav id="shell-navigation">
+        <!-- Navigation items populated by shell.ts -->
+      </nav>
+    </div>
+
+    <!-- Main content area -->
+    <div id="shell-main">
+      <div id="shell-content">
+        <!-- Plugin apps render here -->
+      </div>
+    </div>
+
+    <!-- Shell script -->
+    <script type="module" src="/src/shell.ts"></script>
+    
+    <!-- Shoelace setup and autoloader -->
+    <script type="module" src="/shoelace-init.js"></script>
+  </body>
+</html>
