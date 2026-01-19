@@ -17,11 +17,6 @@ const BASE_PATH = '/sample/trailhead';
 // Serve static files from public directory at base path
 app.use(BASE_PATH, express.static(join(__dirname, 'public')));
 
-// SPA fallback - serve index.html for all routes under base path
-app.use(BASE_PATH, (req, res) => {
-  res.sendFile(join(__dirname, 'public', 'index.html'));
-});
-
 // Redirect root to base path
 app.get('/', (req, res) => {
   res.redirect(BASE_PATH);
@@ -34,9 +29,11 @@ app.listen(PORT, () => {
   Local:   http://localhost:${PORT}${BASE_PATH}
   
   Routes:
-  - http://localhost:${PORT}${BASE_PATH}       (Shell home)
-  - http://localhost:${PORT}${BASE_PATH}/demo  (Demo plugin)
-  - http://localhost:${PORT}${BASE_PATH}/saas  (SaaS plugin)
+  - http://localhost:${PORT}${BASE_PATH}           (Shell home)
+  - http://localhost:${PORT}${BASE_PATH}/demo      (Demo plugin)
+  - http://localhost:${PORT}${BASE_PATH}/saas-demo (SaaS Demo plugin)
+  
+  Note: No URL rewrite rules needed - each route has its own index.html
   
 Press Ctrl+C to stop
 `);

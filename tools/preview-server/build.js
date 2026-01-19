@@ -4,7 +4,7 @@
  */
 
 import { execSync } from 'child_process';
-import { cpSync, mkdirSync, rmSync } from 'fs';
+import { cpSync, mkdirSync, rmSync, readFileSync, writeFileSync } from 'fs';
 
 console.log('Building production artifacts...\n');
 
@@ -21,24 +21,33 @@ execSync('npm run build', { cwd: '../../core/shell', stdio: 'inherit' });
 console.log('\n2. Copying shell build...');
 cpSync('../../core/shell/dist', 'public', { recursive: true });
 
-// Build demo app
-console.log('\n3. Building demo app...');
-execSync('npm run build', { cwd: '../../apps/demo', stdio: 'inherit' });
+// Read navigation to determine which apps to build
+const navigation = JSON.parse(readFileSync('public/navigation.json', 'utf-8'));
+const indexTemplate = readFileSync('public/index.html', 'utf-8');
 
-// Copy demo app build
-console.log('\n4. Copying demo app build...');
-mkdirSync('public/apps/demo', { recursive: true });
-cpSync('../../apps/demo/dist/app.js', 'public/apps/demo/app.js');
-
-// Build saas-demo app
-console.log('\n5. Building saas-demo app...');
-execSync('npm run build', { cwd: '../../apps/saas-demo', stdio: 'inherit' });
-
-// Copy saas-demo app build
-console.log('\n6. Copying saas-demo app build...');
-mkdirSync('public/apps/saas', { recursive: true });
-cpSync('../../apps/saas-demo/dist/app.js', 'public/apps/saas/app.js');
+// Build and copy each app
+let step = 3;
+navigation.forEach(route => {
+  const appName = route.app;
+  const routePath = route.path.substring(1); // Remove leading slash
+  
+  console.log(`\n${step}. Building ${appName} app...`);
+  execSync('npm run build', { cwd: `../../apps/${appName}`, stdio: 'inherit' });
+  step++;
+  
+  console.log(`\n${step}. Copying ${appName} app to ${routePath}/...`);
+  const routeDir = `public/${routePath}`;
+  mkdirSync(routeDir, { recursive: true });
+  
+  // Copy app.js to route directory
+  cpSync(`../../apps/${appName}/dist/app.js`, `${routeDir}/app.js`);
+  
+  // Copy index.html to route directory
+  writeFileSync(`${routeDir}/index.html`, indexTemplate);
+  console.log(`  Created ${routePath}/index.html and ${routePath}/app.js`);
+  step++;
+});
 
 console.log('\n✓ Production build complete!');
 console.log('\nPublic directory structure:');
-execSync('find public -type f', { stdio: 'inherit' });
+execSync('find public -type f | head -30', { stdio: 'inherit' });

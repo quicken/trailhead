@@ -8,9 +8,9 @@
     "order": 1
   },
   {
-    "id": "saas",
-    "path": "/saas",
-    "app": "saas",
+    "id": "saas-demo",
+    "path": "/saas-demo",
+    "app": "saas-demo",
     "icon": "people",
     "label": "SaaS Demo",
     "order": 2

@@ -177,7 +177,7 @@ class Shell {
     const navItem = this.navigation.find((item) => path.startsWith(item.path));
 
     if (navItem) {
-      this.loadPlugin(navItem.app);
+      this.loadPlugin(navItem.app, navItem.path);
       this.updateActiveNav(navItem.path);
     }
   }
@@ -201,7 +201,7 @@ class Shell {
   /**
    * Load plugin application
    */
-  private async loadPlugin(appName: string): Promise<void> {
+  private async loadPlugin(appName: string, appPath: string): Promise<void> {
     // Unmount previous plugin
     if (this.currentPlugin) {
       this.currentPlugin.unmount();
@@ -222,7 +222,7 @@ class Shell {
     root.appendChild(loadingDiv);
 
     try {
-      const pluginUrl = this.getPluginUrl(appName);
+      const pluginUrl = this.getPluginUrl(appName, appPath);
 
       // Load plugin script
       const script = document.createElement("script");
@@ -252,7 +252,7 @@ class Shell {
   /**
    * Get plugin URL based on environment
    */
-  private getPluginUrl(appName: string): string {
+  private getPluginUrl(appName: string, appPath: string): string {
     // Development: Use environment variable for port
     if (import.meta.env.DEV) {
       const envKey = `VITE_PLUGIN_PORT_${appName.toUpperCase()}`;
@@ -268,8 +268,8 @@ class Shell {
       console.warn(`No dev port defined for plugin "${appName}". Add ${envKey} to .env.development`);
     }
 
-    // Production: Use standard path with base path
-    const url = `${this.basePath}/apps/${appName}/app.js`;
+    // Production: Use app's base path from navigation
+    const url = `${this.basePath}${appPath}/app.js`;
     console.log(`[Shell] Loading plugin "${appName}" from:`, url);
     return url;
   }
