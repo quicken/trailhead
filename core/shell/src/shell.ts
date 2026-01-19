@@ -10,9 +10,26 @@ class Shell {
   private currentPlugin: PluginInstance | null = null;
   private navigation: NavItem[] = [];
   private routeChangeCallbacks: Array<(path: string) => void> = [];
+  private basePath: string = "";
 
   constructor() {
+    this.basePath = import.meta.env.VITE_BASE_PATH || "";
+    this.initShoelace();
     this.init();
+  }
+
+  /**
+   * Initialize Shoelace with correct base path
+   */
+  private async initShoelace(): Promise<void> {
+    try {
+      const shoelacePath = `${this.basePath}/shoelace`;
+      const { setBasePath } = await import(/* @vite-ignore */ `${shoelacePath}/utilities/base-path.js`);
+      setBasePath(shoelacePath);
+      await import(/* @vite-ignore */ `${shoelacePath}/shoelace-autoloader.js`);
+    } catch (error) {
+      console.error("Failed to initialize Shoelace:", error);
+    }
   }
 
   /**
@@ -87,7 +104,7 @@ class Shell {
   private async loadNavigation(): Promise<void> {
     try {
       // In dev, navigation.json is on the shell server
-      const baseUrl = import.meta.env.DEV ? "http://localhost:3000" : "";
+      const baseUrl = import.meta.env.DEV ? "http://localhost:3000" : this.basePath;
       const response = await fetch(`${baseUrl}/navigation.json`);
       this.navigation = await response.json();
     } catch (error) {
@@ -106,7 +123,7 @@ class Shell {
     nav.innerHTML = this.navigation
       .map(
         (item) => `
-      <a href="${item.path}"
+      <a href="${this.basePath}${item.path}"
          class="shell-nav-item"
          data-path="${item.path}"
          data-app="${item.app}">
@@ -143,14 +160,20 @@ class Shell {
    */
   private navigate(path: string): void {
     // Simple page reload for navigation
-    window.location.href = path;
+    window.location.href = this.basePath + path;
   }
 
   /**
    * Handle route change
    */
   private handleRoute(): void {
-    const path = window.location.pathname;
+    let path = window.location.pathname;
+    
+    // Remove base path if present
+    if (this.basePath && path.startsWith(this.basePath)) {
+      path = path.substring(this.basePath.length) || "/";
+    }
+    
     const navItem = this.navigation.find((item) => path.startsWith(item.path));
 
     if (navItem) {
@@ -245,8 +268,8 @@ class Shell {
       console.warn(`No dev port defined for plugin "${appName}". Add ${envKey} to .env.development`);
     }
 
-    // Production: Use standard path
-    const url = `/apps/${appName}/app.js`;
+    // Production: Use standard path with base path
+    const url = `${this.basePath}/apps/${appName}/app.js`;
     console.log(`[Shell] Loading plugin "${appName}" from:`, url);
     return url;
   }
