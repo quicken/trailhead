@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "id": "demo",
+    "path": "/demo",
+    "app": "demo",
+    "icon": "🎨",
+    "label": "Demo",
+    "order": 1
+  }
+]

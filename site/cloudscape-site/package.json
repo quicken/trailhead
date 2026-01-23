@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@cfkit/vite-i18n-plugin": "file:../../tools/vite-i18n-plugin",
+    "@cloudscape-design/components": "^3.0.0",
+    "@cloudscape-design/global-styles": "^1.0.0",
     "ky": "^1.14.2"
   },
   "devDependencies": {

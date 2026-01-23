@@ -106,7 +106,16 @@ cd site/shoelace-site/apps/demo && npm start
 
 ```bash
 cd tools/preview-server
-npm run build  # Builds Shoelace shell + all apps
+
+# Build Shoelace site (default)
+npm run build
+# or
+npm run build:shoelace
+
+# Build CloudScape site
+npm run build:cloudscape
+
+# Start server
 npm start      # Serves at http://localhost:8081/sample/trailhead
 ```
 
