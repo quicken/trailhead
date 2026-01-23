@@ -1,7 +1,7 @@
 /**
  * Shoelace Design System Adapter
  */
-import type { DesignSystemAdapter, FeedbackAdapter, DialogConfig, DialogResult, ToastVariant } from './types.js';
+import type { DesignSystemAdapter, FeedbackAdapter, DialogConfig, DialogResult, ToastVariant } from '../../shell/src/adapters/types.js';
 
 class ShoelaceFeedbackAdapter implements FeedbackAdapter {
   private busyOverlay: HTMLElement | null = null;

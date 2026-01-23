@@ -1,10 +1,18 @@
 /**
  * Request manager - orchestrates HTTP requests with feedback
  */
-import * as feedback from "./feedback";
+import type { FeedbackAdapter } from "../adapters/types.js";
 
 let activeRequests = 0;
 const requestKeys = new Map<string, number>();
+let feedbackAdapter: FeedbackAdapter | null = null;
+
+/**
+ * Initialize request manager with feedback adapter
+ */
+export function init(adapter: FeedbackAdapter): void {
+  feedbackAdapter = adapter;
+}
 
 /**
  * Track request start
@@ -14,7 +22,7 @@ export function startRequest(
   busyMessage?: string,
   noFeedback?: boolean
 ): void {
-  if (noFeedback) return;
+  if (noFeedback || !feedbackAdapter) return;
 
   if (requestKey) {
     const count = requestKeys.get(requestKey) || 0;
@@ -23,7 +31,7 @@ export function startRequest(
 
   activeRequests++;
   if (activeRequests === 1) {
-    feedback.busy(busyMessage || "Loading...");
+    feedbackAdapter.showBusy(busyMessage || "Loading...");
   }
 }
 
@@ -34,7 +42,7 @@ export function endRequest(
   requestKey?: string,
   noFeedback?: boolean
 ): void {
-  if (noFeedback) return;
+  if (noFeedback || !feedbackAdapter) return;
 
   if (requestKey) {
     const count = requestKeys.get(requestKey) || 0;
@@ -47,7 +55,7 @@ export function endRequest(
 
   activeRequests--;
   if (activeRequests === 0) {
-    feedback.clear();
+    feedbackAdapter.clearBusy();
   }
 }
 
@@ -55,14 +63,18 @@ export function endRequest(
  * Show success feedback
  */
 export function showSuccess(message: string): void {
-  feedback.success(message);
+  if (feedbackAdapter) {
+    feedbackAdapter.showToast(message, "success");
+  }
 }
 
 /**
  * Show error feedback
  */
 export function showError(message: string): void {
-  feedback.error(message);
+  if (feedbackAdapter) {
+    feedbackAdapter.showToast(message, "error", 5000);
+  }
 }
 
 /**

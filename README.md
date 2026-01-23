@@ -14,7 +14,7 @@ Trailhead is a proof-of-concept micro-frontend shell built on a simple premise: 
 
 The shell is a lightweight vanilla TypeScript application (24 KB) that provides core services to independent plugin applications. Each app can use any framework - React, Vue, Svelte, or vanilla JavaScript - and can be deployed independently without affecting other apps.
 
-**Design System Agnostic**: Trailhead uses an adapter pattern, allowing you to use any design system (Shoelace, CloudScape, Material-UI, etc.). All apps in your deployment share the same design system for consistency.
+**Design System Agnostic**: Trailhead uses an adapter pattern. The shell includes a Shoelace adapter by default, but you can easily create adapters for other design systems (CloudScape, Material-UI, etc.). See [Creating Adapters](docs/CREATING_ADAPTERS.md).
 
 ## The Shell's Purpose
 
@@ -71,8 +71,11 @@ Add a new app? Just add a JSON entry. The menu updates instantly.
 ```
 trailhead/
 ├── core/
-│   ├── shell/             # Vanilla TypeScript shell (21 KB)
-│   └── contracts/         # Shell API type definitions
+│   ├── shell/             # Vanilla TypeScript shell (24 KB)
+│   ├── contracts/         # Shell API type definitions
+│   └── adapters/          # Design system adapters
+│       ├── shoelace/      # Shoelace adapter
+│       └── cloudscape/    # CloudScape adapter (stub)
 ├── apps/
 │   ├── demo/              # React demo app
 │   └── saas-demo/         # SaaS example app
@@ -119,6 +122,7 @@ The article covers:
 
 - [Versioning Strategy](VERSIONING.md) - How apps control shell versions
 - [Creating Adapters](docs/CREATING_ADAPTERS.md) - Build custom design system adapters
+- [Available Adapters](core/adapters/README.md) - Shoelace, CloudScape, and community adapters
 - [Architecture Overview](docs/ARCHITECTURE.md) - Deep dive into the adapter pattern
 
 ## License

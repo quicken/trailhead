@@ -1,46 +1,40 @@
 /**
- * Shell - Application shell providing services to plugin apps
+ * Trailhead Core Shell - Design system agnostic orchestration
  */
-import type { ShellAPI, NavItem } from "./types/shell-api";
-import type { DesignSystemAdapter } from "./adapters/types";
-import { ShoelaceAdapter } from "./adapters/shoelace";
-import * as http from "./lib/http";
-import { t } from "./lib/i18n";
+import type { ShellAPI, NavItem } from "./types/shell-api.js";
+import type { DesignSystemAdapter } from "./adapters/types.js";
+import * as http from "./lib/http.js";
+import * as requestManager from "./lib/requestManager.js";
+import { t } from "./lib/i18n.js";
 
-class Shell {
+export interface ShellConfig {
+  adapter: DesignSystemAdapter;
+  basePath?: string;
+  apiUrl?: string;
+}
+
+export class Trailhead {
   private navigation: NavItem[] = [];
   private routeChangeCallbacks: Array<(path: string) => void> = [];
-  private basePath: string = "";
+  private basePath: string;
   private adapter: DesignSystemAdapter;
 
-  constructor(adapter?: DesignSystemAdapter) {
-    this.basePath = import.meta.env.VITE_BASE_PATH || "";
-    this.adapter = adapter || new ShoelaceAdapter();
-    this.init();
-  }
-
-  /**
-   * Initialize design system adapter
-   */
-  private async initAdapter(): Promise<void> {
-    try {
-      await this.adapter.init(this.basePath);
-      console.log(`[Shell] Initialized ${this.adapter.name} adapter v${this.adapter.version}`);
-    } catch (error) {
-      console.error("Failed to initialize design system adapter:", error);
-    }
+  constructor(config: ShellConfig) {
+    this.basePath = config.basePath || "";
+    this.adapter = config.adapter;
+    this.init(config.apiUrl);
   }
 
   /**
    * Initialize shell
    */
-  private async init(): Promise<void> {
+  private async init(apiUrl?: string): Promise<void> {
     // Initialize design system adapter
     await this.initAdapter();
 
-    // Initialize HTTP client
-    const apiUrl = (window as any).APP_CONFIG?.apiUrl || "";
-    http.init(apiUrl);
+    // Initialize request manager and HTTP client with adapter
+    requestManager.init(this.adapter.feedback);
+    http.init(apiUrl || "");
 
     // Expose shell API globally
     window.shell = this.createAPI();
@@ -56,6 +50,19 @@ class Shell {
 
     // Load initial route
     this.handleRoute();
+  }
+
+  /**
+   * Initialize design system adapter
+   */
+  private async initAdapter(): Promise<void> {
+    try {
+      await this.adapter.init(this.basePath);
+      console.log(`[Trailhead] Initialized ${this.adapter.name} adapter v${this.adapter.version}`);
+    } catch (error) {
+      console.error("Failed to initialize design system adapter:", error);
+      throw error;
+    }
   }
 
   /**
@@ -149,9 +156,7 @@ class Shell {
    */
   private async loadNavigation(): Promise<void> {
     try {
-      // In dev, navigation.json is on the shell server
-      const baseUrl = import.meta.env.DEV ? "http://localhost:3000" : this.basePath;
-      const response = await fetch(`${baseUrl}/navigation.json`);
+      const response = await fetch(`${this.basePath}/navigation.json`);
       this.navigation = await response.json();
     } catch (error) {
       console.error("Failed to load navigation:", error);
@@ -180,7 +185,6 @@ class Shell {
       )
       .join("");
 
-    // Add click handlers
     nav.querySelectorAll("a").forEach((link) => {
       link.addEventListener("click", (e) => {
         e.preventDefault();
@@ -205,7 +209,6 @@ class Shell {
    * Navigate to path
    */
   private navigate(path: string): void {
-    // Simple page reload for navigation
     window.location.href = this.basePath + path;
   }
 
@@ -215,7 +218,6 @@ class Shell {
   private handleRoute(): void {
     let path = window.location.pathname;
     
-    // Remove base path if present
     if (this.basePath && path.startsWith(this.basePath)) {
       path = path.substring(this.basePath.length) || "/";
     }
@@ -251,11 +253,10 @@ class Shell {
     const root = document.getElementById("shell-content");
     if (!root) return;
 
-    // Clear and show loading
     root.innerHTML = `<div class="shell-loading">${t("Loading...")}</div>`;
 
     try {
-      const pluginUrl = this.getPluginUrl(appName, appPath);
+      const pluginUrl = `${this.basePath}${appPath}/app.js`;
       const script = document.createElement("script");
       script.src = pluginUrl;
       script.type = "module";
@@ -277,36 +278,4 @@ class Shell {
       root.innerHTML = `<div class="shell-error">${t("Failed to load application")}</div>`;
     }
   }
-
-  /**
-   * Get plugin URL based on environment
-   */
-  private getPluginUrl(appName: string, appPath: string): string {
-    // Development: Use environment variable for port
-    if (import.meta.env.DEV) {
-      const envKey = `VITE_PLUGIN_PORT_${appName.toUpperCase()}`;
-      const port = import.meta.env[envKey];
-
-      if (port) {
-        // Load from Vite dev server - Vite transforms /src/index.tsx on the fly
-        const url = `http://localhost:${port}/src/index.tsx`;
-        console.log(`[Shell] Loading plugin "${appName}" from:`, url);
-        return url;
-      }
-
-      console.warn(`No dev port defined for plugin "${appName}". Add ${envKey} to .env.development`);
-    }
-
-    // Production: Use app's base path from navigation
-    const url = `${this.basePath}${appPath}/app.js`;
-    console.log(`[Shell] Loading plugin "${appName}" from:`, url);
-    return url;
-  }
-}
-
-// Initialize shell when DOM is ready
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", () => new Shell());
-} else {
-  new Shell();
 }

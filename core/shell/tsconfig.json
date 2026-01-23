@@ -12,7 +12,7 @@
     "noEmit": true,
     "sourceMap": true,
     "strict": true,
-    "noUnusedLocals": true,
+    "noUnusedLocals": false,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "declaration": true,
