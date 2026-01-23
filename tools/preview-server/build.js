@@ -5,7 +5,7 @@
  */
 
 import { execSync } from 'child_process';
-import { cpSync, mkdirSync, rmSync, readFileSync, writeFileSync } from 'fs';
+import { cpSync, mkdirSync, rmSync, readFileSync, writeFileSync, readdirSync } from 'fs';
 
 // Get site from command line argument (default: shoelace)
 const site = process.argv[2] || 'shoelace';
@@ -55,6 +55,18 @@ navigation.forEach(route => {
   
   // Copy app.js to route directory
   cpSync(`../../site/${site}-site/apps/${appName}/dist/app.js`, `${routeDir}/app.js`);
+  
+  // Copy CSS if it exists (find any .css file)
+  try {
+    const distFiles = readdirSync(`../../site/${site}-site/apps/${appName}/dist`);
+    const cssFile = distFiles.find(f => f.endsWith('.css'));
+    if (cssFile) {
+      cpSync(`../../site/${site}-site/apps/${appName}/dist/${cssFile}`, `${routeDir}/${appName}.css`);
+      console.log(`  Copied ${cssFile} as ${appName}.css`);
+    }
+  } catch (e) {
+    console.log(`  No CSS file for ${appName}`);
+  }
   
   // Copy index.html to route directory
   writeFileSync(`${routeDir}/index.html`, indexTemplate);

@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { DemoApp } from "./DemoApp";
+import { SaasDemoApp } from "./SaasDemoApp";
 import type { ShellAPI } from "@cfkit/contracts";
 import { applyMode, Mode } from "@cloudscape-design/global-styles";
 
@@ -42,7 +42,7 @@ if (!window.shell) {
     },
     navigation: {
       navigate: (path) => console.log("[Mock] navigate:", path),
-      getCurrentPath: () => "/demo",
+      getCurrentPath: () => "/saas-demo",
       onRouteChange: () => () => {},
     },
   } as any;
@@ -50,14 +50,13 @@ if (!window.shell) {
 
 /**
  * Plugin mount function
- * Called by shell when plugin is loaded
  */
 window.AppMount = (container: HTMLElement) => {
   const root = ReactDOM.createRoot(container);
 
   root.render(
     <React.StrictMode>
-      <DemoApp />
+      <SaasDemoApp />
     </React.StrictMode>
   );
 };
@@ -70,7 +69,7 @@ if (rootElement) {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     <React.StrictMode>
-      <DemoApp />
+      <SaasDemoApp />
     </React.StrictMode>
   );
 }
