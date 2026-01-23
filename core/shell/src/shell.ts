@@ -259,16 +259,13 @@ export class Trailhead {
       const pluginUrl = `${this.basePath}${appPath}/app.js`;
       const pluginCss = `${this.basePath}${appPath}/${appName}.css`;
       
-      // Load CSS first
+      // Load CSS
       const link = document.createElement("link");
       link.rel = "stylesheet";
       link.href = pluginCss;
-      link.onerror = () => {
-        console.log(`[Shell] No CSS file for ${appName} (this is okay)`);
-      };
       document.head.appendChild(link);
       
-      // Then load JS
+      // Load JS
       const script = document.createElement("script");
       script.src = pluginUrl;
       script.type = "module";

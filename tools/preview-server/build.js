@@ -56,13 +56,17 @@ navigation.forEach(route => {
   // Copy app.js to route directory
   cpSync(`../../site/${site}-site/apps/${appName}/dist/app.js`, `${routeDir}/app.js`);
   
-  // Copy CSS if it exists (find any .css file)
+  // Copy CSS if it exists (find any .css file in dist or public)
   try {
     const distFiles = readdirSync(`../../site/${site}-site/apps/${appName}/dist`);
     const cssFile = distFiles.find(f => f.endsWith('.css'));
     if (cssFile) {
       cpSync(`../../site/${site}-site/apps/${appName}/dist/${cssFile}`, `${routeDir}/${appName}.css`);
       console.log(`  Copied ${cssFile} as ${appName}.css`);
+    } else {
+      // Try public folder
+      cpSync(`../../site/${site}-site/apps/${appName}/public/${appName}.css`, `${routeDir}/${appName}.css`);
+      console.log(`  Copied ${appName}.css from public`);
     }
   } catch (e) {
     console.log(`  No CSS file for ${appName}`);
