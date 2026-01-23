@@ -14,7 +14,5 @@ export type {
   ErrorResult,
   HttpError,
   NavigationAPI,
-  PluginMount,
-  PluginInstance,
   NavItem,
 } from './shell-api.js';

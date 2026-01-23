@@ -1,13 +1,12 @@
 /**
  * Shell - Application shell providing services to plugin apps
  */
-import type { ShellAPI, NavItem, PluginInstance } from "./types/shell-api";
+import type { ShellAPI, NavItem } from "./types/shell-api";
 import * as feedback from "./lib/feedback";
 import * as http from "./lib/http";
 import { t } from "./lib/i18n";
 
 class Shell {
-  private currentPlugin: PluginInstance | null = null;
   private navigation: NavItem[] = [];
   private routeChangeCallbacks: Array<(path: string) => void> = [];
   private basePath: string = "";
@@ -202,39 +201,22 @@ class Shell {
    * Load plugin application
    */
   private async loadPlugin(appName: string, appPath: string): Promise<void> {
-    // Unmount previous plugin
-    if (this.currentPlugin) {
-      this.currentPlugin.unmount();
-      this.currentPlugin = null;
-    }
-
-    // Clear content
     const root = document.getElementById("shell-content");
     if (!root) return;
 
-    // Clear the container completely
-    root.innerHTML = "";
-
-    // Show loading state
-    const loadingDiv = document.createElement("div");
-    loadingDiv.className = "shell-loading";
-    loadingDiv.textContent = t("Loading...");
-    root.appendChild(loadingDiv);
+    // Clear and show loading
+    root.innerHTML = `<div class="shell-loading">${t("Loading...")}</div>`;
 
     try {
       const pluginUrl = this.getPluginUrl(appName, appPath);
-
-      // Load plugin script
       const script = document.createElement("script");
       script.src = pluginUrl;
       script.type = "module";
 
       script.onload = () => {
-        // Remove loading indicator
-        loadingDiv.remove();
-
+        root.innerHTML = "";
         if (window.AppMount) {
-          this.currentPlugin = window.AppMount(root);
+          window.AppMount(root);
         }
       };
 

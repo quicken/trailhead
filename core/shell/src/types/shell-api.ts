@@ -84,17 +84,6 @@ export interface NavigationAPI {
 }
 
 /**
- * Plugin mount function signature
- */
-export interface PluginMount {
-  (container: HTMLElement): PluginInstance;
-}
-
-export interface PluginInstance {
-  unmount(): void;
-}
-
-/**
  * Navigation configuration
  */
 export interface NavItem {
@@ -113,6 +102,6 @@ export interface NavItem {
 declare global {
   interface Window {
     shell: ShellAPI;
-    AppMount?: PluginMount;
+    AppMount?: (container: HTMLElement) => void;
   }
 }
