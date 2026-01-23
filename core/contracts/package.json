@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "TypeScript types for the shell API",
   "type": "module",
-  "main": "index.ts",
-  "types": "index.ts",
+  "main": "dist/public-api.d.ts",
+  "types": "dist/public-api.d.ts",
   "files": [
-    "index.ts"
+    "dist"
   ],
   "keywords": [
     "shell",
