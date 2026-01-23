@@ -2,7 +2,8 @@
  * Shell - Application shell providing services to plugin apps
  */
 import type { ShellAPI, NavItem } from "./types/shell-api";
-import * as feedback from "./lib/feedback";
+import type { DesignSystemAdapter } from "./adapters/types";
+import { ShoelaceAdapter } from "./adapters/shoelace";
 import * as http from "./lib/http";
 import { t } from "./lib/i18n";
 
@@ -10,24 +11,23 @@ class Shell {
   private navigation: NavItem[] = [];
   private routeChangeCallbacks: Array<(path: string) => void> = [];
   private basePath: string = "";
+  private adapter: DesignSystemAdapter;
 
-  constructor() {
+  constructor(adapter?: DesignSystemAdapter) {
     this.basePath = import.meta.env.VITE_BASE_PATH || "";
-    this.initShoelace();
+    this.adapter = adapter || new ShoelaceAdapter();
     this.init();
   }
 
   /**
-   * Initialize Shoelace with correct base path
+   * Initialize design system adapter
    */
-  private async initShoelace(): Promise<void> {
+  private async initAdapter(): Promise<void> {
     try {
-      const shoelacePath = `${this.basePath}/shoelace`;
-      const { setBasePath } = await import(/* @vite-ignore */ `${shoelacePath}/utilities/base-path.js`);
-      setBasePath(shoelacePath);
-      await import(/* @vite-ignore */ `${shoelacePath}/shoelace-autoloader.js`);
+      await this.adapter.init(this.basePath);
+      console.log(`[Shell] Initialized ${this.adapter.name} adapter v${this.adapter.version}`);
     } catch (error) {
-      console.error("Failed to initialize Shoelace:", error);
+      console.error("Failed to initialize design system adapter:", error);
     }
   }
 
@@ -35,6 +35,9 @@ class Shell {
    * Initialize shell
    */
   private async init(): Promise<void> {
+    // Initialize design system adapter
+    await this.initAdapter();
+
     // Initialize HTTP client
     const apiUrl = (window as any).APP_CONFIG?.apiUrl || "";
     http.init(apiUrl);
@@ -59,21 +62,64 @@ class Shell {
    * Create shell API
    */
   private createAPI(): ShellAPI {
+    const adapter = this.adapter;
+    
     return {
       version: "1.0.0",
       feedback: {
-        busy: feedback.busy,
-        clear: feedback.clear,
-        success: feedback.success,
-        error: feedback.error,
-        warning: feedback.warning,
-        info: feedback.info,
-        alert: feedback.alert,
-        confirm: feedback.confirm,
-        ok: feedback.ok,
-        yesNo: feedback.yesNo,
-        yesNoCancel: feedback.yesNoCancel,
-        custom: feedback.custom,
+        busy: (message: string) => adapter.feedback.showBusy(message),
+        clear: () => adapter.feedback.clearBusy(),
+        success: (message: string, duration?: number) => 
+          adapter.feedback.showToast(message, "success", duration),
+        error: (message: string, duration?: number) => 
+          adapter.feedback.showToast(message, "error", duration || 5000),
+        warning: (message: string, duration?: number) => 
+          adapter.feedback.showToast(message, "warning", duration || 4000),
+        info: (message: string, duration?: number) => 
+          adapter.feedback.showToast(message, "info", duration),
+        alert: (message: string, variant: any = "info", duration?: number) => 
+          adapter.feedback.showToast(message, variant, duration),
+        confirm: (message: string, title: string = "Confirm") =>
+          adapter.feedback.showDialog({
+            message,
+            title,
+            buttons: [
+              { label: "Cancel", value: "cancel", variant: "secondary" },
+              { label: "Confirm", value: "confirm", variant: "primary" },
+            ],
+          }).then((result) => result.value === "confirm"),
+        ok: (message: string, title: string = "Information") =>
+          adapter.feedback.showDialog({
+            message,
+            title,
+            buttons: [{ label: "OK", value: "ok", variant: "primary" }],
+          }).then(() => undefined),
+        yesNo: (message: string, title: string = "Confirm") =>
+          adapter.feedback.showDialog({
+            message,
+            title,
+            buttons: [
+              { label: "No", value: "no", variant: "secondary" },
+              { label: "Yes", value: "yes", variant: "primary" },
+            ],
+          }).then((result) => result.value === "yes"),
+        yesNoCancel: (message: string, title: string = "Confirm") =>
+          adapter.feedback.showDialog({
+            message,
+            title,
+            buttons: [
+              { label: "Cancel", value: "cancel", variant: "secondary" },
+              { label: "No", value: "no", variant: "secondary" },
+              { label: "Yes", value: "yes", variant: "primary" },
+            ],
+          }).then((result) => (result.value as "yes" | "no" | "cancel") || "cancel"),
+        custom: <T extends string>(
+          message: string,
+          title: string,
+          buttons: Array<{ label: string; value: T; variant?: string }>
+        ) =>
+          adapter.feedback.showDialog({ message, title, buttons })
+            .then((result) => result.value),
       },
       http: {
         get: http.get,

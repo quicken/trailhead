@@ -12,7 +12,9 @@ This is Trailhead - a rainy Sunday experiment for building a functional micro-fr
 
 Trailhead is a proof-of-concept micro-frontend shell built on a simple premise: **what if we just used the browser's native module system and minimal tooling?**
 
-The shell is a lightweight vanilla TypeScript application (21 KB) that provides core services to independent plugin applications. Each app can use any framework - React, Vue, Svelte, or vanilla JavaScript - and can be deployed independently without affecting other apps.
+The shell is a lightweight vanilla TypeScript application (24 KB) that provides core services to independent plugin applications. Each app can use any framework - React, Vue, Svelte, or vanilla JavaScript - and can be deployed independently without affecting other apps.
+
+**Design System Agnostic**: Trailhead uses an adapter pattern, allowing you to use any design system (Shoelace, CloudScape, Material-UI, etc.). All apps in your deployment share the same design system for consistency.
 
 ## The Shell's Purpose
 
@@ -29,11 +31,13 @@ Apps don't worry about infrastructure - they focus purely on business logi, thin
 ## Key Features
 
 - **Framework Agnostic**: Use React, Vue, Svelte, or vanilla JavaScript - the shell doesn't care
+- **Design System Agnostic**: Pluggable adapter pattern supports any design system
 - **Independent Deployment**: Deploy one app without touching the other 79
 - **Zero Configuration Deployment**: No URL rewrite rules, no CloudFront complexity - just upload files
 - **Build-time i18n**: Zero runtime overhead for translations
 - **True Isolation**: Page reloads provide automatic CSS and JavaScript isolation
-- **Shared Infrastructure**: Main Menu for Navigation, HTTP, and feedback handled by the shell. (Menu accross all apps can be updated in all app as once at runtime via JSON)
+- **Shared Infrastructure**: Main Menu for Navigation, HTTP, and feedback handled by the shell. (Menu across all apps can be updated in all apps at once at runtime via JSON)
+- **Versioned Shell**: Apps control which shell version they load, enabling gradual upgrades
 
 ## Demo Application
 
@@ -110,6 +114,12 @@ The article covers:
 - Deployment on AWS (S3 + CloudFront)
 - Scaling to 80+ modules
 - The React exit strategy
+
+### Additional Documentation
+
+- [Versioning Strategy](VERSIONING.md) - How apps control shell versions
+- [Creating Adapters](docs/CREATING_ADAPTERS.md) - Build custom design system adapters
+- [Architecture Overview](docs/ARCHITECTURE.md) - Deep dive into the adapter pattern
 
 ## License
 

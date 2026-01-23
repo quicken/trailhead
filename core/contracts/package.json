@@ -12,6 +12,9 @@
     "./version-check": {
       "types": "./version-check.d.ts",
       "default": "./version-check.js"
+    },
+    "./adapters": {
+      "types": "./dist/adapters/public-api.d.ts"
     }
   },
   "files": [

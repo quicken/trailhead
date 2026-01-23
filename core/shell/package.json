@@ -11,7 +11,7 @@
     "build": "npm run copy-shoelace && tsc && vite build",
     "build:de": "npm run copy-shoelace && tsc && vite build --config vite.config.de.js",
     "build:all": "npm run build && npm run build:de",
-    "build:types": "tsc src/types/public-api.ts --declaration --emitDeclarationOnly --outDir ../contracts/dist --skipLibCheck",
+    "build:types": "tsc src/types/public-api.ts --declaration --emitDeclarationOnly --outDir ../contracts/dist --skipLibCheck && tsc src/adapters/public-api.ts --declaration --emitDeclarationOnly --outDir ../contracts/dist/adapters --skipLibCheck",
     "postbuild": "npm run build:types",
     "copy-shoelace": "mkdir -p public/shoelace && cp -r node_modules/@shoelace-style/shoelace/cdn/* public/shoelace/",
     "preview": "vite preview",

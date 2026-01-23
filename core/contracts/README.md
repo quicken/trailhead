@@ -82,12 +82,25 @@ In your app's `index.html`:
 
 ## Types Included
 
+### Shell API Types
 - `ShellAPI` - Main shell API interface with version property
 - `FeedbackAPI` - Feedback service (toasts, dialogs, busy overlay)
 - `HttpAPI` - HTTP client with Result type
 - `NavigationAPI` - Client-side navigation
 - `Result<T>` - Success/error result type
 - `NavItem` - Navigation configuration
+
+### Adapter Types (for creating custom design systems)
+```typescript
+import type { DesignSystemAdapter } from "@cfkit/contracts/adapters";
+
+// Create your own design system adapter
+class MyAdapter implements DesignSystemAdapter {
+  // ... implementation
+}
+```
+
+See [Creating Adapters Guide](../../docs/CREATING_ADAPTERS.md) for details.
 
 ## Development
 
