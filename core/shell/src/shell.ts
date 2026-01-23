@@ -60,6 +60,7 @@ class Shell {
    */
   private createAPI(): ShellAPI {
     return {
+      version: "1.0.0",
       feedback: {
         busy: feedback.busy,
         clear: feedback.clear,

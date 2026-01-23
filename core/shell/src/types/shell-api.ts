@@ -4,6 +4,7 @@
  */
 
 export interface ShellAPI {
+  version: string;
   feedback: FeedbackAPI;
   http: HttpAPI;
   navigation: NavigationAPI;

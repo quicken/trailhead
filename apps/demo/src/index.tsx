@@ -9,17 +9,12 @@ declare global {
   }
 }
 
-declare global {
-  interface Window {
-    shell: ShellAPI;
-  }
-}
-
 /**
  * Mock shell for standalone development
  */
 if (!window.shell) {
   window.shell = {
+    version: "1.0.0",
     feedback: {
       busy: (msg) => console.log("[Mock] busy:", msg),
       clear: () => console.log("[Mock] clear"),
@@ -54,6 +49,10 @@ if (!window.shell) {
  * Called by shell when plugin is loaded
  */
 window.AppMount = (container: HTMLElement) => {
+  // Optional: Check shell version compatibility
+  // import { assertShellVersion } from "@cfkit/contracts/version-check";
+  // assertShellVersion("1.x");
+
   const root = ReactDOM.createRoot(container);
 
   root.render(
@@ -61,10 +60,6 @@ window.AppMount = (container: HTMLElement) => {
       <DemoApp />
     </React.StrictMode>
   );
-
-  return {
-    unmount: () => root.unmount(),
-  };
 };
 
 /**

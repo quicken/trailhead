@@ -1,13 +1,29 @@
 {
   "name": "@cfkit/contracts",
   "version": "1.0.0",
-  "description": "TypeScript types for the shell API",
+  "description": "TypeScript types for the shell API - Auto-generated from shell source",
   "type": "module",
   "main": "dist/public-api.d.ts",
   "types": "dist/public-api.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/public-api.d.ts"
+    },
+    "./version-check": {
+      "types": "./version-check.d.ts",
+      "default": "./version-check.js"
+    }
+  },
   "files": [
-    "dist"
+    "dist",
+    "version-check.ts",
+    "version-check.js",
+    "version-check.d.ts",
+    "README.md"
   ],
+  "scripts": {
+    "build": "cd ../shell && npx tsc ../contracts/version-check.ts --declaration --module esnext --target es2020 --moduleResolution bundler --skipLibCheck --outDir ../contracts"
+  },
   "keywords": [
     "shell",
     "api",
@@ -15,5 +31,10 @@
     "typescript"
   ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/trailhead.git",
+    "directory": "core/contracts"
+  }
 }
