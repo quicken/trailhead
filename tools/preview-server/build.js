@@ -15,11 +15,15 @@ mkdirSync('public', { recursive: true });
 
 // Build shell
 console.log('\n1. Building shell...');
-execSync('npm run build', { cwd: '../../core/shell', stdio: 'inherit' });
+execSync('VITE_BASE_PATH=/sample/trailhead npm run build', { 
+  cwd: '../../site/shoelace-site', 
+  stdio: 'inherit',
+  env: { ...process.env, VITE_BASE_PATH: '/sample/trailhead' }
+});
 
 // Copy shell build
 console.log('\n2. Copying shell build...');
-cpSync('../../core/shell/dist', 'public', { recursive: true });
+cpSync('../../site/shoelace-site/dist', 'public', { recursive: true });
 
 // Read navigation to determine which apps to build
 const navigation = JSON.parse(readFileSync('public/navigation.json', 'utf-8'));
@@ -32,7 +36,7 @@ navigation.forEach(route => {
   const routePath = route.path.substring(1); // Remove leading slash
   
   console.log(`\n${step}. Building ${appName} app...`);
-  execSync('npm run build', { cwd: `../../apps/${appName}`, stdio: 'inherit' });
+  execSync('npm run build', { cwd: `../../site/shoelace-site/apps/${appName}`, stdio: 'inherit' });
   step++;
   
   console.log(`\n${step}. Copying ${appName} app to ${routePath}/...`);
@@ -40,7 +44,7 @@ navigation.forEach(route => {
   mkdirSync(routeDir, { recursive: true });
   
   // Copy app.js to route directory
-  cpSync(`../../apps/${appName}/dist/app.js`, `${routeDir}/app.js`);
+  cpSync(`../../site/shoelace-site/apps/${appName}/dist/app.js`, `${routeDir}/app.js`);
   
   // Copy index.html to route directory
   writeFileSync(`${routeDir}/index.html`, indexTemplate);

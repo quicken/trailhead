@@ -1,0 +1,20 @@
+{
+  "name": "trailhead-cloudscape-site",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Trailhead shell with CloudScape design system",
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@cfkit/vite-i18n-plugin": "file:../../tools/vite-i18n-plugin",
+    "ky": "^1.14.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
+  }
+}

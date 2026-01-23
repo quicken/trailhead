@@ -1,0 +1,22 @@
+{
+  "name": "trailhead-shoelace-site",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Trailhead shell with Shoelace design system",
+  "scripts": {
+    "start": "vite",
+    "build": "npm run copy-shoelace && vite build",
+    "copy-shoelace": "mkdir -p public/shoelace && cp -r node_modules/@shoelace-style/shoelace/cdn/* public/shoelace/",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@cfkit/vite-i18n-plugin": "file:../../tools/vite-i18n-plugin",
+    "@shoelace-style/shoelace": "^2.20.1",
+    "ky": "^1.14.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
+  }
+}

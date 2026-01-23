@@ -71,14 +71,17 @@ Add a new app? Just add a JSON entry. The menu updates instantly.
 ```
 trailhead/
 ├── core/
-│   ├── shell/             # Vanilla TypeScript shell (24 KB)
+│   ├── shell/             # Core shell logic (importable)
 │   ├── contracts/         # Shell API type definitions
-│   └── adapters/          # Design system adapters
-│       ├── shoelace/      # Shoelace adapter
-│       └── cloudscape/    # CloudScape adapter (stub)
-├── apps/
-│   ├── demo/              # React demo app
-│   └── saas-demo/         # SaaS example app
+│   └── adapters/          # Design system adapters (reference)
+│       ├── shoelace/
+│       └── cloudscape/
+├── site/
+│   ├── shoelace-site/     # Shoelace shell build
+│   │   └── apps/          # Apps using Shoelace
+│   │       ├── demo/
+│   │       └── saas-demo/
+│   └── cloudscape-site/   # CloudScape shell build
 └── tools/
     ├── vite-i18n-plugin/  # Build-time i18n
     └── preview-server/    # Local production preview
@@ -90,11 +93,11 @@ trailhead/
 # Install dependencies
 npm install
 
-# Start shell (port 3000)
-cd core/shell && npm start
+# Start Shoelace shell (port 3000)
+cd site/shoelace-site && npm start
 
 # Start demo app (port 3001)
-cd apps/demo && npm start
+cd site/shoelace-site/apps/demo && npm start
 
 # Visit http://localhost:3000
 ```
@@ -103,7 +106,7 @@ cd apps/demo && npm start
 
 ```bash
 cd tools/preview-server
-npm run build  # Builds all apps
+npm run build  # Builds Shoelace shell + all apps
 npm start      # Serves at http://localhost:8081/sample/trailhead
 ```
 
