@@ -26,14 +26,14 @@ mkdirSync('public', { recursive: true });
 // Build shell
 console.log(`\n1. Building ${site} shell...`);
 execSync('VITE_BASE_PATH=/sample/trailhead npm run build', { 
-  cwd: `../../site/${site}-site`, 
+  cwd: `../../site/${site}-site/shell`, 
   stdio: 'inherit',
   env: { ...process.env, VITE_BASE_PATH: '/sample/trailhead' }
 });
 
 // Copy shell build
 console.log('\n2. Copying shell build...');
-cpSync(`../../site/${site}-site/dist`, 'public', { recursive: true });
+cpSync(`../../site/${site}-site/shell/dist`, 'public', { recursive: true });
 
 // Read navigation to determine which apps to build
 const navigation = JSON.parse(readFileSync('public/navigation.json', 'utf-8'));
