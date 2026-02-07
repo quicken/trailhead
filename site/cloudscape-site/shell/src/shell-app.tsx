@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Flashbar from '@cloudscape-design/components/flashbar';
 import Spinner from '@cloudscape-design/components/spinner';
+import Modal from '@cloudscape-design/components/modal';
+import Box from '@cloudscape-design/components/box';
+import SpaceBetween from '@cloudscape-design/components/space-between';
+import Button from '@cloudscape-design/components/button';
 import { ShellLayout } from './shell-layout.tsx';
 import type { Trailhead } from '../../core/shell/src/core.ts';
 
@@ -15,10 +19,23 @@ interface FlashMessage {
   dismissible: boolean;
 }
 
+interface DialogState {
+  visible: boolean;
+  title?: string;
+  message: string;
+  buttons: Array<{ label: string; value: string; variant?: string }>;
+  resolve?: (result: { value: string | null }) => void;
+}
+
 export function ShellApp({ shell }: ShellAppProps) {
   const [navigation, setNavigation] = useState<any[]>([]);
   const [flashMessages, setFlashMessages] = useState<FlashMessage[]>([]);
   const [busyMessage, setBusyMessage] = useState('');
+  const [dialogState, setDialogState] = useState<DialogState>({
+    visible: false,
+    message: '',
+    buttons: []
+  });
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Get current path without basePath
@@ -38,6 +55,19 @@ export function ShellApp({ shell }: ShellAppProps) {
     adapter.setFlashChangeHandler(setFlashMessages);
     adapter.setBusyChangeHandler(setBusyMessage);
 
+    // Listen for dialog events
+    const handleDialogEvent = (event: CustomEvent) => {
+      const { config, resolve } = event.detail;
+      setDialogState({
+        visible: true,
+        title: config.title,
+        message: config.message,
+        buttons: config.buttons,
+        resolve
+      });
+    };
+    window.addEventListener('cloudscape-dialog', handleDialogEvent as EventListener);
+
     // Load navigation
     fetch(`${shell.basePath}/navigation.json`)
       .then(res => res.json())
@@ -45,6 +75,10 @@ export function ShellApp({ shell }: ShellAppProps) {
         setNavigation(data);
       })
       .catch(err => console.error('Failed to load navigation:', err));
+
+    return () => {
+      window.removeEventListener('cloudscape-dialog', handleDialogEvent as EventListener);
+    };
   }, []);
 
   useEffect(() => {
@@ -106,6 +140,20 @@ export function ShellApp({ shell }: ShellAppProps) {
     window.location.href = path;
   };
 
+  const handleDialogButton = (value: string) => {
+    if (dialogState.resolve) {
+      dialogState.resolve({ value });
+    }
+    setDialogState({ ...dialogState, visible: false });
+  };
+
+  const handleDialogDismiss = () => {
+    if (dialogState.resolve) {
+      dialogState.resolve({ value: null });
+    }
+    setDialogState({ ...dialogState, visible: false });
+  };
+
   return (
     <>
       {flashMessages.length > 0 && (
@@ -146,6 +194,29 @@ export function ShellApp({ shell }: ShellAppProps) {
           </div>
         </div>
       )}
+
+      <Modal
+        visible={dialogState.visible}
+        onDismiss={handleDialogDismiss}
+        header={dialogState.title}
+        footer={
+          <Box float="right">
+            <SpaceBetween direction="horizontal" size="xs">
+              {dialogState.buttons.map((btn, idx) => (
+                <Button
+                  key={idx}
+                  variant={btn.variant === 'primary' ? 'primary' : 'normal'}
+                  onClick={() => handleDialogButton(btn.value)}
+                >
+                  {btn.label}
+                </Button>
+              ))}
+            </SpaceBetween>
+          </Box>
+        }
+      >
+        {dialogState.message}
+      </Modal>
 
       <ShellLayout
         navigation={navigation}
