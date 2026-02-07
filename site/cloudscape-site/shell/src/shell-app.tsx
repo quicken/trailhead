@@ -55,7 +55,9 @@ export function ShellApp({ shell }: ShellAppProps) {
   }, [navigation, currentPath]);
 
   const handleRoute = (path: string) => {
-    const route = navigation.find(item => item.path === path);
+    // Normalize path by removing trailing slash for matching
+    const normalizedPath = path.endsWith('/') && path !== '/' ? path.slice(0, -1) : path;
+    const route = navigation.find(item => item.path === normalizedPath);
     if (route && contentRef.current) {
       loadApp(route.app, route.path);
     }

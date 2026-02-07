@@ -25,7 +25,7 @@ export function ShellLayout({ navigation, currentPath, basePath, onNavigate, chi
   const navItems = navigation.map(item => ({
     type: 'link' as const,
     text: item.label,
-    href: basePath + item.path,
+    href: basePath + item.path + '/',  // Add trailing slash for directory routing
   }));
 
   return (

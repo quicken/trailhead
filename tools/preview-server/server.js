@@ -14,7 +14,16 @@ const app = express();
 const PORT = 8081;
 const BASE_PATH = '/sample/trailhead';
 
-// Serve static files from public directory at base path
+/**
+ * Serve static files from public directory at base path.
+ * 
+ * Uses default Express behavior:
+ * - Directories without trailing slash get 301 redirect to add it
+ * - /demo → 301 → /demo/ → serves /demo/index.html
+ * 
+ * This works on ANY static file server (S3, Netlify, Apache, nginx)
+ * without configuration. Third-party developers just upload files.
+ */
 app.use(BASE_PATH, express.static(join(__dirname, 'public')));
 
 // Redirect root to base path
