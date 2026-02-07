@@ -1,0 +1,154 @@
+/**
+ * CloudScape Shell Styles
+ */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Amazon Ember", "Helvetica Neue", Roboto, Arial, sans-serif;
+  background: #f2f3f3;
+  color: #000716;
+}
+
+/* Shell Layout */
+#shell-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 280px;
+  background: #232f3e;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+#shell-header {
+  padding: 20px;
+  border-bottom: 1px solid #414d5c;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#shell-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+}
+
+#shell-collapse {
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+#shell-collapse:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Navigation */
+#shell-navigation {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.shell-nav-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  color: #aab7b8;
+  text-decoration: none;
+  transition: all 0.2s;
+  border-left: 4px solid transparent;
+}
+
+.shell-nav-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+.shell-nav-item-active {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-left-color: #0972d3;
+}
+
+.shell-icon {
+  margin-right: 12px;
+  font-size: 18px;
+}
+
+.shell-nav-label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Main Content */
+#shell-main {
+  margin-left: 280px;
+  min-height: 100vh;
+  background: #f2f3f3;
+}
+
+#shell-content {
+  padding: 24px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+/* Loading State */
+.shell-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: #545b64;
+  font-size: 16px;
+}
+
+/* Error State */
+.shell-error {
+  background: white;
+  border: 1px solid #e9ebed;
+  border-radius: 8px;
+  padding: 24px;
+  margin: 24px;
+  color: #d13212;
+  font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  #shell-sidebar {
+    width: 60px;
+  }
+
+  #shell-title,
+  .shell-nav-label {
+    display: none;
+  }
+
+  #shell-main {
+    margin-left: 60px;
+  }
+
+  .shell-nav-item {
+    justify-content: center;
+    padding: 12px;
+  }
+
+  .shell-icon {
+    margin-right: 0;
+  }
+}

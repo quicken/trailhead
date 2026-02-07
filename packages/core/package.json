@@ -1,0 +1,46 @@
+{
+  "name": "@herdingbits/trailhead-core",
+  "version": "0.0.3",
+  "description": "Core shell orchestration for Trailhead micro-frontend framework",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist ../types/*.d.ts ../types/adapters",
+    "build": "npm run clean && tsc && npm run build:types",
+    "build:types": "tsc src/types/public-api.ts --declaration --emitDeclarationOnly --outDir ../types --skipLibCheck && tsc src/adapters/public-api.ts --declaration --emitDeclarationOnly --outDir ../types/adapters --skipLibCheck",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "ky": "^1.14.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  },
+  "keywords": [
+    "micro-frontend",
+    "shell",
+    "trailhead"
+  ],
+  "author": "HerdingBits",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/herdingbits/trailhead.git",
+    "directory": "packages/core"
+  }
+}

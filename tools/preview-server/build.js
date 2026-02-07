@@ -26,14 +26,14 @@ mkdirSync('public', { recursive: true });
 // Build shell
 console.log(`\n1. Building ${site} shell...`);
 execSync('VITE_BASE_PATH=/sample/trailhead npm run build', { 
-  cwd: `../../site/${site}-site/shell`, 
+  cwd: `../../examples/${site}-site/shell`, 
   stdio: 'inherit',
   env: { ...process.env, VITE_BASE_PATH: '/sample/trailhead' }
 });
 
 // Copy shell build
 console.log('\n2. Copying shell build...');
-cpSync(`../../site/${site}-site/shell/dist`, 'public', { recursive: true });
+cpSync(`../../examples/${site}-site/shell/dist`, 'public', { recursive: true });
 
 // Read navigation to determine which apps to build
 const navigation = JSON.parse(readFileSync('public/navigation.json', 'utf-8'));
@@ -46,7 +46,7 @@ navigation.forEach(route => {
   const routePath = route.path.substring(1); // Remove leading slash
   
   console.log(`\n${step}. Building ${appName} app...`);
-  execSync('npm run build', { cwd: `../../site/${site}-site/apps/${appName}`, stdio: 'inherit' });
+  execSync('npm run build', { cwd: `../../examples/${site}-site/apps/${appName}`, stdio: 'inherit' });
   step++;
   
   console.log(`\n${step}. Copying ${appName} app to ${routePath}/...`);
@@ -54,18 +54,18 @@ navigation.forEach(route => {
   mkdirSync(routeDir, { recursive: true });
   
   // Copy app.js to route directory
-  cpSync(`../../site/${site}-site/apps/${appName}/dist/app.js`, `${routeDir}/app.js`);
+  cpSync(`../../examples/${site}-site/apps/${appName}/dist/app.js`, `${routeDir}/app.js`);
   
   // Copy CSS if it exists (find any .css file in dist or public)
   try {
-    const distFiles = readdirSync(`../../site/${site}-site/apps/${appName}/dist`);
+    const distFiles = readdirSync(`../../examples/${site}-site/apps/${appName}/dist`);
     const cssFile = distFiles.find(f => f.endsWith('.css'));
     if (cssFile) {
-      cpSync(`../../site/${site}-site/apps/${appName}/dist/${cssFile}`, `${routeDir}/${appName}.css`);
+      cpSync(`../../examples/${site}-site/apps/${appName}/dist/${cssFile}`, `${routeDir}/${appName}.css`);
       console.log(`  Copied ${cssFile} as ${appName}.css`);
     } else {
       // Try public folder
-      cpSync(`../../site/${site}-site/apps/${appName}/public/${appName}.css`, `${routeDir}/${appName}.css`);
+      cpSync(`../../examples/${site}-site/apps/${appName}/public/${appName}.css`, `${routeDir}/${appName}.css`);
       console.log(`  Copied ${appName}.css from public`);
     }
   } catch (e) {

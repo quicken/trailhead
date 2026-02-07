@@ -1,0 +1,48 @@
+{
+  "name": "@herdingbits/trailhead-shoelace",
+  "version": "0.0.1",
+  "description": "Shoelace design system adapter for Trailhead micro-frontend framework",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./shell.css": "./dist/shell.css"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsc && cp src/shell.css dist/"
+  },
+  "peerDependencies": {
+    "@herdingbits/trailhead-core": "^0.0.3",
+    "@shoelace-style/shoelace": "^2.20.0"
+  },
+  "devDependencies": {
+    "@herdingbits/trailhead-types": "^0.0.3",
+    "@shoelace-style/shoelace": "^2.20.1",
+    "typescript": "^5.9.3"
+  },
+  "keywords": [
+    "micro-frontend",
+    "shoelace",
+    "adapter",
+    "trailhead"
+  ],
+  "author": "HerdingBits",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/herdingbits/trailhead.git",
+    "directory": "packages/shoelace"
+  }
+}

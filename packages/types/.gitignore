@@ -1,0 +1,10 @@
+# Auto-generated Types
+
+This directory contains auto-generated TypeScript definitions from `@herdingbits/trailhead-core`.
+
+**DO NOT EDIT FILES IN THIS DIRECTORY DIRECTLY**
+
+To update types:
+1. Edit source files in `packages/core/src/types/` or `packages/core/src/adapters/`
+2. Run `npm run build` in `packages/core/`
+3. Types will be regenerated here automatically

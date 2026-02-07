@@ -1,0 +1,36 @@
+{
+  "name": "@herdingbits/trailhead-types",
+  "version": "0.0.3",
+  "description": "TypeScript type definitions for Trailhead micro-frontend framework",
+  "type": "module",
+  "types": "./public-api.d.ts",
+  "exports": {
+    ".": {
+      "types": "./public-api.d.ts"
+    },
+    "./adapters": {
+      "types": "./adapters/public-api.d.ts"
+    }
+  },
+  "files": [
+    "*.d.ts",
+    "adapters/*.d.ts",
+    "README.md"
+  ],
+  "keywords": [
+    "micro-frontend",
+    "types",
+    "typescript",
+    "trailhead"
+  ],
+  "author": "HerdingBits",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/herdingbits/trailhead.git",
+    "directory": "packages/types"
+  }
+}
