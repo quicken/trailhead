@@ -1,9 +1,0 @@
-node_modules/
-dist/
-public/shoelace/
-public/shoelace-assets/
-.DS_Store
-*.log
-.env.local
-.env.*.local
-
