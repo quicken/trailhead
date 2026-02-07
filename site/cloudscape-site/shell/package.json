@@ -13,9 +13,14 @@
     "@cfkit/vite-i18n-plugin": "file:../../tools/vite-i18n-plugin",
     "@cloudscape-design/components": "^3.0.0",
     "@cloudscape-design/global-styles": "^1.0.0",
-    "ky": "^1.14.2"
+    "ky": "^1.14.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.4",
     "typescript": "^5.9.3",
     "vite": "^7.3.1"
   }
