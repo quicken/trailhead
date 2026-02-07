@@ -1,6 +1,13 @@
 # @herdingbits/trailhead-cloudscape
 
-CloudScape design system adapter for the Trailhead micro-frontend framework.
+AWS CloudScape design system adapter for Trailhead micro-frontend shell.
+
+## What is this?
+
+This package provides a Trailhead adapter for the [AWS CloudScape Design System](https://cloudscape.design/). It includes:
+- CloudScape React components integration
+- Pre-built shell UI (AppLayout, SideNavigation, Modal, Flashbar)
+- Event-based communication between adapter and React components
 
 ## Installation
 
@@ -27,6 +34,13 @@ const shell = new Trailhead({
 const root = createRoot(document.getElementById('app')!);
 root.render(<ShellApp shell={shell} />);
 ```
+
+## What's Included
+
+- **CloudScapeAdapter** - Implements the Trailhead adapter interface
+- **ShellApp** - React component that renders the shell UI
+- **ShellLayout** - CloudScape AppLayout with navigation
+- **shell.css** - Base styles for the shell UI
 
 ## Documentation
 

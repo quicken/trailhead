@@ -1,6 +1,13 @@
 # @herdingbits/trailhead-shoelace
 
-Shoelace design system adapter for the Trailhead micro-frontend framework.
+Shoelace design system adapter for Trailhead micro-frontend shell.
+
+## What is this?
+
+This package provides a Trailhead adapter for the [Shoelace](https://shoelace.style/) web component library. It handles:
+- Loading and configuring Shoelace components
+- Rendering toasts, dialogs, and busy overlays
+- Integrating Shoelace with the Trailhead shell
 
 ## Installation
 
@@ -23,6 +30,12 @@ const shell = new Trailhead({
 
 ShellApp.mount(shell);
 ```
+
+## What's Included
+
+- **ShoelaceAdapter** - Implements the Trailhead adapter interface
+- **ShellApp** - Minimal mounting wrapper for API consistency
+- **shell.css** - Base styles for the shell UI
 
 ## Documentation
 

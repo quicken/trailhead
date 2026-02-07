@@ -1,109 +1,158 @@
-# Trailhead Shell Sites
+# Trailhead Examples
 
-Pre-configured shell builds for different design systems.
+Example implementations showing how to build shells and micro-frontend applications using Trailhead.
 
-## Available Sites
+## What's Here
+
+This directory contains working examples of:
+- **Shell implementations** - Host applications using different design systems
+- **Micro-frontend apps** - Independent applications that integrate with the shell
+
+## Available Examples
 
 ### Shoelace Site
-- **Location**: `site/shoelace-site/`
-- **Design System**: Shoelace
-- **Bundle Size**: ~23 KB
-- **Status**: ✅ Production ready
+- **Location**: `examples/shoelace-site/`
+- **Design System**: Shoelace web components
+- **Shell**: Vanilla TypeScript
+- **Apps**: Demo app, SaaS demo
 
 ### CloudScape Site
-- **Location**: `site/cloudscape-site/`
-- **Design System**: CloudScape (basic implementation)
-- **Bundle Size**: ~22 KB
-- **Status**: 🚧 Basic implementation
+- **Location**: `examples/cloudscape-site/`
+- **Design System**: AWS CloudScape Design System
+- **Shell**: React
+- **Apps**: Demo app, SaaS demo
+
+## Running Examples
+
+### Development Mode
+
+```bash
+# Shoelace shell
+cd examples/shoelace-site/shell
+npm install
+npm start  # http://localhost:3000
+
+# Shoelace demo app (in another terminal)
+cd examples/shoelace-site/apps/demo
+npm install
+npm start  # http://localhost:3001
+```
+
+### Production Preview
+
+```bash
+cd tools/preview-server
+
+# Build and preview Shoelace site
+npm run build:shoelace
+npm start  # http://localhost:8081/sample/trailhead
+
+# Build and preview CloudScape site
+npm run build:cloudscape
+npm start
+```
+
+## Structure
+
+```
+examples/
+├── shoelace-site/
+│   ├── shell/              # Shell implementation
+│   │   ├── src/
+│   │   │   └── index.ts   # Uses @herdingbits/trailhead-shoelace
+│   │   └── public/
+│   │       └── navigation.json
+│   └── apps/
+│       ├── demo/          # Simple demo app
+│       └── saas-demo/     # SaaS dashboard demo
+└── cloudscape-site/
+    ├── shell/              # Shell implementation
+    │   ├── src/
+    │   │   └── index.tsx  # Uses @herdingbits/trailhead-cloudscape
+    │   └── public/
+    │       └── navigation.json
+    └── apps/
+        ├── demo/          # Simple demo app
+        └── saas-demo/     # SaaS dashboard demo
+```
 
 ## How It Works
 
-Each site imports the core shell logic from `core/shell/src/` and wires in a specific design system adapter:
+### Shell Implementation
+
+Each shell imports the published Trailhead packages:
 
 ```typescript
-// site/shoelace-site/src/index.ts
-import { Trailhead } from '../../core/shell/src/core.ts';
-import { ShoelaceAdapter } from '../../core/shell/src/adapters/shoelace.ts';
+// examples/shoelace-site/shell/src/index.ts
+import { Trailhead } from '@herdingbits/trailhead-core';
+import { ShoelaceAdapter, ShellApp } from '@herdingbits/trailhead-shoelace';
 
-new Trailhead({
+const shell = new Trailhead({
   adapter: new ShoelaceAdapter(),
-  basePath: '/',
+  basePath: import.meta.env.VITE_BASE_PATH || '',
+  apiUrl: window.APP_CONFIG?.apiUrl || ''
 });
+
+ShellApp.mount(shell);
 ```
 
-## Development
+### Micro-Frontend Apps
 
-### Build Shoelace Shell
-```bash
-cd site/shoelace-site
-npm install
-npm run build
-# Output: dist/shell.js
-```
+Apps are framework-agnostic and export an `init` function:
 
-### Build CloudScape Shell
-```bash
-cd site/cloudscape-site
-npm install
-npm run build
-# Output: dist/shell.js
-```
-
-### Start Development Server
-```bash
-cd site/shoelace-site  # or cloudscape-site
-npm start
-# Opens at http://localhost:3000
-```
-
-## Deployment
-
-Deploy each site to a versioned path:
-
-```
-CDN/
-├── shell/
-│   ├── shoelace/
-│   │   └── 1.0.0/
-│   │       ├── shell.js
-│   │       ├── shell.css
-│   │       └── shoelace/  (design system assets)
-│   └── cloudscape/
-│       └── 1.0.0/
-│           ├── shell.js
-│           └── shell.css
-```
-
-Apps choose which shell to load:
-
-```html
-<!-- Shoelace apps -->
-<script type="module" src="/shell/shoelace/1.0.0/shell.js"></script>
-
-<!-- CloudScape apps -->
-<script type="module" src="/shell/cloudscape/1.0.0/shell.js"></script>
-```
-
-## Creating a New Site
-
-1. Create directory: `site/my-design-site/`
-2. Copy `package.json`, `vite.config.js`, `tsconfig.json` from an existing site
-3. Create `src/index.ts`:
 ```typescript
-import { Trailhead } from '../../core/shell/src/core.ts';
-import { MyAdapter } from '../../core/shell/src/adapters/my-adapter.ts';
+// examples/shoelace-site/apps/demo/src/index.ts
+import type { ShellAPI } from '@herdingbits/trailhead-types';
 
-new Trailhead({
-  adapter: new MyAdapter(),
-  basePath: '/',
-});
+export function init(shell: ShellAPI) {
+  // Use shell services
+  shell.feedback.success('App loaded!');
+  
+  const result = await shell.http.get('/api/data');
+  if (result.success) {
+    renderApp(result.data);
+  }
+}
 ```
-4. Build: `npm install && npm run build`
 
-## Benefits
+## Creating Your Own
 
-✅ **One Codebase** - Core shell logic shared across all sites  
-✅ **Multiple Design Systems** - Each site uses a different adapter  
-✅ **Independent Builds** - Build and deploy each site separately  
-✅ **Type Safe** - Full TypeScript support  
-✅ **Small Bundles** - Only includes chosen design system  
+### New Shell
+
+1. Install packages:
+```bash
+npm install @herdingbits/trailhead-core @herdingbits/trailhead-shoelace
+```
+
+2. Create entry point:
+```typescript
+import { Trailhead } from '@herdingbits/trailhead-core';
+import { ShoelaceAdapter, ShellApp } from '@herdingbits/trailhead-shoelace';
+
+const shell = new Trailhead({
+  adapter: new ShoelaceAdapter(),
+  basePath: '/app'
+});
+
+ShellApp.mount(shell);
+```
+
+### New Micro-Frontend
+
+1. Install types:
+```bash
+npm install --save-dev @herdingbits/trailhead-types
+```
+
+2. Export init function:
+```typescript
+import type { ShellAPI } from '@herdingbits/trailhead-types';
+
+export function init(shell: ShellAPI) {
+  // Your app logic
+}
+```
+
+## Learn More
+
+See the [main Trailhead documentation](https://github.com/herdingbits/trailhead) for architecture details and best practices.

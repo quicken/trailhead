@@ -1,8 +1,8 @@
-# Trailhead - A Micro-Frontend Experiment
+# Trailhead - Micro-Frontend Shell & Orchestration
 
 **What if micro-frontends didn't need webpack magic or complex tooling?** Just the browser's native module system and some common sense?
 
-This is Trailhead - a rainy Sunday experiment for building a functional micro-frontend shell with a focus on simple. A 21 KB vanilla TypeScript shell that lets you deploy many independent apps as scale without coordination, URL rewrites, or framework lock-in.
+Trailhead is an application shell that orchestrates independent single page applications (SPAs). It provides shared infrastructure (navigation, HTTP, feedback) while letting each app use any framework and deploy independently.
 
 **[Read the full story →](https://www.herdingbits.com/blog/building-trailhead-micro-frontend-framework)** | **[Try it live →](https://www.herdingbits.com/sample/trailhead)**
 
@@ -10,49 +10,171 @@ This is Trailhead - a rainy Sunday experiment for building a functional micro-fr
 
 ## What is Trailhead?
 
-Trailhead is a proof-of-concept micro-frontend shell built on a simple premise: **what if we just used the browser's native module system and minimal tooling?**
+Trailhead is a **front-end orchestration shell** that provides orchestration and shared services to independent applications. Built with vanilla TypeScript, it acts as the host application that loads and coordinates multiple single page applications (SPAs).
 
-The shell is a lightweight vanilla TypeScript application (24 KB) that provides core services to independent plugin applications. Each app can use any framework - React, Vue, Svelte, or vanilla JavaScript - and can be deployed independently without affecting other apps.
+**Key Concepts:**
+- **Shell/Host Application**: The container that provides shared infrastructure
+- **Single Page Applications (SPAs)**: Independent applications loaded by the shell
+- **Orchestration**: Coordinating navigation, shared UI template, and intentially minimal shared UI services.
+- **Design System Adapters**: Pluggable UI layer supporting any component library
 
-**Design System Agnostic**: Trailhead uses an adapter pattern. The shell includes a Shoelace adapter by default, but you can easily create adapters for other design systems (CloudScape, Material-UI, etc.). See [Creating Adapters](docs/CREATING_ADAPTERS.md).
+Each SPA can use any framework (React, Vue, Svelte, vanilla JS) and deploys independently without affecting other orchestrated SPAs.
 
-## The Shell's Purpose
+## Architecture
 
-The shell acts as your application's **service layer**, providing:
+### Shell Responsibilities
 
-- **Navigation Management**: Automatically builds the navigation menu from a simple JSON configuration
-- **HTTP Client**: Centralized API calls with automatic error handling, loading states, and authentication
-- **User Feedback**: Consistent toasts, dialogs, and loading overlays across all apps
-- **Shared UI Components**: Shoelace web components loaded once and available to all apps
-- **Routing**: Simple page-based navigation that works on any static file server
+The shell acts as the **host application**, providing:
 
-Apps don't worry about infrastructure - they focus purely on business logi, think of them as extension in vscode or browser plugins.
+- **Navigation Orchestration**: Dynamic menu from JSON configuration. To navigate between SPAs, no URL rewrites needed.
+- **HTTP Client**: Centralized API calls with error handling and UI loading states
+- **User Feedback**: Consistent toasts, dialogs, and busy overlays
+- **Design System Integration**: Adapter pattern for any UI component library
+- **Routing**: Page-based navigation that works on any static host. (Unless your SPA framework needs client-side routing, then you can do that too!)
+
+### Single Page Applications (SPAs)
+
+Applications focus purely on business logic and UI, without worrying about shared infrastructure. They are:
+- Loaded as ES modules by the shell
+- Access shell services via `window.shell` API
+- No shared dependencies or build coordination
+- Deploy independently without affecting other apps
+
+Think of them as browser extensions or VS Code plugins - isolated but integrated.
 
 ## Key Features
 
-- **Framework Agnostic**: Use React, Vue, Svelte, or vanilla JavaScript - the shell doesn't care
-- **Design System Agnostic**: Pluggable adapter pattern supports any design system
-- **Independent Deployment**: Deploy one app without touching the other 79
-- **Zero Configuration Deployment**: No URL rewrite rules, no CloudFront complexity - just upload files
+- **Framework Agnostic**: Each SPA chooses its own framework
+- **Design System Agnostic**: Pluggable adapter pattern (Shoelace, CloudScape, Material-UI, etc.)
+- **Independent Deployment**: Deploy one app without touching others
+- **Zero Configuration**: No URL rewrites or complex CDN rules - just static files
 - **Build-time i18n**: Zero runtime overhead for translations
 - **True Isolation**: Page reloads provide automatic CSS and JavaScript isolation
-- **Shared Infrastructure**: Main Menu for Navigation, HTTP, and feedback handled by the shell. (Menu across all apps can be updated in all apps at once at runtime via JSON)
-- **Versioned Shell**: Apps control which shell version they load, enabling gradual upgrades
+- **Runtime Configuration**: Update navigation menu without rebuilding
 
-## Demo Application
+## Project Structure
 
-The demo app showcases how applications interact with the shell's services:
+```
+trailhead/
+├── packages/                      # Published NPM packages
+│   ├── core/                     # @herdingbits/trailhead-core
+│   ├── types/                    # @herdingbits/trailhead-types
+│   ├── shoelace/                 # @herdingbits/trailhead-shoelace
+│   └── cloudscape/               # @herdingbits/trailhead-cloudscape
+├── examples/                     # Example implementations
+│   ├── shoelace-site/
+│   │   ├── shell/               # Shoelace shell implementation
+│   │   └── apps/                # Demo micro-frontends
+│   └── cloudscape-site/
+│       ├── shell/               # CloudScape shell implementation
+│       └── apps/                # Demo micro-frontends
+└── tools/
+    ├── vite-i18n-plugin/        # Build-time i18n
+    └── preview-server/          # Local production preview
+```
 
-- Uses shell's HTTP client for API calls
-- Displays feedback using shell's toast notifications
-- Leverages Shoelace components provided by the shell
-- Demonstrates framework-agnostic architecture
+## Installation
 
-All apps share these UI elements and services without importing libraries or managing state.
+### For Shell Developers
+
+```bash
+# Shoelace shell
+npm install @herdingbits/trailhead-core @herdingbits/trailhead-shoelace
+
+# CloudScape shell (React)
+npm install @herdingbits/trailhead-core @herdingbits/trailhead-cloudscape
+```
+
+### For SPA Developers
+
+```bash
+# Types only (for TypeScript support)
+npm install --save-dev @herdingbits/trailhead-types
+```
+
+## Quick Start
+
+### Using Published Packages
+
+**Shoelace Shell:**
+```typescript
+import { Trailhead } from '@herdingbits/trailhead-core';
+import { ShoelaceAdapter, ShellApp } from '@herdingbits/trailhead-shoelace';
+
+const shell = new Trailhead({
+  adapter: new ShoelaceAdapter(),
+  basePath: '/app',
+  apiUrl: 'https://api.example.com'
+});
+
+ShellApp.mount(shell);
+```
+
+**CloudScape Shell (React):**
+```typescript
+import { createRoot } from 'react-dom/client';
+import { Trailhead } from '@herdingbits/trailhead-core';
+import { CloudScapeAdapter, ShellApp } from '@herdingbits/trailhead-cloudscape';
+
+const shell = new Trailhead({
+  adapter: new CloudScapeAdapter(),
+  basePath: '/app',
+  apiUrl: 'https://api.example.com'
+});
+
+const root = createRoot(document.getElementById('app')!);
+root.render(<ShellApp shell={shell} />);
+```
+
+**Single Page Application:**
+```typescript
+import type { ShellAPI } from '@herdingbits/trailhead-types';
+
+export function init(shell: ShellAPI) {
+  shell.feedback.success('App loaded!');
+
+  const result = await shell.http.get('/api/data');
+  if (result.success) {
+    // Use data
+  }
+}
+```
+
+## Example Preview
+
+```bash
+cd tools/preview-server
+
+# Build and preview Shoelace site
+npm run build:shoelace
+npm start
+
+# Build and preview CloudScape site
+npm run build:cloudscape
+npm start
+
+# Serves at http://localhost:8081/sample/trailhead
+```
+
+## Developing Locally
+
+```bash
+# Install dependencies
+cd examples/shoelace-site/shell && npm install
+cd examples/shoelace-site/apps/demo && npm install
+
+# Start shell (port 3000)
+cd examples/shoelace-site/shell && npm start
+
+# Start demo app (port 3001)
+cd examples/shoelace-site/apps/demo && npm start
+
+# Visit http://localhost:3000
+```
 
 ## Dynamic Navigation
 
-Update `navigation.json` to add, remove, or reorder menu items - **no rebuild required**. The shell reads this configuration at runtime and automatically updates the navigation menu across all applications.
+Update `navigation.json` to add, remove, or reorder menu items - **no rebuild required**:
 
 ```json
 {
@@ -64,60 +186,7 @@ Update `navigation.json` to add, remove, or reorder menu items - **no rebuild re
 }
 ```
 
-Add a new app? Just add a JSON entry. The menu updates instantly.
-
-## Project Structure
-
-```
-trailhead/
-├── core/
-│   ├── shell/             # Core shell logic (importable)
-│   ├── contracts/         # Shell API type definitions
-│   └── adapters/          # Design system adapters (reference)
-│       ├── shoelace/
-│       └── cloudscape/
-├── site/
-│   ├── shoelace-site/     # Shoelace shell build
-│   │   └── apps/          # Apps using Shoelace
-│   │       ├── demo/
-│   │       └── saas-demo/
-│   └── cloudscape-site/   # CloudScape shell build
-└── tools/
-    ├── vite-i18n-plugin/  # Build-time i18n
-    └── preview-server/    # Local production preview
-```
-
-## Quick Start
-
-```bash
-# Install dependencies
-npm install
-
-# Start Shoelace shell (port 3000)
-cd site/shoelace-site && npm start
-
-# Start demo app (port 3001)
-cd site/shoelace-site/apps/demo && npm start
-
-# Visit http://localhost:3000
-```
-
-## Production Preview
-
-```bash
-cd tools/preview-server
-
-# Build Shoelace site (default)
-npm run build
-# or
-npm run build:shoelace
-
-# Build CloudScape site
-npm run build:cloudscape
-
-# Start server
-npm start      # Serves at http://localhost:8081/sample/trailhead
-```
+The shell reads this at runtime and updates the navigation menu across all SPAs.
 
 ## Learn More
 
@@ -132,10 +201,15 @@ The article covers:
 
 ### Additional Documentation
 
-- [Versioning Strategy](VERSIONING.md) - How apps control shell versions
 - [Creating Adapters](docs/CREATING_ADAPTERS.md) - Build custom design system adapters
-- [Available Adapters](core/adapters/README.md) - Shoelace, CloudScape, and community adapters
 - [Architecture Overview](docs/ARCHITECTURE.md) - Deep dive into the adapter pattern
+
+## Published Packages
+
+- **[@herdingbits/trailhead-core](packages/core)** - Core shell orchestration
+- **[@herdingbits/trailhead-types](packages/types)** - TypeScript type definitions
+- **[@herdingbits/trailhead-shoelace](packages/shoelace)** - Shoelace design system adapter
+- **[@herdingbits/trailhead-cloudscape](packages/cloudscape)** - CloudScape design system adapter
 
 ## License
 
