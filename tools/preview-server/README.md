@@ -1,57 +1,60 @@
-# Production Test Server
+# Production Preview Server
 
-Simulates production deployment of the shell + plugin architecture.
+Simulates production deployment of the Trailhead shell and SPAs.
 
 ## Quick Start
 
 ```bash
-# Build shell and plugins
-npm run build
+# Build Shoelace site
+npm run build:shoelace
+
+# Build CloudScape site
+npm run build:cloudscape
 
 # Start production server
 npm start
 
-# Visit http://localhost:8080
+# Visit http://localhost:8081/sample/trailhead
 ```
 
 ## What It Does
 
-1. **Build Script** (`build.js`):
-   - Builds ui-shell (production)
-   - Builds plugin-demo (production)
+1. **Build Scripts**:
+   - Builds shell (production)
+   - Builds SPAs (production)
    - Copies all artifacts to `public/` directory
    - Structure:
      ```
-     public/
+     public/sample/trailhead/
      ├── index.html              (Shell entry)
      ├── shell.js                (Shell bundle)
      ├── shell.css               (Shell styles)
-     ├── react.production.min.js (React runtime)
-     ├── react-dom.production.min.js (ReactDOM runtime)
      ├── navigation.json         (Menu config)
      └── apps/
-         └── demo/
-             └── app.js          (Plugin bundle)
+         ├── demo/
+         │   └── app.js          (SPA bundle)
+         └── saas-demo/
+             └── app.js          (SPA bundle)
      ```
 
 2. **Server** (`server.js`):
-   - Express server on port 8080
+   - Express server on port 8081
    - Serves static files from `public/`
    - SPA routing (all routes → index.html)
 
 ## Testing Production
 
-1. Build: `npm run build`
+1. Build: `npm run build:shoelace` or `npm run build:cloudscape`
 2. Start: `npm start`
-3. Open: http://localhost:8080/demo
+3. Open: http://localhost:8081/sample/trailhead
 4. Check Network tab:
-   - React loaded once from shell
-   - Plugin loads as ESM module
-   - No duplicate React
+   - Shell loaded once
+   - SPAs load as ES modules
+   - Design system components cached
 
 ## Differences from Dev
 
-- **Dev**: Plugin uses React from node_modules
-- **Prod**: Plugin uses React from shell via import map
-- **Dev**: Two servers (3000 + 3001)
-- **Prod**: One server (8080)
+- **Dev**: SPAs run on separate ports (3001, 3002)
+- **Prod**: Everything served from one server (8081)
+- **Dev**: Hot reload enabled
+- **Prod**: Static files with caching headers

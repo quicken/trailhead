@@ -1,12 +1,12 @@
 # @herdingbits/trailhead-types
 
-TypeScript type definitions for Trailhead micro-frontend applications.
+TypeScript type definitions for Trailhead single page applications (SPAs).
 
 **Note:** This package is auto-generated from `@herdingbits/trailhead-core` during build. Do not edit these files directly.
 
 ## What is this?
 
-Provides TypeScript types for micro-frontend applications that integrate with the Trailhead shell. Install this as a dev dependency to get type checking and IntelliSense for the shell API.
+Provides TypeScript types for single page applications (SPAs) that integrate with the Trailhead shell. Install this as a dev dependency to get type checking and IntelliSense for the shell API.
 
 ## Installation
 
@@ -16,7 +16,7 @@ npm install --save-dev @herdingbits/trailhead-types
 
 ## Usage
 
-### In Micro-Frontend Applications
+### In Single Page Applications (SPAs)
 
 ```typescript
 import type { ShellAPI } from '@herdingbits/trailhead-types';

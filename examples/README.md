@@ -1,12 +1,12 @@
 # Trailhead Examples
 
-Example implementations showing how to build shells and micro-frontend applications using Trailhead.
+Example implementations showing how to build application shells and single page applications (SPAs) using Trailhead.
 
 ## What's Here
 
 This directory contains working examples of:
-- **Shell implementations** - Host applications using different design systems
-- **Micro-frontend apps** - Independent applications that integrate with the shell
+- **Shell implementations** - Host applications that orchestrate multiple SPAs using different design systems
+- **Single Page Applications (SPAs)** - Independent applications that integrate with the shell
 
 ## Available Examples
 
@@ -15,12 +15,14 @@ This directory contains working examples of:
 - **Design System**: Shoelace web components
 - **Shell**: Vanilla TypeScript
 - **Apps**: Demo app, SaaS demo
+- **Use Case**: Framework-agnostic shell with web components
 
 ### CloudScape Site
 - **Location**: `examples/cloudscape-site/`
-- **Design System**: AWS CloudScape Design System
+- **Design System**: AWS CloudScape Design System (React-based)
 - **Shell**: React
 - **Apps**: Demo app, SaaS demo
+- **Use Case**: React-first architecture where both shell and SPAs use React. CloudScape is built around React, so this example demonstrates Trailhead when you're all-in on React.
 
 ## Running Examples
 
@@ -80,8 +82,9 @@ examples/
 
 ### Shell Implementation
 
-Each shell imports the published Trailhead packages:
+Each shell imports the published Trailhead packages and uses a design system adapter:
 
+**Shoelace (Vanilla TypeScript):**
 ```typescript
 // examples/shoelace-site/shell/src/index.ts
 import { Trailhead } from '@herdingbits/trailhead-core';
@@ -96,9 +99,26 @@ const shell = new Trailhead({
 ShellApp.mount(shell);
 ```
 
-### Micro-Frontend Apps
+**CloudScape (React):**
+```typescript
+// examples/cloudscape-site/shell/src/index.tsx
+import { createRoot } from 'react-dom/client';
+import { Trailhead } from '@herdingbits/trailhead-core';
+import { CloudScapeAdapter, ShellApp } from '@herdingbits/trailhead-cloudscape';
 
-Apps are framework-agnostic and export an `init` function:
+const shell = new Trailhead({
+  adapter: new CloudScapeAdapter(),
+  basePath: import.meta.env.VITE_BASE_PATH || '',
+  apiUrl: window.APP_CONFIG?.apiUrl || ''
+});
+
+const root = createRoot(document.getElementById('app')!);
+root.render(<ShellApp shell={shell} />);
+```
+
+### Single Page Applications (SPAs)
+
+SPAs are framework-agnostic and export an `init` function that receives the shell API:
 
 ```typescript
 // examples/shoelace-site/apps/demo/src/index.ts
@@ -115,17 +135,24 @@ export function init(shell: ShellAPI) {
 }
 ```
 
+The shell and SPAs share the same design system for visual consistency. Each SPA can use any framework (React, Vue, Svelte, vanilla JS) internally while consuming the shared design system components.
+
 ## Creating Your Own
 
 ### New Shell
 
 1. Install packages:
 ```bash
+# For Shoelace (vanilla TypeScript)
 npm install @herdingbits/trailhead-core @herdingbits/trailhead-shoelace
+
+# For CloudScape (React)
+npm install @herdingbits/trailhead-core @herdingbits/trailhead-cloudscape
 ```
 
 2. Create entry point:
 ```typescript
+// Shoelace
 import { Trailhead } from '@herdingbits/trailhead-core';
 import { ShoelaceAdapter, ShellApp } from '@herdingbits/trailhead-shoelace';
 
@@ -135,9 +162,22 @@ const shell = new Trailhead({
 });
 
 ShellApp.mount(shell);
+
+// CloudScape (React)
+import { createRoot } from 'react-dom/client';
+import { Trailhead } from '@herdingbits/trailhead-core';
+import { CloudScapeAdapter, ShellApp } from '@herdingbits/trailhead-cloudscape';
+
+const shell = new Trailhead({
+  adapter: new CloudScapeAdapter(),
+  basePath: '/app'
+});
+
+const root = createRoot(document.getElementById('app')!);
+root.render(<ShellApp shell={shell} />);
 ```
 
-### New Micro-Frontend
+### New Single Page Application (SPA)
 
 1. Install types:
 ```bash
@@ -149,9 +189,12 @@ npm install --save-dev @herdingbits/trailhead-types
 import type { ShellAPI } from '@herdingbits/trailhead-types';
 
 export function init(shell: ShellAPI) {
-  // Your app logic
+  // Your app logic - use any framework you want
+  // Access shell services via shell.http, shell.feedback, etc.
 }
 ```
+
+3. Use the shared design system components in your app for visual consistency
 
 ## Learn More
 

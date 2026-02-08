@@ -1,6 +1,6 @@
 # @herdingbits/trailhead-shoelace
 
-Shoelace design system adapter for Trailhead micro-frontend shell.
+Shoelace design system adapter for Trailhead application shell.
 
 ## What is this?
 
@@ -8,6 +8,7 @@ This package provides a Trailhead adapter for the [Shoelace](https://shoelace.st
 - Loading and configuring Shoelace components
 - Rendering toasts, dialogs, and busy overlays
 - Integrating Shoelace with the Trailhead shell
+- Vanilla TypeScript implementation (framework-agnostic)
 
 ## Installation
 

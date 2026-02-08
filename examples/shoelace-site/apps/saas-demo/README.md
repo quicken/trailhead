@@ -1,6 +1,6 @@
-# SaaS Demo Plugin
+# SaaS Demo App
 
-Simple user management plugin demonstrating shell integration.
+Simple user management single page application demonstrating shell integration.
 
 ## Features
 

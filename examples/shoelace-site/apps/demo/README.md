@@ -1,6 +1,6 @@
-# Plugin Demo
+# Demo App
 
-React 19 plugin demonstrating shell API integration.
+React 19 single page application demonstrating shell API integration.
 
 ## Features
 
@@ -33,11 +33,11 @@ npm run build  # Outputs to dist/app.js
 
 ## Bundle Size
 
-- Plugin: ~313 kB (72 kB gzipped) - includes React
+- App: ~313 kB (72 kB gzipped) - includes React
 
 ## Integration
 
-Plugin exports `window.AppMount(container)` for shell integration:
+App exports `window.AppMount(container)` for shell integration:
 
 ```typescript
 window.AppMount = (container: HTMLElement) => {
@@ -62,4 +62,4 @@ window.shell.navigation.navigate("/demo");
 
 ## Standalone Dev
 
-The plugin includes a mock shell API for standalone development at localhost:3001.
+The app includes a mock shell API for standalone development at localhost:3001.

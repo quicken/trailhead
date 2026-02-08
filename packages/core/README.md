@@ -1,11 +1,11 @@
 # @herdingbits/trailhead-core
 
-Core shell orchestration for Trailhead - a micro-frontend host application that coordinates independent applications.
+Core orchestration for Trailhead - an application shell that coordinates multiple single page applications (SPAs).
 
 ## What is this?
 
 This package provides the core shell logic that:
-- Orchestrates multiple micro-frontend applications
+- Orchestrates multiple single page applications (SPAs) within a shared layout
 - Manages navigation and routing
 - Provides centralized HTTP client with error handling
 - Coordinates user feedback (toasts, dialogs, busy states)
@@ -32,7 +32,7 @@ const shell = new Trailhead({
 
 ## Available Adapters
 
-- **[@herdingbits/trailhead-shoelace](https://www.npmjs.com/package/@herdingbits/trailhead-shoelace)** - Shoelace web components
+- **[@herdingbits/trailhead-shoelace](https://www.npmjs.com/package/@herdingbits/trailhead-shoelace)** - Shoelace web components (vanilla TypeScript)
 - **[@herdingbits/trailhead-cloudscape](https://www.npmjs.com/package/@herdingbits/trailhead-cloudscape)** - AWS CloudScape Design System (React)
 
 ## Documentation
