@@ -142,6 +142,84 @@ export function init(shell: ShellAPI) {
 }
 ```
 
+## Configuration
+
+### Environment Variables
+
+**Shell Configuration:**
+
+- **`VITE_BASE_PATH`** - Base URL path for deployment (e.g., `/app`, `/sample/trailhead`)
+  - Used when deploying to a subdirectory instead of root
+  - Example: Deploying to `https://example.com/app/` → set `VITE_BASE_PATH=/app`
+  - Default: `""` (root path)
+
+- **`APP_CONFIG.apiUrl`** - API endpoint URL (runtime configuration)
+  - Set via `window.APP_CONFIG` in your HTML
+  - Used by shell's HTTP client for API calls
+  - Example: `<script>window.APP_CONFIG = { apiUrl: 'https://api.example.com' };</script>`
+
+**Development Configuration:**
+
+Create `.env.development` in your shell directory:
+
+```bash
+# Base path for local development (usually empty for root)
+VITE_BASE_PATH=
+
+# Dev server ports for SPAs (used by shell to load SPAs in dev mode)
+VITE_APP_PORT_DEMO=3001
+VITE_APP_PORT_SAASDEMO=3002
+```
+
+**Production Build:**
+
+```bash
+# Build with custom base path
+VITE_BASE_PATH=/app npm run build
+
+# Or set in .env.production
+echo "VITE_BASE_PATH=/app" > .env.production
+npm run build
+```
+
+### Shell Configuration Example
+
+```typescript
+import { Trailhead } from '@herdingbits/trailhead-core';
+import { ShoelaceAdapter, ShellApp } from '@herdingbits/trailhead-shoelace';
+
+const shell = new Trailhead({
+  adapter: new ShoelaceAdapter(),
+  basePath: import.meta.env.VITE_BASE_PATH || '',  // From build-time env var
+  apiUrl: window.APP_CONFIG?.apiUrl || '',         // From runtime config
+});
+
+ShellApp.mount(shell);
+```
+
+### Why Set Base Path?
+
+**Subdirectory Deployment:**
+- Deploying to `https://example.com/app/` instead of root
+- Hosting multiple applications on same domain
+- CDN path requirements
+
+**Example Deployment Scenarios:**
+
+```bash
+# Root deployment (default)
+VITE_BASE_PATH= npm run build
+# Serves at: https://example.com/
+
+# Subdirectory deployment
+VITE_BASE_PATH=/app npm run build
+# Serves at: https://example.com/app/
+
+# Multi-tenant deployment
+VITE_BASE_PATH=/tenant1 npm run build
+# Serves at: https://example.com/tenant1/
+```
+
 ## Example Preview
 
 ```bash
