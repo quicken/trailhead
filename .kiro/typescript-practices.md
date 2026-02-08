@@ -145,7 +145,6 @@ test: {
 ### Development
 - `.env.development` for dev-specific config
 - `VITE_BASE_PATH` - Base URL path for deployment
-- `VITE_APP_PORT_<APPNAME>` - Dev server ports for SPAs (e.g., `VITE_APP_PORT_DEMO=3001`)
 
 ### Production
 - Environment variables baked into build

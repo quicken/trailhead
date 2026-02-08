@@ -165,11 +165,9 @@ Create `.env.development` in your shell directory:
 ```bash
 # Base path for local development (usually empty for root)
 VITE_BASE_PATH=
-
-# Dev server ports for SPAs (used by shell to load SPAs in dev mode)
-VITE_APP_PORT_DEMO=3001
-VITE_APP_PORT_SAASDEMO=3002
 ```
+
+**Note:** For development, SPAs are typically developed in standalone mode with hot reload. To test integration with the shell, build the SPA and copy it to the shell's public directory.
 
 **Production Build:**
 
@@ -243,11 +241,21 @@ npm start
 cd examples/shoelace-site/shell && npm install
 cd examples/shoelace-site/apps/demo && npm install
 
-# Start shell (port 3000)
-cd examples/shoelace-site/shell && npm start
-
-# Start demo app (port 3001)
+# Develop SPA in standalone mode (with hot reload)
 cd examples/shoelace-site/apps/demo && npm start
+
+# Visit http://localhost:3001
+
+# To test with shell:
+# 1. Build the SPA
+cd examples/shoelace-site/apps/demo && npm run build
+
+# 2. Copy to shell public directory
+mkdir -p ../shell/public/demo
+cp dist/app.js ../shell/public/demo/
+
+# 3. Start shell
+cd ../shell && npm start
 
 # Visit http://localhost:3000
 ```

@@ -238,14 +238,30 @@ Changes take effect immediately - no rebuild needed.
 
 ### Starting Development
 
-```bash
-# Terminal 1: Start shell
-cd examples/shoelace-site/shell
-npm start  # Port 3000
+**Standalone SPA Development (Recommended):**
 
-# Terminal 2: Start your SPA
+```bash
+# Develop SPA with hot reload
 cd examples/shoelace-site/apps/demo
 npm start  # Port 3001
+
+# Visit http://localhost:3001
+```
+
+**Testing with Shell:**
+
+```bash
+# 1. Build the SPA
+cd examples/shoelace-site/apps/demo
+npm run build
+
+# 2. Copy to shell public directory
+mkdir -p ../shell/public/demo
+cp dist/app.js ../shell/public/demo/
+
+# 3. Start shell
+cd ../shell
+npm start  # Port 3000
 
 # Visit http://localhost:3000
 ```
@@ -255,13 +271,11 @@ npm start  # Port 3001
 Create `examples/shoelace-site/shell/.env.development`:
 
 ```bash
-VITE_APP_PORT_DEMO=3001
-VITE_APP_PORT_MYAPP=3002
+# Base path for local development (usually empty for root)
+VITE_BASE_PATH=
 ```
 
-The shell loads SPAs from dev servers in development:
-- Dev: `http://localhost:3001/src/index.tsx` (Vite transforms on-the-fly)
-- Prod: `/demo/app.js` (pre-built bundle)
+The shell loads SPAs from their built output in the `public/` directory. For rapid development with hot reload, develop SPAs in standalone mode using the mock shell API.
 
 ## Production Build
 
@@ -452,9 +466,15 @@ const msg = "Hallo, Welt!";
    VITE_APP_PORT_MYAPP=3002
    ```
 
-7. **Start developing**
+6. **Start developing**
    ```bash
+   # Standalone mode with hot reload
    npm start  # Port 3002
+   
+   # To test with shell, build and copy:
+   npm run build
+   mkdir -p ../shell/public/my-app
+   cp dist/app.js ../shell/public/my-app/
    ```
 
 ## Key Principles
