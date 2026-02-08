@@ -30,6 +30,29 @@ package/
 └── package.json
 ```
 
+### Example Structures
+
+**Shell Package:**
+```
+packages/shoelace/
+├── src/
+│   ├── adapter.ts     # Shoelace adapter implementation
+│   └── ShellApp.ts    # Shell mounting logic
+├── shell.css          # Shell styles
+└── package.json
+```
+
+**SPA:**
+```
+examples/shoelace-site/apps/demo/
+├── src/
+│   ├── index.tsx      # Entry point with init(shell)
+│   └── DemoApp.tsx    # App component
+├── translations/      # i18n files
+├── vite.config.js
+└── package.json
+```
+
 ## Build Configuration
 
 ### Vite Setup
@@ -37,7 +60,7 @@ package/
 - Configure `base` path from `VITE_BASE_PATH` env variable
 - Enable CORS for dev server when building micro-frontends
 
-### Library Build (Apps)
+### Library Build (SPAs)
 ```javascript
 build: {
   lib: {
@@ -103,21 +126,26 @@ test: {
 
 ## Dependencies
 
-### Workspace Packages
-- Use `file:` protocol for local packages: `"@cfkit/contracts": "file:../../core/contracts"`
-- Shared packages: `@cfkit/contracts`, `@cfkit/vite-i18n-plugin`
+### Published Packages
+- Use published NPM packages: `@herdingbits/trailhead-core`, `@herdingbits/trailhead-types`, etc.
+- For development: `npm install -D @herdingbits/trailhead-types`
+- For shell: `npm install @herdingbits/trailhead-core @herdingbits/trailhead-shoelace`
 
 ### External Libraries
-- Shell uses: `@shoelace-style/shoelace`, `ky` (HTTP client)
-- Apps bundle their own frameworks (React, Vue, etc.)
-- No externalization - apps are self-contained
+- Shell uses: `@shoelace-style/shoelace` (for Shoelace adapter) or `@cloudscape-design/components` (for CloudScape)
+- SPAs bundle their own frameworks (React, Vue, etc.)
+- No externalization - SPAs are self-contained
+
+### Design Systems
+- **Shoelace**: Web components, framework-agnostic
+- **CloudScape**: React components, React-first architecture
 
 ## Environment Variables
 
 ### Development
 - `.env.development` for dev-specific config
 - `VITE_BASE_PATH` - Base URL path for deployment
-- `VITE_PLUGIN_PORT_<APPNAME>` - Dev server ports for apps
+- `VITE_APP_PORT_<APPNAME>` - Dev server ports for SPAs (e.g., `VITE_APP_PORT_DEMO=3001`)
 
 ### Production
 - Environment variables baked into build
@@ -143,14 +171,14 @@ test: {
 ## Performance
 
 ### Bundle Optimization
-- Single file output per app (`inlineDynamicImports: true`)
+- Single file output per SPA (`inlineDynamicImports: true`)
 - Tree-shaking enabled by default
-- No code splitting for micro-frontend apps
+- No code splitting for SPAs (each is self-contained)
 
 ### Loading Strategy
-- Shell loads first (21 KB)
-- Apps loaded on-demand via dynamic script injection
-- Shoelace components loaded once by shell
+- Shell loads first (21 KB / 8 KB gzipped)
+- SPAs loaded on-demand via ES module imports
+- Design system components (Shoelace/CloudScape) loaded once by shell
 
 ## Security
 
