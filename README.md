@@ -1,8 +1,10 @@
-# Trailhead - Micro-Frontend Shell & Orchestration
+# Trailhead - Simple App Orchestration
 
-**What if micro-frontends didn't need webpack magic or complex tooling?** Just the browser's native module system and some common sense?
+**What if every team could build and deploy their apps independently while sharing a common shell?** No webpack magic. No complex tooling. Just the browser's native module system and some common sense.
 
-Trailhead is an application shell that orchestrates independent single page applications (SPAs). It provides shared infrastructure (navigation, HTTP, feedback) while letting each app use any framework and deploy independently.
+Trailhead is an application shell that orchestrates multiple single page applications (SPAs) within a shared layout (chrome) - the classic SaaS pattern where you have a main menu and dozens of independent modules. It provides shared infrastructure (navigation, HTTP, feedback) while letting each app use any framework and deploy independently.
+
+**Works seamlessly with design systems** - The shell and SPAs share the same design system (Shoelace, CloudScape, or your own), ensuring visual consistency across all modules without coordination overhead.
 
 **[Read the full story →](https://www.herdingbits.com/blog/building-trailhead-micro-frontend-framework)** | **[Try it live →](https://www.herdingbits.com/sample/trailhead)**
 
@@ -196,7 +198,7 @@ The article covers:
 - Architecture decisions and tradeoffs
 - Performance analysis (page reloads vs client-side routing)
 - Deployment on AWS (S3 + CloudFront)
-- Scaling to 80+ modules
+- Scaling to multiple modules
 - The React exit strategy
 
 ### Additional Documentation
