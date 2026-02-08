@@ -1,6 +1,6 @@
 {
   "name": "@herdingbits/trailhead-types",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "TypeScript type definitions for Trailhead micro-frontend framework",
   "type": "module",
   "types": "./public-api.d.ts",
