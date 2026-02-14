@@ -28,6 +28,14 @@ export class Trailhead {
   }
 
   /**
+   * Get navigation items loaded from navigation.json
+   * @returns Array of navigation items
+   */
+  public getNavigation(): NavItem[] {
+    return this.navigation;
+  }
+
+  /**
    * Initialize shell
    */
   private async init(apiUrl?: string): Promise<void> {
