@@ -1,0 +1,35 @@
+{
+  "name": "@herdingbits/create-trailhead",
+  "version": "0.0.1",
+  "description": "Create a new Trailhead application shell",
+  "type": "module",
+  "bin": {
+    "create-trailhead": "./bin/create-trailhead.js"
+  },
+  "files": [
+    "bin",
+    "templates"
+  ],
+  "scripts": {
+    "build": "node build.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "trailhead",
+    "micro-frontend",
+    "application-shell",
+    "spa",
+    "scaffolding",
+    "cli"
+  ],
+  "author": "HerdingBits",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/quicken/trailhead.git",
+    "directory": "packages/create-trailhead"
+  }
+}
