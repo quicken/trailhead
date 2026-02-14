@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { SaasDemoApp } from "./SaasDemoApp";
-import type { ShellAPI } from "@cfkit/contracts";
+import type { ShellAPI } from "@herdingbits/trailhead-types";
 import { applyMode, Mode } from "@cloudscape-design/global-styles";
 
 // Apply CloudScape theme

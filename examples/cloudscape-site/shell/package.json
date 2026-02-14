@@ -12,7 +12,6 @@
   "dependencies": {
     "@herdingbits/trailhead-core": "^0.0.3",
     "@herdingbits/trailhead-cloudscape": "^0.0.1",
-    "@cfkit/vite-i18n-plugin": "file:../../../tools/vite-i18n-plugin",
     "@cloudscape-design/components": "^3.0.1194",
     "@cloudscape-design/global-styles": "^1.0.50",
     "react": "^18.3.1",

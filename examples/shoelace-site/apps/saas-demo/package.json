@@ -6,15 +6,10 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
-    "build:de": "vite build --config vite.config.de.js",
-    "build:all": "npm run build && npm run build:de",
     "test": "vitest",
-    "i18n:extract": "node ../../tools/i18n-plugin/extract.js",
-    "i18n:validate": "node ../../tools/i18n-plugin/validate.js"
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@cfkit/contracts": "file:../../core/contracts",
-    "@cfkit/vite-i18n-plugin": "file:../../tools/vite-i18n-plugin",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
@@ -25,6 +20,7 @@
     "jsdom": "^28.0.0",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
-    "vitest": "^4.0.18"
+    "vitest": "^4.0.18",
+    "@herdingbits/trailhead-types": "^0.0.3"
   }
 }

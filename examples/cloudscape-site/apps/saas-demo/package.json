@@ -6,11 +6,8 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
-    "build:de": "vite build --config vite.config.de.js",
-    "build:all": "npm run build && npm run build:de",
     "test": "vitest",
-    "i18n:extract": "node ../../tools/i18n-plugin/extract.js",
-    "i18n:validate": "node ../../tools/i18n-plugin/validate.js"
+    "preview": "vite preview"
   },
   "devDependencies": {
     "@herdingbits/trailhead-types": "^0.0.4",
@@ -23,7 +20,6 @@
     "vitest": "^4.0.18"
   },
   "dependencies": {
-    "@cfkit/contracts": "file:../../../../core/contracts",
     "@cloudscape-design/components": "^3.0.1195",
     "@cloudscape-design/global-styles": "^1.0.50",
     "react": "^19.2.4",

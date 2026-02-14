@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { TestCounter } from "./TestCounter";
-import { t } from "./lib/i18n";
 
 /**
  * Demo application showcasing shell API features
@@ -104,15 +103,15 @@ export const DemoApp: React.FC = () => {
 
   return (
     <div style={{ padding: "2rem", maxWidth: "1200px", margin: "0 auto" }}>
-      <h1 style={{ marginBottom: "2rem", color: "#1e293b" }}>{t("Shell API Demo")}</h1>
+      <h1 style={{ marginBottom: "2rem", color: "#1e293b" }}>Shell API Demo</h1>
 
       {/* React Test Component */}
       <TestCounter />
 
       {/* Feedback System */}
       <section style={sectionStyle}>
-        <h2 style={headingStyle}>{t("Feedback System")}</h2>
-        <p style={descStyle}>{t("Imperative API for user feedback - dialogs, toasts, and busy overlays")}</p>
+        <h2 style={headingStyle}>Feedback System</h2>
+        <p style={descStyle}>Imperative API for user feedback - dialogs, toasts, and busy overlays</p>
 
         <div style={groupStyle}>
           <h3 style={subHeadingStyle}>Toasts (Non-blocking)</h3>

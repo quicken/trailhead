@@ -13,7 +13,6 @@
   "dependencies": {
     "@herdingbits/trailhead-core": "^0.0.3",
     "@herdingbits/trailhead-shoelace": "^0.0.1",
-    "@cfkit/vite-i18n-plugin": "file:../../../tools/vite-i18n-plugin",
     "@shoelace-style/shoelace": "^2.20.1"
   },
   "devDependencies": {

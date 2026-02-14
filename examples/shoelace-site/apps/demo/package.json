@@ -6,13 +6,11 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
-    "build:de": "vite build --config vite.config.de.js",
-    "build:all": "npm run build && npm run build:de",
-    "test": "vitest",
-    "i18n:extract": "node ../../tools/i18n-plugin/extract.js",
-    "i18n:validate": "node ../../tools/i18n-plugin/validate.js"
+    "preview": "vite preview",
+    "test": "vitest"
   },
   "devDependencies": {
+    "@herdingbits/trailhead-types": "^0.0.3",
     "@testing-library/react": "^16.3.2",
     "@types/react": "^19.2.13",
     "@types/react-dom": "^19.2.3",
@@ -22,8 +20,6 @@
     "vitest": "^4.0.18"
   },
   "dependencies": {
-    "@cfkit/contracts": "file:../../core/contracts",
-    "@cfkit/vite-i18n-plugin": "file:../../tools/vite-i18n-plugin",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   }
