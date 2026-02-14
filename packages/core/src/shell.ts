@@ -5,7 +5,6 @@ import type { ShellAPI, NavItem } from "./types/shell-api.js";
 import type { DesignSystemAdapter } from "./adapters/types.js";
 import * as http from "./lib/http.js";
 import * as requestManager from "./lib/requestManager.js";
-import { t } from "./lib/i18n.js";
 
 export interface ShellConfig {
   adapter: DesignSystemAdapter;
@@ -253,7 +252,7 @@ export class Trailhead {
     const root = document.getElementById("shell-content");
     if (!root) return;
 
-    root.innerHTML = `<div class="shell-loading">${t("Loading...")}</div>`;
+    root.innerHTML = `<div class="shell-loading">Loading...</div>`;
 
     try {
       const pluginUrl = `${this.basePath}${appPath}/app.js`;
@@ -278,13 +277,13 @@ export class Trailhead {
       };
 
       script.onerror = () => {
-        root.innerHTML = `<div class="shell-error">${t("Failed to load application")}: ${appName}</div>`;
+        root.innerHTML = `<div class="shell-error">Failed to load application: ${appName}</div>`;
       };
 
       document.body.appendChild(script);
     } catch (error) {
       console.error("Failed to load plugin:", error);
-      root.innerHTML = `<div class="shell-error">${t("Failed to load application")}</div>`;
+      root.innerHTML = `<div class="shell-error">Failed to load application</div>`;
     }
   }
 }
