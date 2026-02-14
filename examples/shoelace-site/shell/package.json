@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Example Trailhead shell with Shoelace design system",
   "scripts": {
+    "postinstall": "npm run copy-shoelace",
     "start": "vite",
     "build": "npm run copy-shoelace && vite build",
     "copy-shoelace": "mkdir -p public/shoelace && cp -r node_modules/@shoelace-style/shoelace/cdn/* public/shoelace/",
