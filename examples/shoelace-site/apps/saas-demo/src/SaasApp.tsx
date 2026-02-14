@@ -1,5 +1,4 @@
 import React, { useState, useRef } from "react";
-import { t } from "./lib/i18n";
 
 interface User {
   id: number;
@@ -23,7 +22,7 @@ export const SaasApp: React.FC = () => {
 
   const loadUsers = async () => {
     setLoading(true);
-    window.shell.feedback.busy(t("Loading users..."));
+    window.shell.feedback.busy("Loading users...");
 
     const result = await window.shell.http.get<User[]>("https://jsonplaceholder.typicode.com/users");
 
@@ -32,9 +31,9 @@ export const SaasApp: React.FC = () => {
 
     if (result.success) {
       setUsers(result.data);
-      window.shell.feedback.success(t("Users loaded successfully"));
+      window.shell.feedback.success("Users loaded successfully");
     } else {
-      window.shell.feedback.error(t("Failed to load users"));
+      window.shell.feedback.error("Failed to load users");
     }
   };
 
@@ -53,19 +52,19 @@ export const SaasApp: React.FC = () => {
 
     // Update user in list
     setUsers(users.map(u => u.id === editingUser.id ? editingUser : u));
-    window.shell.feedback.success(t("User updated successfully"));
+    window.shell.feedback.success("User updated successfully");
     closeEditDialog();
   };
 
   const deleteUser = async (id: number, name: string) => {
     const confirmed = await window.shell.feedback.confirm(
-      t("Are you sure you want to delete") + ` ${name}?`,
-      t("Delete User")
+      "Are you sure you want to delete" + ` ${name}?`,
+      "Delete User"
     );
 
     if (!confirmed) return;
 
-    window.shell.feedback.busy(t("Deleting user..."));
+    window.shell.feedback.busy("Deleting user...");
 
     const result = await window.shell.http.delete(`https://jsonplaceholder.typicode.com/users/${id}`);
 
@@ -73,25 +72,25 @@ export const SaasApp: React.FC = () => {
 
     if (result.success) {
       setUsers(users.filter(u => u.id !== id));
-      window.shell.feedback.success(t("User deleted successfully"));
+      window.shell.feedback.success("User deleted successfully");
     } else {
-      window.shell.feedback.error(t("Failed to delete user"));
+      window.shell.feedback.error("Failed to delete user");
     }
   };
 
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h1 style={styles.title}>{t("User Management")}</h1>
+        <h1 style={styles.title}>{"User Management"}</h1>
         <p style={styles.subtitle}>
-          {t("Manage your application users")}
+          {"Manage your application users"}
         </p>
       </div>
 
       <div style={styles.actions}>
         <sl-button variant="primary" onClick={loadUsers} disabled={loading}>
           <sl-icon slot="prefix" name="arrow-clockwise"></sl-icon>
-          {t("Load Users")}
+          {"Load Users"}
         </sl-button>
       </div>
 
@@ -138,33 +137,33 @@ export const SaasApp: React.FC = () => {
         <sl-card>
           <div style={styles.emptyState}>
             <sl-icon name="people" style={styles.emptyIcon}></sl-icon>
-            <p>{t("No users loaded. Click 'Load Users' to get started.")}</p>
+            <p>{"No users loaded. Click 'Load Users' to get started."}</p>
           </div>
         </sl-card>
       )}
 
       {/* Edit Dialog */}
-      <sl-dialog ref={dialogRef} label={t("Edit User")}>
+      <sl-dialog ref={dialogRef} label={"Edit User"}>
         {editingUser && (
           <div style={styles.form}>
             <sl-input
-              label={t("Name")}
+              label={"Name"}
               value={editingUser.name}
               onInput={(e: any) => setEditingUser({...editingUser, name: e.target.value})}
             />
             <sl-input
-              label={t("Email")}
+              label={"Email"}
               type="email"
               value={editingUser.email}
               onInput={(e: any) => setEditingUser({...editingUser, email: e.target.value})}
             />
             <sl-input
-              label={t("Phone")}
+              label={"Phone"}
               value={editingUser.phone}
               onInput={(e: any) => setEditingUser({...editingUser, phone: e.target.value})}
             />
             <sl-input
-              label={t("Company")}
+              label={"Company"}
               value={editingUser.company.name}
               onInput={(e: any) => setEditingUser({...editingUser, company: {...editingUser.company, name: e.target.value}})}
             />
@@ -172,10 +171,10 @@ export const SaasApp: React.FC = () => {
         )}
         <div slot="footer" style={styles.dialogFooter}>
           <sl-button variant="default" onClick={closeEditDialog}>
-            {t("Cancel")}
+            {"Cancel"}
           </sl-button>
           <sl-button variant="primary" onClick={saveUser}>
-            {t("Save")}
+            {"Save"}
           </sl-button>
         </div>
       </sl-dialog>
