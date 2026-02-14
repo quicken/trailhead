@@ -8,7 +8,7 @@ export default defineConfig({
     'process.env.NODE_ENV': JSON.stringify('production'),
   },
   server: {
-    port: 3001,
+    port: 3000,
     cors: true,
   },
   build: {

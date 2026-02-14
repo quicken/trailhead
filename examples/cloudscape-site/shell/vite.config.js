@@ -29,11 +29,11 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       open: true,
-      port: 3000,
+      port: 3001,
       cors: true,
     },
     preview: {
-      port: 3000,
+      port: 3001,
     },
   };
 });
