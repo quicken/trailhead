@@ -1,7 +1,7 @@
 {
   "name": "@herdingbits/trailhead-core",
-  "version": "0.0.3",
-  "description": "Core shell orchestration for Trailhead micro-frontend framework",
+  "version": "0.0.4",
+  "description": "Simple application shell that orchestrates multiple SPAs. No webpack magic, just the browser's native module system.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

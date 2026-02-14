@@ -1,15 +1,24 @@
 # @herdingbits/trailhead-core
 
-Core orchestration for Trailhead - an application shell that coordinates multiple single page applications (SPAs).
+Simple application shell that orchestrates multiple SPAs. No webpack magic, just the browser's native module system.
 
 ## What is this?
 
-This package provides the core shell logic that:
+This package provides the core shell logic for the Trailhead micro-frontend pattern:
 - Orchestrates multiple single page applications (SPAs) within a shared layout
-- Manages navigation and routing
+- Manages navigation and routing (no URL rewrites needed between apps)
 - Provides centralized HTTP client with error handling
 - Coordinates user feedback (toasts, dialogs, busy states)
 - Integrates with design systems via adapters
+
+**Think of it like browser extensions or VS Code plugins** - the shell provides infrastructure, SPAs focus on business logic.
+
+## Key Features
+
+- **Framework Agnostic**: SPAs can use React, Vue, Svelte, or vanilla JS
+- **Independent Deployment**: Deploy one SPA without touching others
+- **Simple Deployment**: No URL rewrites, works on any static host
+- **Design System Adapters**: Pluggable UI layer (Shoelace, CloudScape, or custom)
 
 ## Installation
 
