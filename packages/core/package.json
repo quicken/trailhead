@@ -40,7 +40,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/herdingbits/trailhead.git",
+    "url": "https://github.com/quicken/trailhead.git",
     "directory": "packages/core"
   }
 }

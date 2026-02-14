@@ -58,7 +58,7 @@ This adapter supports React 18 and React 19. Peer dependencies specify `^19.0.0`
 
 ## Documentation
 
-See the [main Trailhead documentation](https://github.com/herdingbits/trailhead) for more information.
+See the [main Trailhead documentation](https://github.com/quicken/trailhead) for more information.
 
 ## License
 

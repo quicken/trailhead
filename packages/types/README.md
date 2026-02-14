@@ -62,7 +62,7 @@ export class MyAdapter implements DesignSystemAdapter {
 
 ## Documentation
 
-See the [main Trailhead documentation](https://github.com/herdingbits/trailhead) for more information.
+See the [main Trailhead documentation](https://github.com/quicken/trailhead) for more information.
 
 ## License
 

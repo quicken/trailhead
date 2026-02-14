@@ -198,4 +198,4 @@ export function init(shell: ShellAPI) {
 
 ## Learn More
 
-See the [main Trailhead documentation](https://github.com/herdingbits/trailhead) for architecture details and best practices.
+See the [main Trailhead documentation](https://github.com/quicken/trailhead) for architecture details and best practices.
