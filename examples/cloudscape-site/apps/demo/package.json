@@ -10,9 +10,9 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@herdingbits/trailhead-types": "^0.0.4",
+    "@herdingbits/trailhead-types": "^0.0.5",
     "@testing-library/react": "^16.3.2",
-    "@types/react": "^19.2.13",
+    "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "jsdom": "^28.0.0",
     "typescript": "^5.9.3",
@@ -20,7 +20,7 @@
     "vitest": "^4.0.18"
   },
   "dependencies": {
-    "@cloudscape-design/components": "^3.0.1195",
+    "@cloudscape-design/components": "^3.0.1202",
     "@cloudscape-design/global-styles": "^1.0.50",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
