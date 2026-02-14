@@ -9,6 +9,11 @@
     <link rel="stylesheet" href="http://localhost:3001/src/shell.css" />
   </head>
   <body>
+    <!-- Dev mode: Tell shell where to load resources from -->
+    <script>
+      window.SHELL_DEV_URL = 'http://localhost:3001';
+    </script>
+    
     <!-- Shell structure loaded from shell dev server -->
     <div id="shell-sidebar">
       <div id="shell-header">

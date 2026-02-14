@@ -12,12 +12,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@herdingbits/trailhead-core": "^0.0.4",
-    "@herdingbits/trailhead-shoelace": "^0.0.4",
+    "@herdingbits/trailhead-core": "^0.0.9",
+    "@herdingbits/trailhead-shoelace": "^0.0.6",
     "@shoelace-style/shoelace": "^2.20.1"
   },
   "devDependencies": {
-    "@herdingbits/trailhead-types": "^0.0.5",
+    "@herdingbits/trailhead-types": "^0.0.7",
     "typescript": "^5.9.3",
     "vite": "^7.3.1"
   }
