@@ -228,7 +228,7 @@ export function ShellApp({ shell }: ShellAppProps) {
         basePath={shell.basePath}
         onNavigate={handleNavigate}
       >
-        <div ref={contentRef} />
+        <div id="shell-content" ref={contentRef} />
       </ShellLayout>
     </>
   );
