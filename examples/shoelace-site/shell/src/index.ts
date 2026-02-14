@@ -17,4 +17,10 @@ const shell = new Trailhead({
 
 ShellApp.mount(shell);
 
+// Redirect root to first app
+const currentPath = window.location.pathname;
+if (currentPath === basePath || currentPath === basePath + '/') {
+  window.location.href = basePath + '/demo';
+}
+
 console.log('[Trailhead] Shoelace shell initialized');

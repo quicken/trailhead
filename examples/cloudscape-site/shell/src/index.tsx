@@ -18,6 +18,12 @@ const shell = new Trailhead({
   apiUrl,
 });
 
+// Redirect root to first app
+const currentPath = window.location.pathname;
+if (currentPath === basePath || currentPath === basePath + '/') {
+  window.location.href = basePath + '/demo';
+}
+
 // Render React app
 const root = createRoot(document.getElementById('app')!);
 root.render(<ShellApp shell={shell} />);
