@@ -12,37 +12,24 @@ const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = 8081;
-const BASE_PATH = '/sample/trailhead';
 
 /**
- * Serve static files from public directory at base path.
- * 
- * Uses default Express behavior:
- * - Directories without trailing slash get 301 redirect to add it
- * - /demo → 301 → /demo/ → serves /demo/index.html
- * 
- * This works on ANY static file server (S3, Netlify, Apache, nginx)
- * without configuration. Third-party developers just upload files.
+ * Serve static files from public directory.
+ * Files are in public/sample/trailhead/{shoelace,cloudscape}
  */
-app.use(BASE_PATH, express.static(join(__dirname, 'public')));
+app.use(express.static(join(__dirname, 'public')));
 
-// Redirect root to base path
+// Redirect root to shoelace site
 app.get('/', (req, res) => {
-  res.redirect(BASE_PATH);
+  res.redirect('/sample/trailhead/shoelace');
 });
 
 app.listen(PORT, () => {
   console.log(`
 ✓ Production server running!
 
-  Local:   http://localhost:${PORT}${BASE_PATH}
-  
-  Routes:
-  - http://localhost:${PORT}${BASE_PATH}           (Shell home)
-  - http://localhost:${PORT}${BASE_PATH}/demo      (Demo plugin)
-  - http://localhost:${PORT}${BASE_PATH}/saas-demo (SaaS Demo plugin)
-  
-  Note: No URL rewrite rules needed - each route has its own index.html
+  Shoelace:   http://localhost:${PORT}/sample/trailhead/shoelace
+  CloudScape: http://localhost:${PORT}/sample/trailhead/cloudscape
   
 Press Ctrl+C to stop
 `);

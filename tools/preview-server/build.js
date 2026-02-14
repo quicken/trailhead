@@ -1,83 +1,72 @@
 #!/usr/bin/env node
 /**
- * Build script - copies production builds from shell and plugins
- * Usage: node build.js [shoelace|cloudscape]
+ * Build and assemble script for preview server
+ * Builds shells and apps, then assembles for deployment
+ * Usage: node build.js [shoelace|cloudscape|both]
  */
 
 import { execSync } from 'child_process';
-import { cpSync, mkdirSync, rmSync, readFileSync, writeFileSync, readdirSync } from 'fs';
+import { cpSync, mkdirSync, rmSync } from 'fs';
 
-// Get site from command line argument (default: shoelace)
-const site = process.argv[2] || 'shoelace';
+// Get site from command line argument (default: both)
+const site = process.argv[2] || 'both';
 
-if (!['shoelace', 'cloudscape'].includes(site)) {
-  console.error('Error: Site must be either "shoelace" or "cloudscape"');
-  console.log('Usage: node build.js [shoelace|cloudscape]');
+if (!['shoelace', 'cloudscape', 'both'].includes(site)) {
+  console.error('Error: Site must be either "shoelace", "cloudscape", or "both"');
+  console.log('Usage: node build.js [shoelace|cloudscape|both]');
   process.exit(1);
 }
 
-console.log(`Building production artifacts for ${site} site...\n`);
+console.log(`Building and assembling sites for preview...\n`);
 
 // Clean public directory
 console.log('Cleaning public/...');
 rmSync('public', { recursive: true, force: true });
-mkdirSync('public', { recursive: true });
+mkdirSync('public/sample/trailhead', { recursive: true });
 
-// Build shell
-console.log(`\n1. Building ${site} shell...`);
-execSync('VITE_BASE_PATH=/sample/trailhead npm run build', { 
-  cwd: `../../examples/${site}-site/shell`, 
-  stdio: 'inherit',
-  env: { ...process.env, VITE_BASE_PATH: '/sample/trailhead' }
+const sites = site === 'both' ? ['shoelace', 'cloudscape'] : [site];
+
+sites.forEach(siteName => {
+  const siteDir = `../../examples/${siteName}-site`;
+  
+  console.log(`\n=== Building ${siteName} site ===\n`);
+  
+  // Build shell
+  console.log(`Building ${siteName} shell...`);
+  execSync('npm run build', { 
+    cwd: `${siteDir}/shell`,
+    stdio: 'inherit',
+    env: { ...process.env, VITE_BASE_PATH: `/sample/trailhead/${siteName}` }
+  });
+  
+  // Build apps (demo and saas-demo)
+  ['demo', 'saas-demo'].forEach(appName => {
+    console.log(`\nBuilding ${siteName}/${appName} app...`);
+    execSync('npm run build', { 
+      cwd: `${siteDir}/apps/${appName}`,
+      stdio: 'inherit'
+    });
+  });
+  
+  // Assemble deployment
+  console.log(`\nAssembling ${siteName} site...`);
+  execSync('npm run deploy', { 
+    cwd: siteDir,
+    stdio: 'inherit',
+    env: { ...process.env, BASE_PATH: `/sample/trailhead/${siteName}` }
+  });
+  
+  // Copy to public directory
+  console.log(`\nCopying ${siteName} to public/sample/trailhead/${siteName}/...`);
+  cpSync(
+    `${siteDir}/dist`,
+    `public/sample/trailhead/${siteName}`,
+    { recursive: true }
+  );
 });
 
-// Copy shell build
-console.log('\n2. Copying shell build...');
-cpSync(`../../examples/${site}-site/shell/dist`, 'public', { recursive: true });
-
-// Read navigation to determine which apps to build
-const navigation = JSON.parse(readFileSync('public/navigation.json', 'utf-8'));
-const indexTemplate = readFileSync('public/index.html', 'utf-8');
-
-// Build and copy each app
-let step = 3;
-navigation.forEach(route => {
-  const appName = route.app;
-  const routePath = route.path.substring(1); // Remove leading slash
-  
-  console.log(`\n${step}. Building ${appName} app...`);
-  execSync('npm run build', { cwd: `../../examples/${site}-site/apps/${appName}`, stdio: 'inherit' });
-  step++;
-  
-  console.log(`\n${step}. Copying ${appName} app to ${routePath}/...`);
-  const routeDir = `public/${routePath}`;
-  mkdirSync(routeDir, { recursive: true });
-  
-  // Copy app.js to route directory
-  cpSync(`../../examples/${site}-site/apps/${appName}/dist/app.js`, `${routeDir}/app.js`);
-  
-  // Copy CSS if it exists (find any .css file in dist or public)
-  try {
-    const distFiles = readdirSync(`../../examples/${site}-site/apps/${appName}/dist`);
-    const cssFile = distFiles.find(f => f.endsWith('.css'));
-    if (cssFile) {
-      cpSync(`../../examples/${site}-site/apps/${appName}/dist/${cssFile}`, `${routeDir}/${appName}.css`);
-      console.log(`  Copied ${cssFile} as ${appName}.css`);
-    } else {
-      // Try public folder
-      cpSync(`../../examples/${site}-site/apps/${appName}/public/${appName}.css`, `${routeDir}/${appName}.css`);
-      console.log(`  Copied ${appName}.css from public`);
-    }
-  } catch (e) {
-    console.log(`  No CSS file for ${appName}`);
-  }
-  
-  // Copy index.html to route directory
-  writeFileSync(`${routeDir}/index.html`, indexTemplate);
-  console.log(`  Created ${routePath}/index.html and ${routePath}/app.js`);
-  step++;
+console.log('\n✓ Build and assembly complete!');
+console.log('\nServes at:');
+sites.forEach(siteName => {
+  console.log(`  - http://localhost:8081/sample/trailhead/${siteName}`);
 });
-
-console.log('\n✓ Production build complete!');
-console.log('\nPublic directory structure:');
-execSync('find public -type f | head -30', { stdio: 'inherit' });

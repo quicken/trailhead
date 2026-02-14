@@ -96,6 +96,15 @@ npm install --save-dev @herdingbits/trailhead-types
 
 ## Quick Start
 
+### Using the CLI (Recommended)
+
+```bash
+npx @herdingbits/create-trailhead my-app
+cd my-app/shell && npm install && npm start
+```
+
+Visit http://localhost:3001
+
 ### Using Published Packages
 
 **Shoelace Shell:**
@@ -223,15 +232,31 @@ VITE_BASE_PATH=/tenant1 npm run build
 ```bash
 cd tools/preview-server
 
-# Build and preview Shoelace site
+# Build and preview both sites
+npm run build:both
+npm start
+
+# Or build individual sites
 npm run build:shoelace
-npm start
-
-# Build and preview CloudScape site
 npm run build:cloudscape
-npm start
 
-# Serves at http://localhost:8081/sample/trailhead
+# Serves at:
+# - http://localhost:8081/sample/trailhead/shoelace
+# - http://localhost:8081/sample/trailhead/cloudscape
+```
+
+Each example site can also be built independently:
+
+```bash
+# Build Shoelace site
+cd examples/shoelace-site
+npm run build
+# Output: examples/shoelace-site/dist/
+
+# Build CloudScape site with custom base path
+cd examples/cloudscape-site
+BASE_PATH=/my-app npm run build
+# Output: examples/cloudscape-site/dist/
 ```
 
 ## Developing Locally

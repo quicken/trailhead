@@ -1,0 +1,10 @@
+{
+  "name": "trailhead-cloudscape-site",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Trailhead example site with CloudScape design system",
+  "scripts": {
+    "deploy": "node build.js"
+  }
+}
