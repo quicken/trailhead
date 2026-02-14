@@ -1,6 +1,6 @@
 {
   "name": "@herdingbits/trailhead-core",
-  "version": "0.0.5",
+  "version": "0.0.9",
   "description": "Simple application shell that orchestrates multiple SPAs. No webpack magic, just the browser's native module system.",
   "type": "module",
   "main": "./dist/index.js",

@@ -1,6 +1,6 @@
 {
   "name": "@herdingbits/trailhead-shoelace",
-  "version": "0.0.4",
+  "version": "0.0.6",
   "description": "Shoelace web components adapter for Trailhead. Vanilla TypeScript, no React required.",
   "type": "module",
   "main": "./dist/index.js",
@@ -21,11 +21,11 @@
     "build": "npm run clean && tsc && cp src/shell.css dist/"
   },
   "peerDependencies": {
-    "@herdingbits/trailhead-core": "^0.0.4",
+    "@herdingbits/trailhead-core": "^0.0.9",
     "@shoelace-style/shoelace": "^2.20.0"
   },
   "devDependencies": {
-    "@herdingbits/trailhead-types": "^0.0.5",
+    "@herdingbits/trailhead-types": "^0.0.7",
     "@shoelace-style/shoelace": "^2.20.1",
     "typescript": "^5.9.3"
   },

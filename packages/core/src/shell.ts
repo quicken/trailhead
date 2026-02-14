@@ -10,16 +10,19 @@ export interface ShellConfig {
   adapter: DesignSystemAdapter;
   basePath?: string;
   apiUrl?: string;
+  shellResourceUrl?: string;
 }
 
 export class Trailhead {
   private navigation: NavItem[] = [];
   private routeChangeCallbacks: Array<(path: string) => void> = [];
   public readonly basePath: string;
+  private readonly shellResourceUrl: string;
   public readonly adapter: DesignSystemAdapter;
 
   constructor(config: ShellConfig) {
     this.basePath = config.basePath || "";
+    this.shellResourceUrl = config.shellResourceUrl || this.basePath;
     this.adapter = config.adapter;
     this.init(config.apiUrl);
   }
@@ -155,7 +158,7 @@ export class Trailhead {
    */
   private async loadNavigation(): Promise<void> {
     try {
-      const response = await fetch(`${this.basePath}/navigation.json`);
+      const response = await fetch(`${this.shellResourceUrl}/navigation.json`);
       this.navigation = await response.json();
     } catch (error) {
       console.error("Failed to load navigation:", error);
@@ -224,7 +227,14 @@ export class Trailhead {
     const navItem = this.navigation.find((item) => path.startsWith(item.path));
 
     if (navItem) {
-      this.loadPlugin(navItem.app, navItem.path);
+      // Skip loading if app is already mounted (dev mode)
+      const shellContent = document.getElementById("shell-content");
+      const rootElement = shellContent?.querySelector("#root");
+      const isAlreadyMounted = rootElement && rootElement.children.length > 0;
+      
+      if (!isAlreadyMounted) {
+        this.loadPlugin(navItem.app, navItem.path);
+      }
       this.updateActiveNav(navItem.path);
     }
   }
