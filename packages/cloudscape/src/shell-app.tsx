@@ -37,6 +37,7 @@ export function ShellApp({ shell }: ShellAppProps) {
     buttons: []
   });
   const contentRef = useRef<HTMLDivElement>(null);
+  const navigationLoadedRef = useRef(false);
 
   // Get current path without basePath
   const getCurrentPath = () => {
@@ -68,13 +69,16 @@ export function ShellApp({ shell }: ShellAppProps) {
     };
     window.addEventListener('cloudscape-dialog', handleDialogEvent as EventListener);
 
-    // Load navigation
-    fetch(`${shell.basePath}/navigation.json`)
-      .then(res => res.json())
-      .then(data => {
-        setNavigation(data);
-      })
-      .catch(err => console.error('Failed to load navigation:', err));
+    // Load navigation once (prevent React 18 double-mount in dev)
+    if (!navigationLoadedRef.current) {
+      navigationLoadedRef.current = true;
+      fetch(`${shell.basePath}/navigation.json`)
+        .then(res => res.json())
+        .then(data => {
+          setNavigation(data);
+        })
+        .catch(err => console.error('Failed to load navigation:', err));
+    }
 
     return () => {
       window.removeEventListener('cloudscape-dialog', handleDialogEvent as EventListener);
