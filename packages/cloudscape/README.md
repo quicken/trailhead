@@ -1,15 +1,23 @@
 # @herdingbits/trailhead-cloudscape
 
-AWS CloudScape design system adapter for Trailhead application shell.
+AWS CloudScape adapter for Trailhead. React-based shell with CloudScape components.
 
 ## What is this?
 
-This package provides a Trailhead adapter for the [AWS CloudScape Design System](https://cloudscape.design/). CloudScape is built around React, so this adapter demonstrates Trailhead when you're all-in on React for both the shell and SPAs.
+This package provides a Trailhead adapter for the [AWS CloudScape Design System](https://cloudscape.design/). CloudScape is built with React, so this adapter demonstrates Trailhead when you're all-in on React for both the shell and SPAs.
 
 It includes:
 - CloudScape React components integration
 - Pre-built shell UI (AppLayout, SideNavigation, Modal, Flashbar)
 - Event-based communication between adapter and React components
+- **Supports React 18 and React 19**
+
+## Key Features
+
+- **React-Based**: Full CloudScape component library
+- **AWS Design Language**: Consistent with AWS console UX
+- **Pre-Built Shell**: AppLayout with navigation out of the box
+- **Modern React**: Works with React 18+ and React 19
 
 ## Installation
 
@@ -43,6 +51,10 @@ root.render(<ShellApp shell={shell} />);
 - **ShellApp** - React component that renders the shell UI
 - **ShellLayout** - CloudScape AppLayout with navigation
 - **shell.css** - Base styles for the shell UI
+
+## React Version Support
+
+This adapter supports React 18 and React 19. Peer dependencies specify `^19.0.0` but will work with React 18 if needed.
 
 ## Documentation
 

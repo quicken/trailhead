@@ -1,7 +1,7 @@
 {
   "name": "@herdingbits/trailhead-shoelace",
   "version": "0.0.1",
-  "description": "Shoelace design system adapter for Trailhead micro-frontend framework",
+  "description": "Shoelace web components adapter for Trailhead. Vanilla TypeScript, no React required.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

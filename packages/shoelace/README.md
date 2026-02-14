@@ -1,6 +1,6 @@
 # @herdingbits/trailhead-shoelace
 
-Shoelace design system adapter for Trailhead application shell.
+Shoelace web components adapter for Trailhead. Vanilla TypeScript, no React required.
 
 ## What is this?
 
@@ -8,7 +8,16 @@ This package provides a Trailhead adapter for the [Shoelace](https://shoelace.st
 - Loading and configuring Shoelace components
 - Rendering toasts, dialogs, and busy overlays
 - Integrating Shoelace with the Trailhead shell
-- Vanilla TypeScript implementation (framework-agnostic)
+- **Vanilla TypeScript implementation** - no framework required
+
+**Perfect for teams that want to stay close to HTML/CSS/JavaScript** without React complexity.
+
+## Key Features
+
+- **Framework Agnostic**: Works with any SPA framework (or no framework)
+- **Web Components**: Shoelace components work everywhere
+- **Lightweight**: No React, no virtual DOM, just the browser
+- **Simple**: Straightforward DOM manipulation and event handling
 
 ## Installation
 

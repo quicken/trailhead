@@ -1,7 +1,7 @@
 {
   "name": "@herdingbits/trailhead-cloudscape",
   "version": "0.0.1",
-  "description": "CloudScape design system adapter for Trailhead micro-frontend framework",
+  "description": "AWS CloudScape adapter for Trailhead. React-based shell with CloudScape components. Supports React 19.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -24,17 +24,17 @@
     "@herdingbits/trailhead-core": "^0.0.3",
     "@cloudscape-design/components": "^3.0.0",
     "@cloudscape-design/global-styles": "^1.0.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@herdingbits/trailhead-types": "^0.0.3",
     "@cloudscape-design/components": "^3.0.1194",
     "@cloudscape-design/global-styles": "^1.0.50",
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "typescript": "^5.9.3"
   },
   "keywords": [

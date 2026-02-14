@@ -1,7 +1,7 @@
 {
   "name": "@herdingbits/trailhead-types",
-  "version": "0.0.4",
-  "description": "TypeScript type definitions for Trailhead micro-frontend framework",
+  "version": "0.0.5",
+  "description": "TypeScript types for Trailhead SPAs. Provides shell API types for independent applications.",
   "type": "module",
   "types": "./public-api.d.ts",
   "exports": {
