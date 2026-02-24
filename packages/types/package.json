@@ -1,6 +1,6 @@
 {
   "name": "@herdingbits/trailhead-types",
-  "version": "0.0.7",
+  "version": "0.0.10",
   "description": "TypeScript types for Trailhead SPAs. Provides shell API types for independent applications.",
   "type": "module",
   "types": "./public-api.d.ts",
