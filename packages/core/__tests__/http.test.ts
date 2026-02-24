@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import * as http from './http.js';
+import * as http from '../src/lib/http.js';
 
 describe('HTTP Client', () => {
   it('initializes without errors', () => {
