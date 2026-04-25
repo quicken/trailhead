@@ -6,19 +6,21 @@
   "description": "Example Trailhead shell with Shoelace design system",
   "scripts": {
     "postinstall": "npm run copy-shoelace",
-    "start": "vite",
+    "start": "vite build --watch & vite preview --port 3001",
+    "dev": "vite",
     "build": "npm run copy-shoelace && vite build",
     "copy-shoelace": "mkdir -p public/shoelace && cp -r node_modules/@shoelace-style/shoelace/cdn/* public/shoelace/",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@herdingbits/trailhead-core": "^0.0.12",
-    "@herdingbits/trailhead-shoelace": "^0.0.12",
+    "@herdingbits/trailhead-core": "^0.0.13",
+    "@herdingbits/trailhead-shoelace": "^0.0.14",
     "@shoelace-style/shoelace": "^2.20.1"
   },
   "devDependencies": {
-    "@herdingbits/trailhead-types": "^0.0.10",
+    "@herdingbits/trailhead-types": "^0.0.11",
+    "@types/node": "^25.6.0",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1"
+    "vite": "^7.3.2"
   }
 }

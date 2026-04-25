@@ -4,16 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Demo Plugin - Dev</title>
-    
+
     <!-- Load shell CSS from shell dev server -->
-    <link rel="stylesheet" href="http://localhost:3001/src/shell.css" />
+    <link rel="stylesheet" href="/shoelace/themes/light.css" />
+    <link rel="stylesheet" href="/trailhead/shell/shell.css" />
   </head>
   <body>
-    <!-- Dev mode: Tell shell where to load resources from -->
-    <script>
-      window.SHELL_DEV_URL = 'http://localhost:3001';
-    </script>
-    
     <!-- Shell structure loaded from shell dev server -->
     <div id="shell-sidebar">
       <div id="shell-header">
@@ -34,8 +30,8 @@
     </div>
 
     <!-- Load shell JS from shell dev server -->
-    <script type="module" src="http://localhost:3001/src/index.ts"></script>
-    
+    <script type="module" src="/trailhead/shell/shell.js"></script>
+
     <!-- Load plugin with hot reload -->
     <script type="module" src="/src/index.tsx"></script>
   </body>
