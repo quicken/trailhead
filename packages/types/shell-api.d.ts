@@ -23,6 +23,55 @@ export interface ShellAPI {
     navigation: NavigationAPI;
 }
 /**
+ * Contract implemented by applications that can be hosted by the Shell.
+ *
+ * This is a **type-only interface** used at build time to define the shape of
+ * an application entry module. It does **not** introduce runtime dependencies
+ * or production code requirements.
+ *
+ * ### Purpose
+ * - Allows the Shell to load and bootstrap applications in both development
+ *   and production environments.
+ * - Enables strongly-typed guarantees for the Shell without coupling
+ *   applications to shell-specific runtime logic.
+ *
+ * ### Implementation requirements
+ * Applications do **not** need to import or reference this type directly.
+ * An application satisfies this contract automatically by exporting the
+ * required functions from its entry module.
+ *
+ * ### Development vs Production
+ * - In development, the Shell may `import()` an application's source entry
+ *   module directly to enable fast reload behaviour.
+ * - In production, the Shell loads the application's bundled output.
+ *
+ * This interface exists solely to document and enforce the expected surface
+ * area between the Shell and hosted applications.
+ *
+ * @example
+ * ```ts
+ * // src/main.ts
+ * export function AppMount(root: HTMLElement) {
+ *   // Mount application UI into the provided DOM node
+ * }
+ * ```
+ */
+export type ShellPlugin = {
+    /**
+     * Mounts the application into a DOM element provided by the Shell.
+     *
+     * This function is responsible for rendering the application UI
+     * into the given container element.
+     *
+     * The Shell guarantees that:
+     * - `root` is an empty, attached DOM element
+     * - The application owns the DOM subtree beneath `root`
+     *
+     * @param root - Container element into which the application should render.
+     */
+    AppMount(root: HTMLElement): void;
+};
+/**
  * Feedback system API
  *
  * Provides consistent user feedback across all SPAs using the shell's design system.
