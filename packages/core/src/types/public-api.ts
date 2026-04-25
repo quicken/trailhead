@@ -5,6 +5,7 @@
 
 export type {
   ShellAPI,
+  ShellPlugin,
   FeedbackAPI,
   AlertVariant,
   HttpAPI,
@@ -15,4 +16,4 @@ export type {
   HttpError,
   NavigationAPI,
   NavItem,
-} from './shell-api.js';
+} from "./shell-api.js";

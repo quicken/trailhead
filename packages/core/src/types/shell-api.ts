@@ -1,9 +1,9 @@
 /**
  * Shell API Interface
- * 
+ *
  * The main API exposed to single page applications (SPAs) via `window.shell`.
  * Provides access to shared services including feedback, HTTP client, and navigation.
- * 
+ *
  * @example
  * ```typescript
  * export function init(shell: ShellAPI) {
@@ -15,20 +15,74 @@
 export interface ShellAPI {
   /** Shell version string (e.g., "1.0.0") */
   version: string;
-  
+
   /** User feedback system for toasts, dialogs, and loading states */
   feedback: FeedbackAPI;
-  
+
   /** HTTP client with automatic error handling and loading indicators */
   http: HttpAPI;
-  
+
   /** Navigation and routing utilities */
   navigation: NavigationAPI;
 }
 
+
+
+/**
+ * Contract implemented by applications that can be hosted by the Shell.
+ *
+ * This is a **type-only interface** used at build time to define the shape of
+ * an application entry module. It does **not** introduce runtime dependencies
+ * or production code requirements.
+ *
+ * ### Purpose
+ * - Allows the Shell to load and bootstrap applications in both development
+ *   and production environments.
+ * - Enables strongly-typed guarantees for the Shell without coupling
+ *   applications to shell-specific runtime logic.
+ *
+ * ### Implementation requirements
+ * Applications do **not** need to import or reference this type directly.
+ * An application satisfies this contract automatically by exporting the
+ * required functions from its entry module.
+ *
+ * ### Development vs Production
+ * - In development, the Shell may `import()` an application's source entry
+ *   module directly to enable fast reload behaviour.
+ * - In production, the Shell loads the application's bundled output.
+ *
+ * This interface exists solely to document and enforce the expected surface
+ * area between the Shell and hosted applications.
+ *
+ * @example
+ * ```ts
+ * // src/main.ts
+ * export function AppMount(root: HTMLElement) {
+ *   // Mount application UI into the provided DOM node
+ * }
+ * ```
+ */
+
+export type ShellPlugin = {
+  /**
+   * Mounts the application into a DOM element provided by the Shell.
+   *
+   * This function is responsible for rendering the application UI
+   * into the given container element.
+   *
+   * The Shell guarantees that:
+   * - `root` is an empty, attached DOM element
+   * - The application owns the DOM subtree beneath `root`
+   *
+   * @param root - Container element into which the application should render.
+   */
+  AppMount(root: HTMLElement): void;
+};
+
+
 /**
  * Feedback system API
- * 
+ *
  * Provides consistent user feedback across all SPAs using the shell's design system.
  * Handles toasts, loading overlays, confirmation dialogs, and alerts.
  */
@@ -36,7 +90,7 @@ export interface FeedbackAPI {
   /**
    * Show a loading overlay with a message.
    * Call `clear()` to remove it.
-   * 
+   *
    * @param message - Loading message to display
    * @example
    * ```typescript
@@ -46,15 +100,15 @@ export interface FeedbackAPI {
    * ```
    */
   busy(message: string): void;
-  
+
   /**
    * Clear the loading overlay.
    */
   clear(): void;
-  
+
   /**
    * Show a success toast notification.
-   * 
+   *
    * @param message - Success message to display
    * @param duration - Duration in milliseconds (default: 3000)
    * @example
@@ -63,10 +117,10 @@ export interface FeedbackAPI {
    * ```
    */
   success(message: string, duration?: number): void;
-  
+
   /**
    * Show an error toast notification.
-   * 
+   *
    * @param message - Error message to display
    * @param duration - Duration in milliseconds (default: 5000)
    * @example
@@ -75,35 +129,35 @@ export interface FeedbackAPI {
    * ```
    */
   error(message: string, duration?: number): void;
-  
+
   /**
    * Show a warning toast notification.
-   * 
+   *
    * @param message - Warning message to display
    * @param duration - Duration in milliseconds (default: 4000)
    */
   warning(message: string, duration?: number): void;
-  
+
   /**
    * Show an info toast notification.
-   * 
+   *
    * @param message - Info message to display
    * @param duration - Duration in milliseconds (default: 3000)
    */
   info(message: string, duration?: number): void;
-  
+
   /**
    * Show an alert toast with a specific variant.
-   * 
+   *
    * @param message - Alert message to display
    * @param variant - Alert type: "success" | "error" | "warning" | "info"
    * @param duration - Duration in milliseconds
    */
   alert(message: string, variant?: AlertVariant, duration?: number): void;
-  
+
   /**
    * Show a confirmation dialog with OK/Cancel buttons.
-   * 
+   *
    * @param message - Confirmation message
    * @param title - Dialog title (optional)
    * @returns Promise that resolves to `true` if confirmed, `false` if cancelled
@@ -116,28 +170,28 @@ export interface FeedbackAPI {
    * ```
    */
   confirm(message: string, title?: string): Promise<boolean>;
-  
+
   /**
    * Show an alert dialog with an OK button.
-   * 
+   *
    * @param message - Alert message
    * @param title - Dialog title (optional)
    * @returns Promise that resolves when OK is clicked
    */
   ok(message: string, title?: string): Promise<void>;
-  
+
   /**
    * Show a dialog with Yes/No buttons.
-   * 
+   *
    * @param message - Question message
    * @param title - Dialog title (optional)
    * @returns Promise that resolves to `true` for Yes, `false` for No
    */
   yesNo(message: string, title?: string): Promise<boolean>;
-  
+
   /**
    * Show a dialog with Yes/No/Cancel buttons.
-   * 
+   *
    * @param message - Question message
    * @param title - Dialog title (optional)
    * @returns Promise that resolves to "yes", "no", or "cancel"
@@ -152,10 +206,10 @@ export interface FeedbackAPI {
    * ```
    */
   yesNoCancel(message: string, title?: string): Promise<"yes" | "no" | "cancel">;
-  
+
   /**
    * Show a custom dialog with user-defined buttons.
-   * 
+   *
    * @param message - Dialog message
    * @param title - Dialog title
    * @param buttons - Array of button configurations
@@ -176,11 +230,7 @@ export interface FeedbackAPI {
    * }
    * ```
    */
-  custom<T extends string>(
-    message: string,
-    title: string,
-    buttons: Array<{ label: string; value: T; variant?: string }>
-  ): Promise<T | null>;
+  custom<T extends string>(message: string, title: string, buttons: Array<{ label: string; value: T; variant?: string }>): Promise<T | null>;
 }
 
 /** Alert variant types for toast notifications */
@@ -188,7 +238,7 @@ export type AlertVariant = "success" | "error" | "warning" | "info";
 
 /**
  * HTTP client API with automatic feedback orchestration
- * 
+ *
  * Provides HTTP methods with built-in error handling, loading indicators,
  * and success/error feedback. All requests return a discriminated union
  * for type-safe error handling.
@@ -196,7 +246,7 @@ export type AlertVariant = "success" | "error" | "warning" | "info";
 export interface HttpAPI {
   /**
    * Perform a GET request.
-   * 
+   *
    * @param url - Request URL (relative to apiUrl or absolute)
    * @param options - Request options for feedback and headers
    * @returns Promise with success/error result
@@ -207,7 +257,7 @@ export interface HttpAPI {
    *   successMessage: 'Users loaded!',
    *   showSuccess: true
    * });
-   * 
+   *
    * if (result.success) {
    *   console.log(result.data);
    * } else {
@@ -216,10 +266,10 @@ export interface HttpAPI {
    * ```
    */
   get<T = any>(url: string, options?: RequestOptions): Promise<Result<T>>;
-  
+
   /**
    * Perform a POST request.
-   * 
+   *
    * @param url - Request URL
    * @param data - Request body data
    * @param options - Request options for feedback and headers
@@ -234,30 +284,30 @@ export interface HttpAPI {
    * ```
    */
   post<T = any>(url: string, data?: any, options?: RequestOptions): Promise<Result<T>>;
-  
+
   /**
    * Perform a PUT request.
-   * 
+   *
    * @param url - Request URL
    * @param data - Request body data
    * @param options - Request options for feedback and headers
    * @returns Promise with success/error result
    */
   put<T = any>(url: string, data?: any, options?: RequestOptions): Promise<Result<T>>;
-  
+
   /**
    * Perform a PATCH request.
-   * 
+   *
    * @param url - Request URL
    * @param data - Request body data
    * @param options - Request options for feedback and headers
    * @returns Promise with success/error result
    */
   patch<T = any>(url: string, data?: any, options?: RequestOptions): Promise<Result<T>>;
-  
+
   /**
    * Perform a DELETE request.
-   * 
+   *
    * @param url - Request URL
    * @param options - Request options for feedback and headers
    * @returns Promise with success/error result
@@ -280,7 +330,7 @@ export interface RequestOptions {
   /**
    * Unique key to prevent duplicate concurrent requests.
    * If a request with the same key is in progress, subsequent requests are ignored.
-   * 
+   *
    * @example
    * ```typescript
    * // Only one save request at a time
@@ -288,35 +338,35 @@ export interface RequestOptions {
    * ```
    */
   requestKey?: string;
-  
+
   /**
    * Message to show in loading overlay while request is in progress.
    * If not provided, no loading overlay is shown.
    */
   busyMessage?: string;
-  
+
   /**
    * Message to show in success toast when request completes successfully.
    * Only shown if `showSuccess` is true.
    */
   successMessage?: string;
-  
+
   /**
    * Whether to show success toast on successful request.
    * Default: false
    */
   showSuccess?: boolean;
-  
+
   /**
    * Disable all automatic feedback (loading, success, error).
    * Useful when you want to handle feedback manually.
    * Default: false
    */
   noFeedback?: boolean;
-  
+
   /**
    * Additional HTTP headers to include in the request.
-   * 
+   *
    * @example
    * ```typescript
    * await shell.http.get('/api/data', {
@@ -333,10 +383,10 @@ export interface RequestOptions {
 export interface SuccessResult<T> {
   /** Always true for successful responses */
   success: true;
-  
+
   /** Response data */
   data: T;
-  
+
   /** Request key if provided in options */
   requestKey?: string;
 }
@@ -347,10 +397,10 @@ export interface SuccessResult<T> {
 export interface ErrorResult {
   /** Always false for error responses */
   success: false;
-  
+
   /** Error details */
   error: HttpError;
-  
+
   /** Request key if provided in options */
   requestKey?: string;
 }
@@ -358,11 +408,11 @@ export interface ErrorResult {
 /**
  * Discriminated union of success or error result.
  * Use the `success` property to narrow the type.
- * 
+ *
  * @example
  * ```typescript
  * const result = await shell.http.get('/api/data');
- * 
+ *
  * if (result.success) {
  *   // TypeScript knows result.data exists
  *   console.log(result.data);
@@ -380,27 +430,27 @@ export type Result<T> = SuccessResult<T> | ErrorResult;
 export interface HttpError {
   /** Error name (e.g., "HTTPError", "TimeoutError") */
   name: string;
-  
+
   /** Human-readable error message */
   message: string;
-  
+
   /** HTTP status code if available (e.g., 404, 500) */
   status?: number;
-  
+
   /** Additional error data from server response */
   data?: any;
 }
 
 /**
  * Navigation API
- * 
+ *
  * Provides navigation between SPAs and route change notifications.
  */
 export interface NavigationAPI {
   /**
    * Navigate to a different path.
    * Triggers a full page reload to load the target SPA.
-   * 
+   *
    * @param path - Target path (e.g., "/demo", "/users")
    * @example
    * ```typescript
@@ -408,17 +458,17 @@ export interface NavigationAPI {
    * ```
    */
   navigate(path: string): void;
-  
+
   /**
    * Get the current path.
-   * 
+   *
    * @returns Current path (e.g., "/demo")
    */
   getCurrentPath(): string;
-  
+
   /**
    * Subscribe to route changes.
-   * 
+   *
    * @param callback - Function called when route changes
    * @returns Unsubscribe function
    * @example
@@ -426,7 +476,7 @@ export interface NavigationAPI {
    * const unsubscribe = shell.navigation.onRouteChange((path) => {
    *   console.log('Route changed to:', path);
    * });
-   * 
+   *
    * // Later, unsubscribe
    * unsubscribe();
    * ```
@@ -436,42 +486,42 @@ export interface NavigationAPI {
 
 /**
  * Navigation item configuration
- * 
+ *
  * Defines a navigation menu item in `navigation.json`.
  */
 export interface NavItem {
   /** Unique identifier for the navigation item */
   id: string;
-  
+
   /** URL path for the navigation item (e.g., "/demo") */
   path: string;
-  
+
   /** SPA identifier (matches directory name) */
   app: string;
-  
+
   /** Icon name (design system specific) */
   icon: string;
-  
+
   /** Display label for the navigation item */
   label: string;
-  
+
   /** Sort order (lower numbers appear first) */
   order: number;
-  
+
   /** Optional badge function that returns a count to display */
   badge?: () => number;
 }
 
 /**
  * Global window extension
- * 
+ *
  * Extends the Window interface to include Trailhead shell API.
  */
 declare global {
   interface Window {
     /** Trailhead shell API available to all SPAs */
     shell: ShellAPI;
-    
+
     /** Legacy mount function (deprecated, use init() export instead) */
     AppMount?: (container: HTMLElement) => void;
   }
