@@ -80,63 +80,61 @@ export class Trailhead {
    */
   private createAPI(): ShellAPI {
     const adapter = this.adapter;
-    
+
     return {
       version: "1.0.0",
       feedback: {
         busy: (message: string) => adapter.feedback.showBusy(message),
         clear: () => adapter.feedback.clearBusy(),
-        success: (message: string, duration?: number) => 
-          adapter.feedback.showToast(message, "success", duration),
-        error: (message: string, duration?: number) => 
-          adapter.feedback.showToast(message, "error", duration || 5000),
-        warning: (message: string, duration?: number) => 
-          adapter.feedback.showToast(message, "warning", duration || 4000),
-        info: (message: string, duration?: number) => 
-          adapter.feedback.showToast(message, "info", duration),
-        alert: (message: string, variant: any = "info", duration?: number) => 
-          adapter.feedback.showToast(message, variant, duration),
+        success: (message: string, duration?: number) => adapter.feedback.showToast(message, "success", duration),
+        error: (message: string, duration?: number) => adapter.feedback.showToast(message, "error", duration || 5000),
+        warning: (message: string, duration?: number) => adapter.feedback.showToast(message, "warning", duration || 4000),
+        info: (message: string, duration?: number) => adapter.feedback.showToast(message, "info", duration),
+        alert: (message: string, variant: any = "info", duration?: number) => adapter.feedback.showToast(message, variant, duration),
         confirm: (message: string, title: string = "Confirm") =>
-          adapter.feedback.showDialog({
-            message,
-            title,
-            buttons: [
-              { label: "Cancel", value: "cancel", variant: "secondary" },
-              { label: "Confirm", value: "confirm", variant: "primary" },
-            ],
-          }).then((result) => result.value === "confirm"),
+          adapter.feedback
+            .showDialog({
+              message,
+              title,
+              buttons: [
+                { label: "Cancel", value: "cancel", variant: "secondary" },
+                { label: "Confirm", value: "confirm", variant: "primary" },
+              ],
+            })
+            .then((result) => result.value === "confirm"),
         ok: (message: string, title: string = "Information") =>
-          adapter.feedback.showDialog({
-            message,
-            title,
-            buttons: [{ label: "OK", value: "ok", variant: "primary" }],
-          }).then(() => undefined),
+          adapter.feedback
+            .showDialog({
+              message,
+              title,
+              buttons: [{ label: "OK", value: "ok", variant: "primary" }],
+            })
+            .then(() => undefined),
         yesNo: (message: string, title: string = "Confirm") =>
-          adapter.feedback.showDialog({
-            message,
-            title,
-            buttons: [
-              { label: "No", value: "no", variant: "secondary" },
-              { label: "Yes", value: "yes", variant: "primary" },
-            ],
-          }).then((result) => result.value === "yes"),
+          adapter.feedback
+            .showDialog({
+              message,
+              title,
+              buttons: [
+                { label: "No", value: "no", variant: "secondary" },
+                { label: "Yes", value: "yes", variant: "primary" },
+              ],
+            })
+            .then((result) => result.value === "yes"),
         yesNoCancel: (message: string, title: string = "Confirm") =>
-          adapter.feedback.showDialog({
-            message,
-            title,
-            buttons: [
-              { label: "Cancel", value: "cancel", variant: "secondary" },
-              { label: "No", value: "no", variant: "secondary" },
-              { label: "Yes", value: "yes", variant: "primary" },
-            ],
-          }).then((result) => (result.value as "yes" | "no" | "cancel") || "cancel"),
-        custom: <T extends string>(
-          message: string,
-          title: string,
-          buttons: Array<{ label: string; value: T; variant?: string }>
-        ) =>
-          adapter.feedback.showDialog({ message, title, buttons })
-            .then((result) => result.value),
+          adapter.feedback
+            .showDialog({
+              message,
+              title,
+              buttons: [
+                { label: "Cancel", value: "cancel", variant: "secondary" },
+                { label: "No", value: "no", variant: "secondary" },
+                { label: "Yes", value: "yes", variant: "primary" },
+              ],
+            })
+            .then((result) => (result.value as "yes" | "no" | "cancel") || "cancel"),
+        custom: <T extends string>(message: string, title: string, buttons: Array<{ label: string; value: T; variant?: string }>) =>
+          adapter.feedback.showDialog({ message, title, buttons }).then((result) => result.value),
       },
       http: {
         get: http.get,
@@ -227,11 +225,11 @@ export class Trailhead {
    */
   private handleRoute(): void {
     let path = window.location.pathname;
-    
+
     if (this.basePath && path.startsWith(this.basePath)) {
       path = path.substring(this.basePath.length) || "/";
     }
-    
+
     const navItem = this.navigation.find((item) => path.startsWith(item.path));
 
     if (navItem) {
@@ -239,7 +237,7 @@ export class Trailhead {
       const shellContent = document.getElementById("shell-content");
       const rootElement = shellContent?.querySelector("#root");
       const isAlreadyMounted = rootElement && rootElement.children.length > 0;
-      
+
       if (!isAlreadyMounted) {
         this.loadPlugin(navItem.app, navItem.path);
       }
@@ -275,13 +273,13 @@ export class Trailhead {
     try {
       const pluginUrl = `${this.basePath}${appPath}/app.js`;
       const pluginCss = `${this.basePath}${appPath}/${appName}.css`;
-      
+
       // Load CSS
       const link = document.createElement("link");
       link.rel = "stylesheet";
       link.href = pluginCss;
       document.head.appendChild(link);
-      
+
       // Load JS
       const script = document.createElement("script");
       script.src = pluginUrl;
