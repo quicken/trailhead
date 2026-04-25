@@ -270,7 +270,21 @@ export class Trailhead {
 
     root.innerHTML = `<div class="shell-loading">Loading...</div>`;
 
+    const isDev = (window as any).__SHELL_DEV__ === true;
+
     try {
+      if (isDev) {
+        // ✅ DEV PATH — Vite-native, HMR-compatible
+        const mod = await import(
+          /* @vite-ignore */
+          `${this.basePath}${appPath}/src/index.ts`
+        );
+
+        root.innerHTML = "";
+        mod.AppMount(root);
+        return;
+      }
+
       const pluginUrl = `${this.basePath}${appPath}/app.js`;
       const pluginCss = `${this.basePath}${appPath}/${appName}.css`;
 
