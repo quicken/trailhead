@@ -1,16 +1,14 @@
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  esbuild: {
-    jsx: "automatic",
-  },
-  define: {
-    "process.env.NODE_ENV": JSON.stringify("production"),
-  },
   server: {
     port: 3000,
     cors: true,
     proxy: {
+      "/favicon.ico": {
+        target: "http://localhost:3001",
+        changeOrigin: true,
+      },
       "/navigation.json": {
         target: "http://localhost:3001",
         changeOrigin: true,
@@ -29,11 +27,10 @@ export default defineConfig({
   },
   build: {
     lib: {
-      entry: "src/index.tsx",
+      entry: "src/index.ts",
       formats: ["es"],
       fileName: () => "app.js",
     },
-    // Don't externalize React - bundle it
     rollupOptions: {
       output: {
         inlineDynamicImports: true,
