@@ -102,16 +102,18 @@ export function ShellApp({ shell }: ShellAppProps) {
 
     contentRef.current.innerHTML = '<div>Loading...</div>';
 
+    const appBasePath = shell.basePath + appPath;
+
     try {
       const pluginUrl = `${shell.basePath}${appPath}/app.js`;
       const pluginCss = `${shell.basePath}${appPath}/${appName}.css`;
-      
+
       // Load CSS
       const link = document.createElement("link");
       link.rel = "stylesheet";
       link.href = pluginCss;
       document.head.appendChild(link);
-      
+
       // Load JS
       const script = document.createElement("script");
       script.src = pluginUrl;
@@ -120,7 +122,7 @@ export function ShellApp({ shell }: ShellAppProps) {
       script.onload = () => {
         contentRef.current!.innerHTML = "";
         if ((window as any).AppMount) {
-          (window as any).AppMount(contentRef.current);
+          (window as any).AppMount(contentRef.current, appBasePath);
         }
       };
 

@@ -51,7 +51,7 @@ if (!window.shell) {
 /**
  * Plugin mount function
  */
-window.AppMount = (container: HTMLElement) => {
+window.AppMount = (container: HTMLElement, _basePath: string) => {
   const root = ReactDOM.createRoot(container);
 
   root.render(

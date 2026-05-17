@@ -1,12 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { SaasApp } from "./SaasApp";
-import type { ShellAPI } from "@cfkit/shell-api-types";
+import type { ShellAPI } from "@herdingbits/trailhead-types";
 
 declare global {
   interface Window {
     shell: ShellAPI;
-    AppMount?: (container: HTMLElement) => { unmount: () => void };
   }
 }
 
@@ -48,7 +47,7 @@ if (!window.shell) {
  * Plugin mount function
  * Called by shell when plugin is loaded
  */
-window.AppMount = (container: HTMLElement) => {
+window.AppMount = (container: HTMLElement, _basePath: string) => {
   const root = ReactDOM.createRoot(container);
 
   root.render(
@@ -56,10 +55,6 @@ window.AppMount = (container: HTMLElement) => {
       <SaasApp />
     </React.StrictMode>
   );
-
-  return {
-    unmount: () => root.unmount(),
-  };
 };
 
 /**

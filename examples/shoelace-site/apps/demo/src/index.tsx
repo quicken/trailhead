@@ -48,11 +48,7 @@ if (!window.shell) {
  * Plugin mount function
  * Called by shell when plugin is loaded
  */
-window.AppMount = (container: HTMLElement) => {
-  // Optional: Check shell version compatibility
-  // import { assertShellVersion } from "@cfkit/contracts/version-check";
-  // assertShellVersion("1.x");
-
+window.AppMount = (container: HTMLElement, _basePath: string) => {
   const root = ReactDOM.createRoot(container);
 
   root.render(
