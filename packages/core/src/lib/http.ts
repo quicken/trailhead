@@ -12,7 +12,7 @@ let kyInstance: KyInstance;
  */
 export function init(baseUrl: string = ""): void {
   kyInstance = ky.create({
-    prefixUrl: baseUrl,
+    prefix: baseUrl,
     timeout: 30000,
     retry: 0,
   });

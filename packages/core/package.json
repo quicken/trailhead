@@ -1,6 +1,6 @@
 {
   "name": "@herdingbits/trailhead-core",
-  "version": "0.0.13",
+  "version": "0.0.15",
   "description": "Simple application shell that orchestrates multiple SPAs. No webpack magic, just the browser's native module system.",
   "type": "module",
   "main": "./dist/index.js",
@@ -16,17 +16,17 @@
     "README.md"
   ],
   "scripts": {
-    "clean": "rm -rf dist ../types/*.d.ts ../types/adapters",
+    "clean": "rm -rf dist ../types/*.d.ts ../types/*.map ../types/adapters",
     "build": "npm run clean && tsc && npm run build:types",
-    "build:types": "tsc src/types/public-api.ts --declaration --emitDeclarationOnly --outDir ../types --skipLibCheck && tsc src/adapters/public-api.ts --declaration --emitDeclarationOnly --outDir ../types/adapters --skipLibCheck",
+    "build:types": "tsc -p tsconfig.types.json && tsc -p tsconfig.adapters.json",
     "test": "vitest"
   },
   "dependencies": {
-    "ky": "^1.14.3"
+    "ky": "^2.0.2"
   },
   "devDependencies": {
-    "typescript": "^5.9.3",
-    "vitest": "^4.0.18"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.6"
   },
   "keywords": [
     "micro-frontend",
