@@ -10,19 +10,19 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@herdingbits/trailhead-core": "^0.0.12",
-    "@herdingbits/trailhead-cloudscape": "^0.0.10",
-    "@cloudscape-design/components": "^3.0.1208",
-    "@cloudscape-design/global-styles": "^1.0.50",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "@herdingbits/trailhead-core": "^0.0.15",
+    "@herdingbits/trailhead-cloudscape": "^0.0.13",
+    "@cloudscape-design/components": "^3.0.1297",
+    "@cloudscape-design/global-styles": "^1.0.59",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
   },
   "devDependencies": {
-    "@herdingbits/trailhead-types": "^0.0.10",
+    "@herdingbits/trailhead-types": "^0.0.12",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.4",
-    "typescript": "^5.9.3",
-    "vite": "^7.3.1"
+    "@vitejs/plugin-react": "^6.0.2",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.13"
   }
 }
