@@ -72,7 +72,7 @@ export interface DesignSystemAdapter {
    * Called once at shell startup. Register web component base paths,
    * inject global stylesheets, or perform any other design-system-specific setup.
    */
-  init(basePath: string): Promise<void>;
+  init(shellUrl: string): Promise<void>;
 
   /** Feedback implementation backed by this adapter's design system components. */
   feedback: FeedbackAdapter;

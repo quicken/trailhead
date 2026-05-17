@@ -13,14 +13,14 @@ export interface ShellConfig {
   /** Design system adapter that backs all shell UI — toasts, dialogs, and busy overlays. */
   adapter: DesignSystemAdapter;
 
-  /** URL prefix under which the shell is hosted (e.g., `"/sample/trailhead"`). Used to strip the prefix from routes and prepend it to SPA asset URLs. */
-  basePath?: string;
+  /** URL prefix under which SPAs are hosted (e.g., `"/sample/trailhead"`). Used to strip the prefix from routes, construct SPA asset URLs, and build navigation links. */
+  appBasePath?: string;
 
   /** Base URL prepended to all SPA HTTP requests made via `shell.http`. */
   apiUrl?: string;
 
-  /** URL from which shell static assets (e.g., `navigation.json`) are fetched. Defaults to `basePath`. */
-  shellResourceUrl?: string;
+  /** URL from which the shell bundle and static assets (e.g., `navigation.json`) are fetched. Defaults to `appBasePath`. */
+  shellUrl?: string;
 }
 
 /**
@@ -39,9 +39,9 @@ export class Trailhead {
   private navigation: NavItem[] = [];
   private routeChangeCallbacks: Array<(path: string) => void> = [];
 
-  /** URL prefix under which the shell is hosted. Empty string when hosted at the root. */
-  public readonly basePath: string;
-  private readonly shellResourceUrl: string;
+  /** URL prefix under which SPAs are hosted. Empty string when hosted at the root. */
+  public readonly appBasePath: string;
+  private readonly shellUrl: string;
 
   /** The active design system adapter supplying UI components to the shell. */
   public readonly adapter: DesignSystemAdapter;
@@ -53,8 +53,8 @@ export class Trailhead {
    * @param config - Shell configuration
    */
   constructor(config: ShellConfig) {
-    this.basePath = config.basePath || "";
-    this.shellResourceUrl = config.shellResourceUrl || this.basePath;
+    this.appBasePath = config.appBasePath || "";
+    this.shellUrl = config.shellUrl || this.appBasePath;
     this.adapter = config.adapter;
     this.init(config.apiUrl);
   }
@@ -99,7 +99,7 @@ export class Trailhead {
    */
   private async initAdapter(): Promise<void> {
     try {
-      await this.adapter.init(this.basePath);
+      await this.adapter.init(this.shellUrl);
       console.log(`[Trailhead] Initialized ${this.adapter.name} adapter v${this.adapter.version}`);
     } catch (error) {
       console.error("Failed to initialize design system adapter:", error);
@@ -196,7 +196,7 @@ export class Trailhead {
    */
   private async loadNavigation(): Promise<void> {
     try {
-      const response = await fetch(`${this.shellResourceUrl}/navigation.json`);
+      const response = await fetch(`${this.shellUrl}/navigation.json`);
       this.navigation = await response.json();
     } catch (error) {
       console.error("Failed to load navigation:", error);
@@ -214,7 +214,7 @@ export class Trailhead {
     nav.innerHTML = this.navigation
       .map(
         (item) => `
-      <a href="${this.basePath}${item.path}"
+      <a href="${this.appBasePath}${item.path}"
          class="shell-nav-item"
          data-path="${item.path}"
          data-app="${item.app}">
@@ -249,7 +249,7 @@ export class Trailhead {
    * Navigate to path
    */
   private navigate(path: string): void {
-    window.location.href = this.basePath + path;
+    window.location.href = this.appBasePath + path;
   }
 
   /**
@@ -258,8 +258,8 @@ export class Trailhead {
   private handleRoute(): void {
     let path = window.location.pathname;
 
-    if (this.basePath && path.startsWith(this.basePath)) {
-      path = path.substring(this.basePath.length) || "/";
+    if (this.appBasePath && path.startsWith(this.appBasePath)) {
+      path = path.substring(this.appBasePath.length) || "/";
     }
 
     const navItem = this.navigation.find((item) => path.startsWith(item.path));
@@ -303,14 +303,14 @@ export class Trailhead {
     root.innerHTML = `<div class="shell-loading">Loading...</div>`;
 
     const isDev = (window as any).__SHELL_DEV__ === true;
-    const appBasePath = this.basePath + appPath;
+    const appBasePath = this.appBasePath + appPath;
 
     try {
       if (isDev) {
         // ✅ DEV PATH — Vite-native, HMR-compatible
         const mod = await import(
           /* @vite-ignore */
-          `${this.basePath}${appPath}/src/index.ts`
+          `${this.appBasePath}${appPath}/src/index.ts`
         );
 
         root.innerHTML = "";
@@ -318,8 +318,8 @@ export class Trailhead {
         return;
       }
 
-      const pluginUrl = `${this.basePath}${appPath}/app.js`;
-      const pluginCss = `${this.basePath}${appPath}/${appName}.css`;
+      const pluginUrl = `${this.appBasePath}${appPath}/app.js`;
+      const pluginCss = `${this.appBasePath}${appPath}/${appName}.css`;
 
       // Load CSS
       const link = document.createElement("link");
