@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { DemoApp } from "./DemoApp";
-import type { ShellAPI } from "@cfkit/shell-api-types";
+import type { ShellAPI } from "@herdingbits/trailhead-types";
 
 declare global {
   interface Window {
