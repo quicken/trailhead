@@ -42,8 +42,8 @@ export function ShellApp({ shell }: ShellAppProps) {
   // Get current path without basePath
   const getCurrentPath = () => {
     let path = window.location.pathname;
-    if (shell.basePath && path.startsWith(shell.basePath)) {
-      path = path.substring(shell.basePath.length) || '/';
+    if (shell.appBasePath && path.startsWith(shell.appBasePath)) {
+      path = path.substring(shell.appBasePath.length) || '/';
     }
     return path;
   };
@@ -99,7 +99,7 @@ export function ShellApp({ shell }: ShellAppProps) {
   const handleRoute = (path: string) => {
     // Normalize path by removing trailing slash for matching
     const normalizedPath = path.endsWith('/') && path !== '/' ? path.slice(0, -1) : path;
-    const route = navigation.find(item => item.path === normalizedPath);
+    const route = navigation.find(item => normalizedPath.startsWith(item.path));
     if (route && contentRef.current) {
       loadApp(route.app, route.path);
     }
@@ -110,11 +110,11 @@ export function ShellApp({ shell }: ShellAppProps) {
 
     contentRef.current.innerHTML = '<div>Loading...</div>';
 
-    const appBasePath = shell.basePath + appPath;
+    const appBasePath = shell.appBasePath + appPath;
 
     try {
-      const pluginUrl = `${shell.basePath}${appPath}/app.js`;
-      const pluginCss = `${shell.basePath}${appPath}/${appName}.css`;
+      const pluginUrl = `${shell.appBasePath}${appPath}/app.js`;
+      const pluginCss = `${shell.appBasePath}${appPath}/${appName}.css`;
 
       // Load CSS
       const link = document.createElement("link");
@@ -231,7 +231,7 @@ export function ShellApp({ shell }: ShellAppProps) {
       <ShellLayout
         navigation={navigation}
         currentPath={currentPath}
-        basePath={shell.basePath}
+        basePath={shell.appBasePath}
         onNavigate={handleNavigate}
       >
         <div id="shell-content" ref={contentRef} />

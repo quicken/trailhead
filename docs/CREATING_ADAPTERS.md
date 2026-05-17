@@ -5,14 +5,14 @@ Trailhead's shell is design-system agnostic. You can create adapters for any des
 ## Adapter Interface
 
 ```typescript
-import type { DesignSystemAdapter } from '@cfkit/contracts/adapters';
+import type { DesignSystemAdapter } from '@herdingbits/trailhead-types/adapters';
 
 export class MyAdapter implements DesignSystemAdapter {
   name = "my-design-system";
   version = "1.0.0";
   
-  async init(basePath: string): Promise<void> {
-    // Load design system assets, set base paths, etc.
+  async init(shellUrl: string): Promise<void> {
+    // Load design system assets from shellUrl, set base paths, etc.
   }
   
   feedback: FeedbackAdapter = {
@@ -39,28 +39,28 @@ export class MyAdapter implements DesignSystemAdapter {
 ## Using Your Adapter
 
 ```typescript
-// core/shell/src/shell.ts
-import { MyAdapter } from './adapters/my-adapter';
+import { Trailhead } from '@herdingbits/trailhead-core';
+import { MyAdapter } from './my-adapter';
 
-class Shell {
-  constructor() {
-    this.adapter = new MyAdapter();
-    // ... rest of initialization
-  }
-}
+const shell = new Trailhead({
+  adapter: new MyAdapter(),
+  appBasePath: '/app',
+});
 ```
 
 ## Official Adapters
 
-### Shoelace (Default)
-- Location: `core/shell/src/adapters/shoelace.ts`
+### Shoelace
+- Package: `@herdingbits/trailhead-shoelace`
 - Status: ✅ Implemented
 - Design System: [Shoelace](https://shoelace.style/)
+- Config: `ShoelaceAdapterConfig { shoelaceUrl? }` — explicit CDN or local path; defaults to `${shellUrl}/shoelace`
 
-### CloudScape (Coming Soon)
-- Location: `core/shell/src/adapters/cloudscape.ts`
-- Status: 🚧 Planned
+### CloudScape
+- Package: `@herdingbits/trailhead-cloudscape`
+- Status: ✅ Implemented
 - Design System: [CloudScape](https://cloudscape.design/)
+- Config: `CloudScapeAdapterConfig { cloudscapeUrl? }` — if provided, injects global-styles CSS dynamically
 
 ## Adapter Requirements
 
@@ -77,7 +77,7 @@ Your adapter must:
 ```typescript
 // Test in isolation
 const adapter = new MyAdapter();
-await adapter.init('/');
+await adapter.init('https://my-shell.example.com');
 
 adapter.feedback.showToast('Hello!', 'success');
 const result = await adapter.feedback.showDialog({

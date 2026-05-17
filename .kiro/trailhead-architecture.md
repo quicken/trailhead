@@ -271,8 +271,8 @@ npm start  # Port 3000
 Create `examples/shoelace-site/shell/.env.development`:
 
 ```bash
-# Base path for local development (usually empty for root)
-VITE_BASE_PATH=
+# App base path for local development (usually empty for root)
+VITE_APP_BASE_PATH=
 ```
 
 The shell loads SPAs from their built output in the `public/` directory. For rapid development with hot reload, develop SPAs in standalone mode using the mock shell API.

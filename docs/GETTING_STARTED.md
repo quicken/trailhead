@@ -85,13 +85,15 @@ import { ShoelaceAdapter, ShellApp } from '@herdingbits/trailhead-shoelace';
 import '@herdingbits/trailhead-shoelace/shell.css';
 
 // Get configuration
-const basePath = import.meta.env.VITE_BASE_PATH || '';
+const appBasePath = import.meta.env.VITE_APP_BASE_PATH || '';
+const shellUrl = (window as any).SHELL_DEV_URL || appBasePath;
 const apiUrl = (window as any).APP_CONFIG?.apiUrl || '';
 
 // Initialize shell with Shoelace adapter
 const shell = new Trailhead({
   adapter: new ShoelaceAdapter(),
-  basePath,
+  appBasePath,
+  shellUrl,
   apiUrl,
 });
 
@@ -155,7 +157,7 @@ import { defineConfig, loadEnv } from 'vite';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const base = env.VITE_BASE_PATH ? `${env.VITE_BASE_PATH}/` : '/';
+  const base = env.VITE_APP_BASE_PATH ? `${env.VITE_APP_BASE_PATH}/` : '/';
 
   return {
     base,
@@ -200,8 +202,8 @@ Update `package.json`:
 Create `.env.development`:
 
 ```bash
-# Base path (empty for root)
-VITE_BASE_PATH=
+# App base path (empty for root)
+VITE_APP_BASE_PATH=
 ```
 
 **Note:** In the current implementation, the shell loads SPAs from their built output. For hot reload during development, run each SPA in standalone mode on its own port.

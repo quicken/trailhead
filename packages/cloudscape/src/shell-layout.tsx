@@ -34,7 +34,7 @@ export function ShellLayout({ navigation, currentPath, basePath, onNavigate, chi
       onNavigationChange={({ detail }) => setNavigationOpen(detail.open)}
       navigation={
         <SideNavigation
-          activeHref={currentPath}
+          activeHref={basePath + currentPath + (currentPath.endsWith('/') ? '' : '/')}
           items={navItems}
           onFollow={(event) => {
             event.preventDefault();

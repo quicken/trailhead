@@ -114,7 +114,7 @@ import { ShoelaceAdapter, ShellApp } from '@herdingbits/trailhead-shoelace';
 
 const shell = new Trailhead({
   adapter: new ShoelaceAdapter(),
-  basePath: '/app',
+  appBasePath: '/app',
   apiUrl: 'https://api.example.com'
 });
 
@@ -129,7 +129,7 @@ import { CloudScapeAdapter, ShellApp } from '@herdingbits/trailhead-cloudscape';
 
 const shell = new Trailhead({
   adapter: new CloudScapeAdapter(),
-  basePath: '/app',
+  appBasePath: '/app',
   apiUrl: 'https://api.example.com'
 });
 
@@ -157,9 +157,9 @@ export function init(shell: ShellAPI) {
 
 **Shell Configuration:**
 
-- **`VITE_BASE_PATH`** - Base URL path for deployment (e.g., `/app`, `/sample/trailhead`)
+- **`VITE_APP_BASE_PATH`** - URL prefix where SPAs are hosted (e.g., `/app`, `/sample/trailhead`)
   - Used when deploying to a subdirectory instead of root
-  - Example: Deploying to `https://example.com/app/` → set `VITE_BASE_PATH=/app`
+  - Example: Deploying to `https://example.com/app/` → set `VITE_APP_BASE_PATH=/app`
   - Default: `""` (root path)
 
 - **`APP_CONFIG.apiUrl`** - API endpoint URL (runtime configuration)
@@ -172,8 +172,8 @@ export function init(shell: ShellAPI) {
 Create `.env.development` in your shell directory:
 
 ```bash
-# Base path for local development (usually empty for root)
-VITE_BASE_PATH=
+# App base path for local development (usually empty for root)
+VITE_APP_BASE_PATH=
 ```
 
 **Note:** For development, SPAs are typically developed in standalone mode with hot reload. To test integration with the shell, build the SPA and copy it to the shell's public directory.
@@ -182,29 +182,48 @@ VITE_BASE_PATH=
 
 ```bash
 # Build with custom base path
-VITE_BASE_PATH=/app npm run build
+VITE_APP_BASE_PATH=/app npm run build
 
 # Or set in .env.production
-echo "VITE_BASE_PATH=/app" > .env.production
+echo "VITE_APP_BASE_PATH=/app" > .env.production
 npm run build
 ```
 
-### Shell Configuration Example
+### Shell Configuration
+
+There are three URL-related config fields:
+
+| Field | Purpose | Default |
+|---|---|---|
+| `appBasePath` | URL prefix for SPA routing, asset loading, and nav links | `""` |
+| `shellUrl` | Where shell.js, shell.css, and navigation.json are served from | `appBasePath` |
+| `apiUrl` | Base URL for all HTTP requests via `shell.http` | `""` |
+
+Adapter-specific URL config is passed to the adapter constructor:
+
+| Adapter | Config | Purpose |
+|---|---|---|
+| `ShoelaceAdapter` | `shoelaceUrl` | Where Shoelace is hosted (CDN or local). Defaults to `${shellUrl}/shoelace` |
+| `CloudScapeAdapter` | `cloudscapeUrl` | CloudScape global-styles CSS URL. If omitted, styles must be bundled via npm import |
 
 ```typescript
 import { Trailhead } from '@herdingbits/trailhead-core';
 import { ShoelaceAdapter, ShellApp } from '@herdingbits/trailhead-shoelace';
 
+const appBasePath = import.meta.env.VITE_APP_BASE_PATH || '';
+const shellUrl = (window as any).SHELL_DEV_URL || appBasePath;
+
 const shell = new Trailhead({
   adapter: new ShoelaceAdapter(),
-  basePath: import.meta.env.VITE_BASE_PATH || '',  // From build-time env var
-  apiUrl: window.APP_CONFIG?.apiUrl || '',         // From runtime config
+  appBasePath,
+  shellUrl,
+  apiUrl: (window as any).APP_CONFIG?.apiUrl || '',
 });
 
 ShellApp.mount(shell);
 ```
 
-### Why Set Base Path?
+### Why Set appBasePath?
 
 **Subdirectory Deployment:**
 - Deploying to `https://example.com/app/` instead of root
@@ -215,15 +234,15 @@ ShellApp.mount(shell);
 
 ```bash
 # Root deployment (default)
-VITE_BASE_PATH= npm run build
+VITE_APP_BASE_PATH= npm run build
 # Serves at: https://example.com/
 
 # Subdirectory deployment
-VITE_BASE_PATH=/app npm run build
+VITE_APP_BASE_PATH=/app npm run build
 # Serves at: https://example.com/app/
 
 # Multi-tenant deployment
-VITE_BASE_PATH=/tenant1 npm run build
+VITE_APP_BASE_PATH=/tenant1 npm run build
 # Serves at: https://example.com/tenant1/
 ```
 

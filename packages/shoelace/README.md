@@ -34,11 +34,20 @@ import '@herdingbits/trailhead-shoelace/shell.css';
 
 const shell = new Trailhead({
   adapter: new ShoelaceAdapter(),
-  basePath: '/app',
+  appBasePath: '/app',
   apiUrl: 'https://api.example.com'
 });
 
 ShellApp.mount(shell);
+```
+
+By default, Shoelace is served from `${shellUrl}/shoelace`. To load from a CDN instead:
+
+```typescript
+const shell = new Trailhead({
+  adapter: new ShoelaceAdapter({ shoelaceUrl: 'https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn' }),
+  appBasePath: '/app',
+});
 ```
 
 ## What's Included

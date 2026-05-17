@@ -75,16 +75,28 @@ class CloudScapeFeedbackAdapter implements FeedbackAdapter {
   }
 }
 
+export interface CloudScapeAdapterConfig {
+  /** URL for the CloudScape global-styles CSS. If provided, injected dynamically instead of requiring a hardcoded HTML link tag. */
+  cloudscapeUrl?: string;
+}
+
 export class CloudScapeAdapter implements DesignSystemAdapter {
   name = 'cloudscape';
   version = '3.0.0';
   feedback: FeedbackAdapter;
+  private readonly config?: CloudScapeAdapterConfig;
 
-  constructor() {
+  constructor(config?: CloudScapeAdapterConfig) {
+    this.config = config;
     this.feedback = new CloudScapeFeedbackAdapter();
   }
 
-  async init(basePath: string): Promise<void> {
-    // CloudScape styles loaded via global-styles package
+  async init(shellUrl: string): Promise<void> {
+    if (this.config?.cloudscapeUrl) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = this.config.cloudscapeUrl;
+      document.head.appendChild(link);
+    }
   }
 }

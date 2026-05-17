@@ -92,7 +92,7 @@ import { ShoelaceAdapter, ShellApp } from '@herdingbits/trailhead-shoelace';
 
 const shell = new Trailhead({
   adapter: new ShoelaceAdapter(),
-  basePath: import.meta.env.VITE_BASE_PATH || '',
+  appBasePath: import.meta.env.VITE_APP_BASE_PATH || '',
   apiUrl: window.APP_CONFIG?.apiUrl || ''
 });
 
@@ -108,7 +108,7 @@ import { CloudScapeAdapter, ShellApp } from '@herdingbits/trailhead-cloudscape';
 
 const shell = new Trailhead({
   adapter: new CloudScapeAdapter(),
-  basePath: import.meta.env.VITE_BASE_PATH || '',
+  appBasePath: import.meta.env.VITE_APP_BASE_PATH || '',
   apiUrl: window.APP_CONFIG?.apiUrl || ''
 });
 
@@ -158,7 +158,7 @@ import { ShoelaceAdapter, ShellApp } from '@herdingbits/trailhead-shoelace';
 
 const shell = new Trailhead({
   adapter: new ShoelaceAdapter(),
-  basePath: '/app'
+  appBasePath: '/app'
 });
 
 ShellApp.mount(shell);
@@ -170,7 +170,7 @@ import { CloudScapeAdapter, ShellApp } from '@herdingbits/trailhead-cloudscape';
 
 const shell = new Trailhead({
   adapter: new CloudScapeAdapter(),
-  basePath: '/app'
+  appBasePath: '/app'
 });
 
 const root = createRoot(document.getElementById('app')!);

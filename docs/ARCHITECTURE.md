@@ -53,14 +53,14 @@ Adapters implement the `DesignSystemAdapter` interface:
 interface DesignSystemAdapter {
   name: string;
   version: string;
-  init(basePath: string): Promise<void>;
+  init(shellUrl: string): Promise<void>;
   feedback: FeedbackAdapter;
 }
 ```
 
 **Current Adapters:**
-- ✅ **Shoelace** - Default implementation
-- 🚧 **CloudScape** - Stub for AWS CloudScape
+- ✅ **Shoelace** - `@herdingbits/trailhead-shoelace`
+- ✅ **CloudScape** - `@herdingbits/trailhead-cloudscape`
 
 **Adapter Responsibilities:**
 - Load design system assets
@@ -198,10 +198,8 @@ CDN/
 ## Future Enhancements
 
 ### Planned
-- CloudScape adapter implementation
 - Material-UI adapter
 - Adapter certification tests
-- CLI for creating new apps
 - Adapter marketplace
 
 ### Considered

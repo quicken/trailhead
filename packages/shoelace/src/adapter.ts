@@ -92,18 +92,32 @@ class ShoelaceFeedbackAdapter implements FeedbackAdapter {
   }
 }
 
+export interface ShoelaceAdapterConfig {
+  /** URL where Shoelace is hosted (CDN or local path). Defaults to `${shellUrl}/shoelace`. */
+  shoelaceUrl?: string;
+}
+
 export class ShoelaceAdapter implements DesignSystemAdapter {
   name = "shoelace";
   version = "1.0.0";
   feedback: FeedbackAdapter;
+  private readonly config?: ShoelaceAdapterConfig;
 
-  constructor() {
+  constructor(config?: ShoelaceAdapterConfig) {
+    this.config = config;
     this.feedback = new ShoelaceFeedbackAdapter();
   }
 
-  async init(basePath: string): Promise<void> {
+  async init(shellUrl: string): Promise<void> {
     try {
-      const shoelacePath = `${basePath}/shoelace`;
+      const shoelacePath = this.config?.shoelaceUrl ?? `${shellUrl}/shoelace`;
+
+      // Inject theme CSS dynamically so it resolves correctly regardless of where the page is served from
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = `${shoelacePath}/themes/light.css`;
+      document.head.appendChild(link);
+
       const { setBasePath } = await import(/* @vite-ignore */ `${shoelacePath}/utilities/base-path.js`);
       setBasePath(shoelacePath);
       await import(/* @vite-ignore */ `${shoelacePath}/shoelace-autoloader.js`);

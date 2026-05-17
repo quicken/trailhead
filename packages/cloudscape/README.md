@@ -37,12 +37,21 @@ import '@herdingbits/trailhead-cloudscape/shell.css';
 
 const shell = new Trailhead({
   adapter: new CloudScapeAdapter(),
-  basePath: '/app',
+  appBasePath: '/app',
   apiUrl: 'https://api.example.com'
 });
 
 const root = createRoot(document.getElementById('app')!);
 root.render(<ShellApp shell={shell} />);
+```
+
+To load the CloudScape global styles from a CDN instead of bundling via npm import, pass `cloudscapeUrl` to the adapter (and remove the `@cloudscape-design/global-styles/index.css` import from your entry point):
+
+```typescript
+const shell = new Trailhead({
+  adapter: new CloudScapeAdapter({ cloudscapeUrl: 'https://unpkg.com/@cloudscape-design/global-styles@1.0.0/index.css' }),
+  appBasePath: '/app',
+});
 ```
 
 ## What's Included

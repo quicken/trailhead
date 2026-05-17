@@ -8,22 +8,22 @@ import { CloudScapeAdapter, ShellApp } from '@herdingbits/trailhead-cloudscape';
 import '@cloudscape-design/global-styles/index.css';
 
 // Get configuration
-const basePath = import.meta.env.VITE_BASE_PATH || "";
-const shellResourceUrl = (window as any).SHELL_DEV_URL || basePath;
+const appBasePath = import.meta.env.VITE_APP_BASE_PATH || "";
+const shellUrl = (window as any).SHELL_DEV_URL || appBasePath;
 const apiUrl = (window as any).APP_CONFIG?.apiUrl || "";
 
 // Initialize shell with CloudScape adapter
 const shell = new Trailhead({
   adapter: new CloudScapeAdapter(),
-  basePath,
-  shellResourceUrl,
+  appBasePath,
+  shellUrl,
   apiUrl,
 });
 
 // Redirect root to first app
 const currentPath = window.location.pathname;
-if (currentPath === basePath || currentPath === basePath + '/') {
-  window.location.href = basePath + '/demo';
+if (currentPath === appBasePath || currentPath === appBasePath + '/') {
+  window.location.href = appBasePath + '/demo';
 }
 
 // Render React app
