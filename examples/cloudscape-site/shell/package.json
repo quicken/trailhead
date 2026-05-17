@@ -10,15 +10,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@herdingbits/trailhead-core": "^0.0.15",
-    "@herdingbits/trailhead-cloudscape": "^0.0.13",
+    "@herdingbits/trailhead-core": "^0.0.16",
+    "@herdingbits/trailhead-cloudscape": "^0.0.15",
     "@cloudscape-design/components": "^3.0.1297",
     "@cloudscape-design/global-styles": "^1.0.59",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },
   "devDependencies": {
-    "@herdingbits/trailhead-types": "^0.0.12",
+    "@herdingbits/trailhead-types": "^0.0.13",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
