@@ -303,6 +303,7 @@ export class Trailhead {
     root.innerHTML = `<div class="shell-loading">Loading...</div>`;
 
     const isDev = (window as any).__SHELL_DEV__ === true;
+    const appBasePath = this.basePath + appPath;
 
     try {
       if (isDev) {
@@ -313,7 +314,7 @@ export class Trailhead {
         );
 
         root.innerHTML = "";
-        mod.AppMount(root);
+        mod.AppMount(root, appBasePath);
         return;
       }
 
@@ -334,7 +335,7 @@ export class Trailhead {
       script.onload = () => {
         root.innerHTML = "";
         if (window.AppMount) {
-          window.AppMount(root);
+          window.AppMount(root, appBasePath);
         }
       };
 

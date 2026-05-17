@@ -67,16 +67,27 @@ export type ShellPlugin = {
   /**
    * Mounts the application into a DOM element provided by the Shell.
    *
-   * This function is responsible for rendering the application UI
-   * into the given container element.
-   *
    * The Shell guarantees that:
    * - `root` is an empty, attached DOM element
    * - The application owns the DOM subtree beneath `root`
    *
    * @param root - Container element into which the application should render.
+   * @param basePath - Full URL prefix under which this SPA is mounted (e.g. `"/trailhead/apps/mailmerge"`).
+   *   Pass this as `basename` to your client-side router so internal links and default redirects
+   *   resolve correctly when the shell is hosted under a subpath.
+   *
+   * @example
+   * ```ts
+   * export function AppMount(root: HTMLElement, basePath: string) {
+   *   ReactDOM.createRoot(root).render(
+   *     <BrowserRouter basename={basePath}>
+   *       <App />
+   *     </BrowserRouter>
+   *   );
+   * }
+   * ```
    */
-  AppMount(root: HTMLElement): void;
+  AppMount(root: HTMLElement, basePath: string): void;
 };
 
 
@@ -516,7 +527,7 @@ declare global {
     /** Trailhead shell API available to all SPAs */
     shell: ShellAPI;
 
-    /** Legacy mount function (deprecated, use init() export instead) */
-    AppMount?: (container: HTMLElement) => void;
+    /** @see {@link ShellPlugin.AppMount} */
+    AppMount?: (root: HTMLElement, basePath: string) => void;
   }
 }
