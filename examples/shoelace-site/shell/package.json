@@ -12,14 +12,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@herdingbits/trailhead-core": "^0.0.13",
-    "@herdingbits/trailhead-shoelace": "^0.0.14"
+    "@herdingbits/trailhead-core": "^0.0.16",
+    "@herdingbits/trailhead-shoelace": "^0.0.17"
   },
   "devDependencies": {
-    "@herdingbits/trailhead-types": "^0.0.11",
-    "@types/node": "^25.6.0",
-    "typescript": "^5.9.3",
-    "vite": "^7.3.2",
+    "@herdingbits/trailhead-types": "^0.0.13",
+    "@types/node": "^25.8.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.13",
     "@shoelace-style/shoelace": "^2.20.1"
   }
 }
