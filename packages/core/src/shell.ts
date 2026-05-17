@@ -6,20 +6,52 @@ import type { DesignSystemAdapter } from "./adapters/types.js";
 import * as http from "./lib/http.js";
 import * as requestManager from "./lib/requestManager.js";
 
+/**
+ * Configuration passed to the `Trailhead` constructor.
+ */
 export interface ShellConfig {
+  /** Design system adapter that backs all shell UI — toasts, dialogs, and busy overlays. */
   adapter: DesignSystemAdapter;
+
+  /** URL prefix under which the shell is hosted (e.g., `"/sample/trailhead"`). Used to strip the prefix from routes and prepend it to SPA asset URLs. */
   basePath?: string;
+
+  /** Base URL prepended to all SPA HTTP requests made via `shell.http`. */
   apiUrl?: string;
+
+  /** URL from which shell static assets (e.g., `navigation.json`) are fetched. Defaults to `basePath`. */
   shellResourceUrl?: string;
 }
 
+/**
+ * The Trailhead shell. Bootstraps the micro-frontend host by loading navigation config,
+ * mounting SPAs on route activation, and exposing `window.shell` to every hosted application.
+ *
+ * @example
+ * ```typescript
+ * import { Trailhead } from '@herdingbits/trailhead-core';
+ * import { createAdapter } from '@herdingbits/trailhead-shoelace';
+ *
+ * new Trailhead({ adapter: createAdapter() });
+ * ```
+ */
 export class Trailhead {
   private navigation: NavItem[] = [];
   private routeChangeCallbacks: Array<(path: string) => void> = [];
+
+  /** URL prefix under which the shell is hosted. Empty string when hosted at the root. */
   public readonly basePath: string;
   private readonly shellResourceUrl: string;
+
+  /** The active design system adapter supplying UI components to the shell. */
   public readonly adapter: DesignSystemAdapter;
 
+  /**
+   * Creates the shell and immediately begins async initialisation (adapter setup,
+   * navigation load, initial route handling). Mount errors are logged to the console.
+   *
+   * @param config - Shell configuration
+   */
   constructor(config: ShellConfig) {
     this.basePath = config.basePath || "";
     this.shellResourceUrl = config.shellResourceUrl || this.basePath;
@@ -28,8 +60,8 @@ export class Trailhead {
   }
 
   /**
-   * Get navigation items loaded from navigation.json
-   * @returns Array of navigation items
+   * Returns the navigation items loaded from `navigation.json`.
+   * Adapters call this to render the shell's navigation menu.
    */
   public getNavigation(): NavItem[] {
     return this.navigation;

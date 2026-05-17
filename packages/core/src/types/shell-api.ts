@@ -378,46 +378,41 @@ export interface RequestOptions {
 }
 
 /**
- * Successful HTTP response
+ * Successful HTTP response — narrows `Result<T>` when `success` is `true`.
  */
 export interface SuccessResult<T> {
-  /** Always true for successful responses */
   success: true;
 
-  /** Response data */
+  /** Parsed JSON response body. */
   data: T;
 
-  /** Request key if provided in options */
+  /** Echo of the `requestKey` from `RequestOptions`, if supplied. */
   requestKey?: string;
 }
 
 /**
- * Failed HTTP response
+ * Failed HTTP response — narrows `Result<T>` when `success` is `false`.
  */
 export interface ErrorResult {
-  /** Always false for error responses */
   success: false;
 
-  /** Error details */
   error: HttpError;
 
-  /** Request key if provided in options */
+  /** Echo of the `requestKey` from `RequestOptions`, if supplied. */
   requestKey?: string;
 }
 
 /**
- * Discriminated union of success or error result.
- * Use the `success` property to narrow the type.
+ * Discriminated union returned by all `shell.http` methods.
+ * Branch on `result.success` to get type-safe access to `data` or `error`.
  *
  * @example
  * ```typescript
  * const result = await shell.http.get('/api/data');
  *
  * if (result.success) {
- *   // TypeScript knows result.data exists
  *   console.log(result.data);
  * } else {
- *   // TypeScript knows result.error exists
  *   console.error(result.error.message);
  * }
  * ```
@@ -425,19 +420,19 @@ export interface ErrorResult {
 export type Result<T> = SuccessResult<T> | ErrorResult;
 
 /**
- * HTTP error details
+ * Details of a failed HTTP request, normalised from the underlying ky error.
  */
 export interface HttpError {
-  /** Error name (e.g., "HTTPError", "TimeoutError") */
+  /** Error class name (e.g., `"HTTPError"`, `"TimeoutError"`). */
   name: string;
 
-  /** Human-readable error message */
+  /** Human-readable description, extracted from the server response body when available. */
   message: string;
 
-  /** HTTP status code if available (e.g., 404, 500) */
+  /** HTTP status code, present when the server replied (absent for network errors). */
   status?: number;
 
-  /** Additional error data from server response */
+  /** Parsed server response body, when the error response was valid JSON. */
   data?: any;
 }
 
@@ -490,25 +485,24 @@ export interface NavigationAPI {
  * Defines a navigation menu item in `navigation.json`.
  */
 export interface NavItem {
-  /** Unique identifier for the navigation item */
+  /** Stable key used to match active nav state and correlate items across reloads. */
   id: string;
 
-  /** URL path for the navigation item (e.g., "/demo") */
+  /** Route path this item activates (e.g., `"/demo"`). Must match the SPA's base route. */
   path: string;
 
-  /** SPA identifier (matches directory name) */
+  /** SPA directory name; the shell resolves `<basePath>/<app>/app.js` when this route is activated. */
   app: string;
 
-  /** Icon name (design system specific) */
+  /** Icon identifier passed to the adapter's icon component. Naming convention is design-system-specific. */
   icon: string;
 
-  /** Display label for the navigation item */
   label: string;
 
-  /** Sort order (lower numbers appear first) */
+  /** Lower numbers appear earlier in the menu. */
   order: number;
 
-  /** Optional badge function that returns a count to display */
+  /** Called on each render to get a live count shown as a badge on the nav item (e.g., unread notifications). */
   badge?: () => number;
 }
 
