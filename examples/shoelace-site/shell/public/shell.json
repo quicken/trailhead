@@ -1,0 +1,18 @@
+{
+  "apps": [
+    { "id": "demo", "basePath": "/demo", "src": "demo" },
+    { "id": "saas-demo", "basePath": "/saas-demo", "src": "saas-demo" }
+  ],
+  "nav": [
+    {
+      "type": "section",
+      "label": "Applications",
+      "icon": "grid",
+      "order": 1,
+      "children": [
+        { "type": "link", "label": "Demo", "icon": "star", "order": 1, "href": "/demo" },
+        { "type": "link", "label": "SaaS Demo", "icon": "people", "order": 2, "href": "/saas-demo" }
+      ]
+    }
+  ]
+}

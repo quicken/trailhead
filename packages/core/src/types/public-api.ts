@@ -16,4 +16,9 @@ export type {
   HttpError,
   NavigationAPI,
   NavItem,
+  NavLink,
+  NavSection,
+  NavDivider,
+  AppEntry,
+  ShellManifest,
 } from "./shell-api.js";

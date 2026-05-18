@@ -1,18 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import AppLayout from '@cloudscape-design/components/app-layout';
-import SideNavigation from '@cloudscape-design/components/side-navigation';
-import Flashbar from '@cloudscape-design/components/flashbar';
-import Spinner from '@cloudscape-design/components/spinner';
-
-interface NavigationItem {
-  id: string;
-  label: string;
-  path: string;
-  icon?: string;
-}
+import SideNavigation, { SideNavigationProps } from '@cloudscape-design/components/side-navigation';
+import type { NavItem, NavLink } from '@herdingbits/trailhead-core';
 
 interface ShellLayoutProps {
-  navigation: NavigationItem[];
+  navigation: NavItem[];
   currentPath: string;
   basePath: string;
   onNavigate: (path: string) => void;
@@ -22,11 +14,31 @@ interface ShellLayoutProps {
 export function ShellLayout({ navigation, currentPath, basePath, onNavigate, children }: ShellLayoutProps) {
   const [navigationOpen, setNavigationOpen] = useState(true);
 
-  const navItems = navigation.map(item => ({
-    type: 'link' as const,
+  const isExternal = (href: string) => /^https?:\/\/|^\/\//.test(href);
+  const resolveHref = (href: string) => isExternal(href) ? href : basePath + href + '/';
+
+  const mapLink = (item: NavLink): SideNavigationProps.Link => ({
+    type: 'link',
     text: item.label,
-    href: basePath + item.path + '/',  // Add trailing slash for directory routing
-  }));
+    href: resolveHref(item.href),
+  });
+
+  const navItems: SideNavigationProps['items'] = [...navigation]
+    .sort((a, b) => a.order - b.order)
+    .map((item) => {
+      switch (item.type) {
+        case 'link':
+          return mapLink(item);
+        case 'section':
+          return {
+            type: 'section',
+            text: item.label,
+            items: [...item.children].sort((a, b) => a.order - b.order).map(mapLink),
+          };
+        case 'divider':
+          return { type: 'divider' };
+      }
+    });
 
   return (
     <AppLayout

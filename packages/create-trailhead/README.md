@@ -43,7 +43,7 @@ my-app/
 ├── shell/                  # Application shell
 │   ├── src/
 │   ├── public/
-│   │   └── navigation.json
+│   │   └── shell.json
 │   ├── index.html
 │   ├── vite.config.js
 │   └── package.json
@@ -85,16 +85,26 @@ cd my-app
 cp -r apps/demo apps/users
 ```
 
-Update `shell/public/navigation.json`:
+Add your new app to `shell/public/shell.json`:
 
 ```json
 {
-  "id": "users",
-  "path": "/users",
-  "app": "users",
-  "icon": "people",
-  "label": "Users",
-  "order": 2
+  "apps": [
+    { "id": "demo", "basePath": "/demo", "src": "demo" },
+    { "id": "users", "basePath": "/users", "src": "users" }
+  ],
+  "nav": [
+    {
+      "type": "section",
+      "label": "Applications",
+      "icon": "grid",
+      "order": 1,
+      "children": [
+        { "type": "link", "label": "Demo", "icon": "star", "order": 1, "href": "/demo" },
+        { "type": "link", "label": "Users", "icon": "people", "order": 2, "href": "/users" }
+      ]
+    }
+  ]
 }
 ```
 

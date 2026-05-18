@@ -63,7 +63,7 @@ examples/
 │   │   ├── src/
 │   │   │   └── index.ts   # Uses @herdingbits/trailhead-shoelace
 │   │   └── public/
-│   │       └── navigation.json
+│   │       └── shell.json
 │   └── apps/
 │       ├── demo/          # Simple demo app
 │       └── saas-demo/     # SaaS dashboard demo
@@ -72,7 +72,7 @@ examples/
     │   ├── src/
     │   │   └── index.tsx  # Uses @herdingbits/trailhead-cloudscape
     │   └── public/
-    │       └── navigation.json
+    │       └── shell.json
     └── apps/
         ├── demo/          # Simple demo app
         └── saas-demo/     # SaaS dashboard demo

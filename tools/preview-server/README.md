@@ -29,7 +29,7 @@ npm start
      ├── index.html              (Shell entry)
      ├── shell.js                (Shell bundle)
      ├── shell.css               (Shell styles)
-     ├── navigation.json         (Menu config)
+     ├── shell.json              (Shell config: SPA registry + nav)
      └── apps/
          ├── demo/
          │   └── app.js          (SPA bundle)

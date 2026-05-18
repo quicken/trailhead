@@ -35,7 +35,7 @@ import { YourAdapter } from '@herdingbits/trailhead-your-design-system';
 const shell = new Trailhead({
   adapter: new YourAdapter(),
   appBasePath: '/app',       // URL prefix where SPAs are hosted
-  shellUrl: '/app',          // URL where shell.js and navigation.json are served (defaults to appBasePath)
+  shellUrl: '/app',          // URL where shell.js and shell.json are served (defaults to appBasePath)
   apiUrl: 'https://api.example.com'
 });
 ```

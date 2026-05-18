@@ -1,7 +1,7 @@
 /**
  * Trailhead Core Shell - Design system agnostic orchestration
  */
-import type { ShellAPI, NavItem } from "./types/shell-api.js";
+import type { ShellAPI, NavItem, NavLink, AppEntry, ShellManifest } from "./types/shell-api.js";
 import type { DesignSystemAdapter } from "./adapters/types.js";
 import * as http from "./lib/http.js";
 import * as requestManager from "./lib/requestManager.js";
@@ -19,7 +19,7 @@ export interface ShellConfig {
   /** Base URL prepended to all SPA HTTP requests made via `shell.http`. */
   apiUrl?: string;
 
-  /** URL from which the shell bundle and static assets (e.g., `navigation.json`) are fetched. Defaults to `appBasePath`. */
+  /** URL from which the shell bundle and static assets (e.g., `shell.json`) are fetched. Defaults to `appBasePath`. */
   shellUrl?: string;
 }
 
@@ -36,7 +36,8 @@ export interface ShellConfig {
  * ```
  */
 export class Trailhead {
-  private navigation: NavItem[] = [];
+  private apps: AppEntry[] = [];
+  private nav: NavItem[] = [];
   private routeChangeCallbacks: Array<(path: string) => void> = [];
 
   /** URL prefix under which SPAs are hosted. Empty string when hosted at the root. */
@@ -60,11 +61,19 @@ export class Trailhead {
   }
 
   /**
-   * Returns the navigation items loaded from `navigation.json`.
+   * Returns the nav menu items loaded from `shell.json`.
    * Adapters call this to render the shell's navigation menu.
    */
   public getNavigation(): NavItem[] {
-    return this.navigation;
+    return this.nav;
+  }
+
+  /**
+   * Returns the SPA registry loaded from `shell.json`.
+   * Adapters that manage their own routing call this to resolve which app to load.
+   */
+  public getApps(): AppEntry[] {
+    return this.apps;
   }
 
   /**
@@ -196,11 +205,14 @@ export class Trailhead {
    */
   private async loadNavigation(): Promise<void> {
     try {
-      const response = await fetch(`${this.shellUrl}/navigation.json`);
-      this.navigation = await response.json();
+      const response = await fetch(`${this.shellUrl}/shell.json`);
+      const manifest: ShellManifest = await response.json();
+      this.apps = manifest.apps ?? [];
+      this.nav = manifest.nav ?? [];
     } catch (error) {
-      console.error("Failed to load navigation:", error);
-      this.navigation = [];
+      console.error("Failed to load shell.json:", error);
+      this.apps = [];
+      this.nav = [];
     }
   }
 
@@ -211,28 +223,50 @@ export class Trailhead {
     const nav = document.getElementById("shell-navigation");
     if (!nav) return;
 
-    nav.innerHTML = this.navigation
-      .map(
-        (item) => `
-      <a href="${this.appBasePath}${item.path}"
-         class="shell-nav-item"
-         data-path="${item.path}"
-         data-app="${item.app}">
-        <i class="shell-icon shell-icon-${item.icon}"></i>
+    const isExternal = (href: string) => /^https?:\/\/|^\/\//.test(href);
+
+    const renderLink = (item: NavLink, isChild = false): string => {
+      const external = isExternal(item.href);
+      const fullHref = external ? item.href : `${this.appBasePath}${item.href}`;
+      return `<a href="${fullHref}"
+         class="shell-nav-item${isChild ? " shell-nav-item-child" : ""}"
+         data-path="${item.href}"
+         data-external="${external}">
+        <i class="shell-icon shell-icon-${item.icon ?? ""}"></i>
         <span class="shell-nav-label">${item.label}</span>
-      </a>
-    `,
-      )
+      </a>`;
+    };
+
+    nav.innerHTML = [...this.nav]
+      .sort((a, b) => a.order - b.order)
+      .map((item) => {
+        switch (item.type) {
+          case "link":
+            return renderLink(item);
+          case "section":
+            return `<div class="shell-nav-section">
+              <span class="shell-nav-section-header">
+                <i class="shell-icon shell-icon-${item.icon ?? ""}"></i>
+                <span class="shell-nav-label">${item.label}</span>
+              </span>
+              ${[...item.children].sort((a, b) => a.order - b.order).map((c) => renderLink(c, true)).join("")}
+            </div>`;
+          case "divider":
+            return `<hr class="shell-nav-divider" />`;
+        }
+      })
       .join("");
 
     nav.querySelectorAll("a").forEach((link) => {
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-        const path = link.getAttribute("data-path");
-        if (path) {
-          this.navigate(path);
-        }
-      });
+      if (link.getAttribute("data-external") !== "true") {
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const path = link.getAttribute("data-path");
+          if (path) {
+            this.navigate(path);
+          }
+        });
+      }
     });
   }
 
@@ -262,18 +296,18 @@ export class Trailhead {
       path = path.substring(this.appBasePath.length) || "/";
     }
 
-    const navItem = this.navigation.find((item) => path.startsWith(item.path));
+    const app = this.apps.find((entry) => path.startsWith(entry.basePath));
 
-    if (navItem) {
+    if (app) {
       // Skip loading if app is already mounted (dev mode)
       const shellContent = document.getElementById("shell-content");
       const rootElement = shellContent?.querySelector("#root");
       const isAlreadyMounted = rootElement && rootElement.children.length > 0;
 
       if (!isAlreadyMounted) {
-        this.loadPlugin(navItem.app, navItem.path);
+        this.loadPlugin(app.src, app.basePath);
       }
-      this.updateActiveNav(navItem.path);
+      this.updateActiveNav(app.basePath);
     }
   }
 

@@ -21,6 +21,6 @@
     "typescript": "^6.0.3",
     "vite": "^8.0.13",
     "vitest": "^4.1.6",
-    "@herdingbits/trailhead-types": "^0.0.13"
+    "@herdingbits/trailhead-types": "^0.0.14"
   }
 }

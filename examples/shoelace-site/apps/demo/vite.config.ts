@@ -9,7 +9,7 @@ export default defineConfig({
         target: "http://localhost:3001",
         changeOrigin: true,
       },
-      "/navigation.json": {
+      "/shell.json": {
         target: "http://localhost:3001",
         changeOrigin: true,
       },

@@ -491,31 +491,65 @@ export interface NavigationAPI {
 }
 
 /**
- * Navigation item configuration
- *
- * Defines a navigation menu item in `navigation.json`.
+ * SPA registration entry in `shell.json`.
+ * Describes a hosted application — where it lives and how to load it.
  */
-export interface NavItem {
-  /** Stable key used to match active nav state and correlate items across reloads. */
+export interface AppEntry {
+  /** Unique identifier for this SPA (used in logs and as the CSS filename stem). */
   id: string;
 
-  /** Route path this item activates (e.g., `"/demo"`). Must match the SPA's base route. */
-  path: string;
+  /** URL path prefix at which this SPA is mounted (e.g., `"/demo"`). Shell loads the app when the current URL starts with this value. */
+  basePath: string;
 
-  /** SPA directory name; the shell resolves `<basePath>/<app>/app.js` when this route is activated. */
-  app: string;
+  /** Asset directory name. Shell resolves `<appBasePath>/<src>/app.js` and `<appBasePath>/<src>/<src>.css`. */
+  src: string;
+}
 
-  /** Icon identifier passed to the adapter's icon component. Naming convention is design-system-specific. */
-  icon: string;
+/**
+ * Parsed structure of `shell.json`.
+ */
+export interface ShellManifest {
+  apps: AppEntry[];
+  nav: NavItem[];
+}
 
+/** A leaf nav item that links to a URL or SPA route. */
+export interface NavLink {
+  type: 'link';
+  /** Visible label rendered in the nav. */
   label: string;
-
+  /** Icon identifier passed to the adapter's icon component. Naming convention is design-system-specific. */
+  icon?: string;
   /** Lower numbers appear earlier in the menu. */
   order: number;
-
-  /** Called on each render to get a live count shown as a badge on the nav item (e.g., unread notifications). */
+  /** Absolute URL (browser handles navigation; shell does not intercept) or relative path (shell loads the matching SPA). */
+  href: string;
+  /** Called on each render to get a live count shown as a badge on this item. */
   badge?: () => number;
 }
+
+/** A section header that groups a set of child links. Maximum nesting depth is one level. */
+export interface NavSection {
+  type: 'section';
+  /** Visible label for the section header. */
+  label: string;
+  /** Icon identifier for the section header. */
+  icon?: string;
+  /** Lower numbers appear earlier in the menu. */
+  order: number;
+  /** Child link items. Only `NavLink` is allowed here — no nested sections. */
+  children: NavLink[];
+}
+
+/** A visual divider rendered between nav groups. */
+export interface NavDivider {
+  type: 'divider';
+  /** Lower numbers appear earlier in the menu. */
+  order: number;
+}
+
+/** Discriminated union of all nav item types. */
+export type NavItem = NavLink | NavSection | NavDivider;
 
 /**
  * Global window extension

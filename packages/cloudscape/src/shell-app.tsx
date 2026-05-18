@@ -6,7 +6,7 @@ import Box from '@cloudscape-design/components/box';
 import SpaceBetween from '@cloudscape-design/components/space-between';
 import Button from '@cloudscape-design/components/button';
 import { ShellLayout } from './shell-layout.js';
-import type { Trailhead } from '@herdingbits/trailhead-core';
+import type { Trailhead, NavItem } from '@herdingbits/trailhead-core';
 
 interface ShellAppProps {
   shell: Trailhead;
@@ -28,7 +28,7 @@ interface DialogState {
 }
 
 export function ShellApp({ shell }: ShellAppProps) {
-  const [navigation, setNavigation] = useState<any[]>([]);
+  const [navigation, setNavigation] = useState<NavItem[]>([]);
   const [flashMessages, setFlashMessages] = useState<FlashMessage[]>([]);
   const [busyMessage, setBusyMessage] = useState('');
   const [dialogState, setDialogState] = useState<DialogState>({
@@ -97,11 +97,10 @@ export function ShellApp({ shell }: ShellAppProps) {
   }, [navigation, currentPath]);
 
   const handleRoute = (path: string) => {
-    // Normalize path by removing trailing slash for matching
     const normalizedPath = path.endsWith('/') && path !== '/' ? path.slice(0, -1) : path;
-    const route = navigation.find(item => normalizedPath.startsWith(item.path));
-    if (route && contentRef.current) {
-      loadApp(route.app, route.path);
+    const app = shell.getApps().find(entry => normalizedPath.startsWith(entry.basePath));
+    if (app && contentRef.current) {
+      loadApp(app.src, app.basePath);
     }
   };
 
