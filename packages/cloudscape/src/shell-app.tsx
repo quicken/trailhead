@@ -230,7 +230,6 @@ export function ShellApp({ shell }: ShellAppProps) {
       <ShellLayout
         navigation={navigation}
         currentPath={currentPath}
-        basePath={shell.appBasePath}
         onNavigate={handleNavigate}
       >
         <div id="shell-content" ref={contentRef} />

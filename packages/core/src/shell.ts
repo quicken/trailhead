@@ -227,8 +227,7 @@ export class Trailhead {
 
     const renderLink = (item: NavLink, isChild = false): string => {
       const external = isExternal(item.href);
-      const fullHref = external ? item.href : `${this.appBasePath}${item.href}`;
-      return `<a href="${fullHref}"
+      return `<a href="${item.href}"
          class="shell-nav-item${isChild ? " shell-nav-item-child" : ""}"
          data-path="${item.href}"
          data-external="${external}">
@@ -283,7 +282,7 @@ export class Trailhead {
    * Navigate to path
    */
   private navigate(path: string): void {
-    window.location.href = this.appBasePath + path;
+    window.location.href = path;
   }
 
   /**

@@ -6,21 +6,17 @@ import type { NavItem, NavLink } from '@herdingbits/trailhead-core';
 interface ShellLayoutProps {
   navigation: NavItem[];
   currentPath: string;
-  basePath: string;
   onNavigate: (path: string) => void;
   children: React.ReactNode;
 }
 
-export function ShellLayout({ navigation, currentPath, basePath, onNavigate, children }: ShellLayoutProps) {
+export function ShellLayout({ navigation, currentPath, onNavigate, children }: ShellLayoutProps) {
   const [navigationOpen, setNavigationOpen] = useState(true);
-
-  const isExternal = (href: string) => /^https?:\/\/|^\/\//.test(href);
-  const resolveHref = (href: string) => isExternal(href) ? href : basePath + href + '/';
 
   const mapLink = (item: NavLink): SideNavigationProps.Link => ({
     type: 'link',
     text: item.label,
-    href: resolveHref(item.href),
+    href: item.href,
   });
 
   const navItems: SideNavigationProps['items'] = [...navigation]
@@ -46,7 +42,7 @@ export function ShellLayout({ navigation, currentPath, basePath, onNavigate, chi
       onNavigationChange={({ detail }) => setNavigationOpen(detail.open)}
       navigation={
         <SideNavigation
-          activeHref={basePath + currentPath + (currentPath.endsWith('/') ? '' : '/')}
+          activeHref={window.location.pathname.replace(/\/$/, '') || '/'}
           items={navItems}
           onFollow={(event) => {
             event.preventDefault();

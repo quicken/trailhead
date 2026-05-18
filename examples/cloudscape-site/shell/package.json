@@ -1,6 +1,6 @@
 {
   "name": "trailhead-cloudscape-example",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "type": "module",
   "description": "Example Trailhead shell with CloudScape design system",
@@ -10,8 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@herdingbits/trailhead-core": "^0.0.17",
-    "@herdingbits/trailhead-cloudscape": "^0.0.17",
+    "@herdingbits/trailhead-core": "^0.0.18",
+    "@herdingbits/trailhead-cloudscape": "^0.0.18",
     "@cloudscape-design/components": "^3.0.1297",
     "@cloudscape-design/global-styles": "^1.0.59",
     "react": "^19.2.6",

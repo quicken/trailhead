@@ -1,6 +1,6 @@
 {
   "name": "@herdingbits/trailhead-cloudscape",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "description": "AWS CloudScape adapter for Trailhead. React-based shell with CloudScape components. Supports React 19.",
   "type": "module",
   "main": "./dist/index.js",
@@ -23,7 +23,7 @@
   "peerDependencies": {
     "@cloudscape-design/components": "^3.0.0",
     "@cloudscape-design/global-styles": "^1.0.0",
-    "@herdingbits/trailhead-core": "^0.0.17",
+    "@herdingbits/trailhead-core": "^0.0.18",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
