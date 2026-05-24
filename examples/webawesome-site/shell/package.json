@@ -1,0 +1,25 @@
+{
+  "name": "trailhead-webawesome-example",
+  "version": "0.0.2",
+  "private": true,
+  "type": "module",
+  "description": "Example Trailhead shell with Web Awesome design system",
+  "scripts": {
+    "start": "npm run build && vite preview --port 3001",
+    "dev": "vite",
+    "build": "vite build && npm run copy-webawesome",
+    "copy-webawesome": "rm -rf dist/webawesome && mkdir -p dist/webawesome && cp -R node_modules/@awesome.me/webawesome/dist-cdn/* dist/webawesome/",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@herdingbits/trailhead-core": "^0.1.0",
+    "@herdingbits/trailhead-webawesome": "^0.1.1"
+  },
+  "devDependencies": {
+    "@herdingbits/trailhead-types": "^0.1.0",
+    "@types/node": "^25.9.1",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.14",
+    "@awesome.me/webawesome": "^3.7.0"
+  }
+}

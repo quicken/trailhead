@@ -22,7 +22,7 @@ Trailhead is built on a simple adapter pattern that separates core orchestration
                  ▼
 ┌─────────────────────────────────────────────────────────┐
 │            Design System Adapter                        │
-│  - Shoelace / CloudScape / Material-UI / etc.          │
+│  - Web Awesome / CloudScape / Material UI / etc.       │
 │  - Toasts, Dialogs, Busy States                        │
 │  - Component Loading                                    │
 └─────────────────────────────────────────────────────────┘
@@ -30,7 +30,7 @@ Trailhead is built on a simple adapter pattern that separates core orchestration
 
 ## Core Components
 
-### 1. Shell Core (`core/shell/src/shell.ts`)
+### 1. Shell Core (`packages/core/src/shell.ts`)
 
 The shell is the orchestration layer that:
 - Loads and manages plugin applications
@@ -45,7 +45,7 @@ The shell is the orchestration layer that:
 - ✅ Navigation configuration from JSON
 - ✅ Hard redirects for true isolation
 
-### 2. Design System Adapter (`core/shell/src/adapters/`)
+### 2. Design System Adapter (`packages/core/src/adapters/`)
 
 Adapters implement the `DesignSystemAdapter` interface:
 
@@ -59,8 +59,8 @@ interface DesignSystemAdapter {
 ```
 
 **Current Adapters:**
-- ✅ **Shoelace** - `@herdingbits/trailhead-shoelace`
-- ✅ **CloudScape** - `@herdingbits/trailhead-cloudscape`
+- ✅ **Web Awesome** — `@herdingbits/trailhead-webawesome` (vanilla TypeScript)
+- ✅ **CloudScape** — `@herdingbits/trailhead-cloudscape` (React)
 
 **Adapter Responsibilities:**
 - Load design system assets
@@ -69,22 +69,20 @@ interface DesignSystemAdapter {
 - Implement busy/loading overlays
 - Provide consistent UI across all apps
 
-### 3. Contracts Package (`core/contracts/`)
+### 3. Types Package (`packages/types/`)
 
 TypeScript type definitions for:
 - Shell API (`ShellAPI`, `FeedbackAPI`, `HttpAPI`, `NavigationAPI`)
 - Adapter interfaces (`DesignSystemAdapter`, `FeedbackAdapter`)
-- Version checking utilities
 
 Apps install this as a dev dependency for type safety.
 
-### 4. Plugin Apps (`apps/*/`)
+### 4. Plugin Apps
 
 Independent applications that:
 - Use any framework (React, Vue, Svelte, vanilla)
-- Expose `window.AppMount(container)` function
+- Assign `window.AppMount(container, basePath)` for shell to call
 - Use `window.shell` API for services
-- Load specific shell version via script tag
 - Deploy independently
 
 ## Data Flow
@@ -96,9 +94,10 @@ Independent applications that:
 2. Shell reads navigation.json
 3. Shell finds matching route
 4. Shell creates <script> tag for app
-5. App loads and calls window.AppMount(container)
-6. App renders into container
-7. App uses window.shell for services
+5. App loads and assigns window.AppMount
+6. Shell calls AppMount(container, basePath)
+7. App renders into container
+8. App uses window.shell for services
 ```
 
 ### Feedback Flow
@@ -117,7 +116,7 @@ Independent applications that:
 2. Shell performs hard redirect (window.location.href)
 3. Page reloads with new app
 4. Previous app is completely destroyed
-5. New app initializes fresh
+5. New app initialises fresh
 ```
 
 ## Design Decisions
@@ -132,13 +131,13 @@ Independent applications that:
 
 ### Why Adapter Pattern?
 
-- **Flexibility**: Organizations choose their design system
+- **Flexibility**: Organisations choose their design system
 - **Maintainability**: Core logic separate from UI
 - **Extensibility**: Community can add adapters
 - **Testability**: Can mock adapters
 - **Simplicity**: Clear separation of concerns
 
-### Why No Client-Side Routing?
+### Why No Client-Side Routing Between SPAs?
 
 - **Simplicity**: No router library needed
 - **Isolation**: Page reloads provide automatic cleanup
@@ -152,55 +151,37 @@ Independent applications that:
 - **Type Safety**: Compile-time validation
 - **Bundle Size**: Only one language per build
 
-## Versioning Strategy
-
-Apps control which shell version they load:
-
-```html
-<!-- app/index.html -->
-<script type="module" src="/shell/1.0.0/shell.js"></script>
-<script type="module" src="./app.js"></script>
-```
-
-Benefits:
-- Apps upgrade shell independently
-- No coordination needed
-- Gradual migration
-- Type safety via contracts package
-
-See [VERSIONING.md](../VERSIONING.md) for details.
-
 ## Deployment Architecture
 
 ```
 CDN/
 ├── shell/
-│   └── 1.0.0/
-│       ├── shell.js          # Shell + Shoelace adapter
-│       ├── shell.css
-│       └── shoelace/         # Design system assets
+│   ├── index.html
+│   ├── shell.js
+│   ├── shell.css
+│   ├── navigation.json
+│   └── webawesome/           # Web Awesome assets (served from here)
 ├── customers/
-│   ├── index.html            # Loads shell/1.0.0
-│   └── app.js                # Customer app
+│   ├── index.html            # Copy of shell HTML
+│   └── app.js                # Customer SPA bundle
 ├── orders/
-│   ├── index.html            # Loads shell/1.0.0
-│   └── app.js                # Orders app
-└── navigation.json           # Shared navigation config
+│   ├── index.html
+│   └── app.js
+└── navigation.json
 ```
 
 **Key Points:**
 - Each app is a separate directory
-- Each app has its own index.html
-- Shell is versioned and immutable
+- Each app has its own `index.html` (copy of shell HTML)
+- Web Awesome loaded once by the shell, available to all SPAs
 - No URL rewrite rules needed
-- Works on S3 + CloudFront
+- Works on S3 + CloudFront, Netlify, or any file server
 
 ## Future Enhancements
 
 ### Planned
-- Material-UI adapter
+- Material UI adapter
 - Adapter certification tests
-- Adapter marketplace
 
 ### Considered
 - Client-side routing (rejected for simplicity)

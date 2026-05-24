@@ -17,11 +17,11 @@ console.log('Cleaning templates/...');
 rmSync(join(__dirname, 'templates'), { recursive: true, force: true });
 mkdirSync(join(__dirname, 'templates'), { recursive: true });
 
-// Copy Shoelace templates
-console.log('Copying Shoelace shell template...');
+// Copy Web Awesome templates
+console.log('Copying Web Awesome shell template...');
 cpSync(
-  join(__dirname, '../../examples/shoelace-site/shell'),
-  join(__dirname, 'templates/shoelace-shell'),
+  join(__dirname, '../../examples/webawesome-site/shell'),
+  join(__dirname, 'templates/webawesome-shell'),
   {
     recursive: true,
     filter: (src) => {
@@ -31,10 +31,10 @@ cpSync(
   }
 );
 
-console.log('Copying Shoelace app template...');
+console.log('Copying Web Awesome app template...');
 cpSync(
-  join(__dirname, '../../examples/shoelace-site/apps/demo'),
-  join(__dirname, 'templates/shoelace-app'),
+  join(__dirname, '../../examples/webawesome-site/apps/demo'),
+  join(__dirname, 'templates/webawesome-app'),
   {
     recursive: true,
     filter: (src) => {

@@ -2,7 +2,7 @@
 /**
  * Build and assemble script for preview server
  * Builds shells and apps, then assembles for deployment
- * Usage: node build.js [shoelace|cloudscape|both]
+ * Usage: node build.js [webawesome|cloudscape|both]
  */
 
 import { execSync } from 'child_process';
@@ -11,9 +11,9 @@ import { cpSync, mkdirSync, rmSync } from 'fs';
 // Get site from command line argument (default: both)
 const site = process.argv[2] || 'both';
 
-if (!['shoelace', 'cloudscape', 'both'].includes(site)) {
-  console.error('Error: Site must be either "shoelace", "cloudscape", or "both"');
-  console.log('Usage: node build.js [shoelace|cloudscape|both]');
+if (!['webawesome', 'cloudscape', 'both'].includes(site)) {
+  console.error('Error: Site must be either "webawesome", "cloudscape", or "both"');
+  console.log('Usage: node build.js [webawesome|cloudscape|both]');
   process.exit(1);
 }
 
@@ -24,7 +24,7 @@ console.log('Cleaning public/...');
 rmSync('public', { recursive: true, force: true });
 mkdirSync('public/sample/trailhead', { recursive: true });
 
-const sites = site === 'both' ? ['shoelace', 'cloudscape'] : [site];
+const sites = site === 'both' ? ['webawesome', 'cloudscape'] : [site];
 
 sites.forEach(siteName => {
   const siteDir = `../../examples/${siteName}-site`;

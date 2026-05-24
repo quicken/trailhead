@@ -15,22 +15,22 @@ const PORT = 8081;
 
 /**
  * Serve static files from public directory.
- * Files are in public/sample/trailhead/{shoelace,cloudscape}
+ * Files are in public/sample/trailhead/{webawesome,cloudscape}
  */
 app.use(express.static(join(__dirname, 'public')));
 
-// Redirect root to shoelace site
+// Redirect root to Web Awesome site
 app.get('/', (req, res) => {
-  res.redirect('/sample/trailhead/shoelace');
+  res.redirect('/sample/trailhead/webawesome');
 });
 
 app.listen(PORT, () => {
   console.log(`
 ✓ Production server running!
 
-  Shoelace:   http://localhost:${PORT}/sample/trailhead/shoelace
-  CloudScape: http://localhost:${PORT}/sample/trailhead/cloudscape
-  
+  Web Awesome: http://localhost:${PORT}/sample/trailhead/webawesome
+  CloudScape:  http://localhost:${PORT}/sample/trailhead/cloudscape
+
 Press Ctrl+C to stop
 `);
 });

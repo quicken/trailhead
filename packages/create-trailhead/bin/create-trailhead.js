@@ -19,12 +19,13 @@ Usage:
   npx @herdingbits/create-trailhead <project-name> [options]
 
 Options:
-  --design-system <name>   Design system to use (shoelace|cloudscape)
+  --design-system <name>   Design system to use (webawesome|cloudscape)
   --no-demo               Skip creating demo app
   --help, -h              Show this help message
 
 Examples:
   npx @herdingbits/create-trailhead my-app
+  npx @herdingbits/create-trailhead my-app --design-system webawesome
   npx @herdingbits/create-trailhead my-app --design-system cloudscape
   npx @herdingbits/create-trailhead my-app --no-demo
 
@@ -39,7 +40,7 @@ After creating your project:
 // Parse arguments
 const projectName = args[0];
 const designSystemArg = args.indexOf('--design-system');
-const designSystem = designSystemArg !== -1 ? args[designSystemArg + 1] : 'shoelace';
+const designSystem = designSystemArg !== -1 ? args[designSystemArg + 1] : 'webawesome';
 const createDemo = !args.includes('--no-demo');
 
 // Validate
@@ -49,8 +50,8 @@ if (!projectName) {
   process.exit(1);
 }
 
-if (!['shoelace', 'cloudscape'].includes(designSystem)) {
-  console.error('Error: Design system must be either "shoelace" or "cloudscape"');
+if (!['webawesome', 'cloudscape'].includes(designSystem)) {
+  console.error('Error: Design system must be either "webawesome" or "cloudscape"');
   process.exit(1);
 }
 

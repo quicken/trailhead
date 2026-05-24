@@ -5,8 +5,8 @@ Simulates production deployment of the Trailhead shell and SPAs.
 ## Quick Start
 
 ```bash
-# Build Shoelace site
-npm run build:shoelace
+# Build Web Awesome site
+npm run build:webawesome
 
 # Build CloudScape site
 npm run build:cloudscape
@@ -22,7 +22,7 @@ npm start
 1. **Build Scripts**:
    - Builds shell (production)
    - Builds SPAs (production)
-   - Copies all artifacts to `public/` directory
+   - Copies all artefacts to `public/` directory
    - Structure:
      ```
      public/sample/trailhead/
@@ -30,6 +30,7 @@ npm start
      ├── shell.js                (Shell bundle)
      ├── shell.css               (Shell styles)
      ├── shell.json              (Shell config: SPA registry + nav)
+     ├── webawesome/             (Web Awesome assets)
      └── apps/
          ├── demo/
          │   └── app.js          (SPA bundle)
@@ -40,21 +41,20 @@ npm start
 2. **Server** (`server.js`):
    - Express server on port 8081
    - Serves static files from `public/`
-   - SPA routing (all routes → index.html)
 
 ## Testing Production
 
-1. Build: `npm run build:shoelace` or `npm run build:cloudscape`
+1. Build: `npm run build:webawesome` or `npm run build:cloudscape`
 2. Start: `npm start`
 3. Open: http://localhost:8081/sample/trailhead
 4. Check Network tab:
    - Shell loaded once
    - SPAs load as ES modules
-   - Design system components cached
+   - Web Awesome components cached
 
 ## Differences from Dev
 
-- **Dev**: SPAs run on separate ports (3001, 3002)
+- **Dev**: SPAs run on separate ports (3001, 3000)
 - **Prod**: Everything served from one server (8081)
 - **Dev**: Hot reload enabled
-- **Prod**: Static files with caching headers
+- **Prod**: Static files

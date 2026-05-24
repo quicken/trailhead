@@ -12,7 +12,7 @@ Trailhead is an application shell that orchestrates multiple single page applica
 │  - Navigation Management                         │
 │  - HTTP Client with feedback orchestration       │
 │  - User Feedback (toasts, dialogs, loading)      │
-│  - Design System Integration (Shoelace/CloudScape)│
+│  - Design System Integration (Web Awesome/CloudScape)│
 │  - Routing & SPA Loading                         │
 └─────────────────────────────────────────────────┘
                       │
@@ -43,9 +43,9 @@ trailhead/
 │   ├── types/                    # @herdingbits/trailhead-types
 │   │   └── index.d.ts           # Auto-generated from core
 │   │
-│   ├── shoelace/                 # @herdingbits/trailhead-shoelace
+│   ├── webawesome/                 # @herdingbits/trailhead-webawesome
 │   │   ├── src/
-│   │   │   ├── adapter.ts       # Shoelace adapter
+│   │   │   ├── adapter.ts       # Web Awesome adapter
 │   │   │   └── ShellApp.ts      # Shell mounting
 │   │   └── shell.css
 │   │
@@ -56,8 +56,8 @@ trailhead/
 │       └── shell.css
 │
 ├── examples/                     # Example implementations
-│   ├── shoelace-site/
-│   │   ├── shell/               # Shoelace shell implementation
+│   ├── webawesome-site/
+│   │   ├── shell/               # Web Awesome shell implementation
 │   │   │   ├── src/
 │   │   │   │   └── index.ts    # Shell entry point
 │   │   │   └── public/
@@ -217,7 +217,7 @@ export function init(shell: ShellAPI) {
 
 ## Navigation Configuration
 
-Update `examples/shoelace-site/shell/public/navigation.json` to add SPAs:
+Update `examples/webawesome-site/shell/public/navigation.json` to add SPAs:
 
 ```json
 [
@@ -242,7 +242,7 @@ Changes take effect immediately - no rebuild needed.
 
 ```bash
 # Develop SPA with hot reload
-cd examples/shoelace-site/apps/demo
+cd examples/webawesome-site/apps/demo
 npm start  # Port 3001
 
 # Visit http://localhost:3001
@@ -252,7 +252,7 @@ npm start  # Port 3001
 
 ```bash
 # 1. Build the SPA
-cd examples/shoelace-site/apps/demo
+cd examples/webawesome-site/apps/demo
 npm run build
 
 # 2. Copy to shell public directory
@@ -268,7 +268,7 @@ npm start  # Port 3000
 
 ### Environment Configuration
 
-Create `examples/shoelace-site/shell/.env.development`:
+Create `examples/webawesome-site/shell/.env.development`:
 
 ```bash
 # App base path for local development (usually empty for root)
@@ -284,8 +284,8 @@ The shell loads SPAs from their built output in the `public/` directory. For rap
 ```bash
 cd tools/preview-server
 
-# Build Shoelace site
-npm run build:shoelace
+# Build Web Awesome site
+npm run build:webawesome
 
 # Build CloudScape site
 npm run build:cloudscape
@@ -310,7 +310,7 @@ public/sample/trailhead/
 ├── shell.js             # Shell bundle (21 KB / 8 KB gzipped)
 ├── shell.css            # Shell styles
 ├── navigation.json      # Menu config
-├── shoelace/            # Design system (if using Shoelace)
+├── webawesome/            # Design system (Web Awesome assets)
 ├── demo/
 │   ├── index.html       # Copy of shell HTML
 │   └── app.js           # Demo SPA bundle
@@ -369,19 +369,19 @@ const result = await window.shell.http.post("/api/users", userData, {
 - **Dialogs**: `confirm()`, `yesNo()`, `yesNoCancel()`, `custom()`
 - **Alerts**: `alert()` with variants
 
-All use design system components (Shoelace or CloudScape) loaded by shell.
+All use design system components (Web Awesome or CloudScape) loaded by shell.
 
 ## Design System Integration
 
-### Shoelace (Web Components)
+### Web Awesome (Web Components)
 
-Shell loads Shoelace once - all SPAs use the same components:
+Shell loads Web Awesome once — all SPAs use the same components:
 
 ```typescript
 // In any SPA - no imports needed
-<sl-button variant="primary" onClick={handleClick}>
+<wa-button variant="primary" onClick={handleClick}>
   Click Me
-</sl-button>
+</wa-button>
 ```
 
 ### CloudScape (React)
@@ -427,8 +427,8 @@ const msg = "Hallo, Welt!";
 
 1. **Create SPA directory**
    ```bash
-   mkdir -p examples/shoelace-site/apps/my-app/src
-   cd examples/shoelace-site/apps/my-app
+   mkdir -p examples/webawesome-site/apps/my-app/src
+   cd examples/webawesome-site/apps/my-app
    npm init -y
    ```
 
@@ -449,7 +449,7 @@ const msg = "Hallo, Welt!";
    - Output: `app.js`
    - Enable CORS
 
-5. **Add to navigation** (`examples/shoelace-site/shell/public/navigation.json`)
+5. **Add to navigation** (`examples/webawesome-site/shell/public/navigation.json`)
    ```json
    {
      "id": "my-app",
@@ -461,7 +461,7 @@ const msg = "Hallo, Welt!";
    }
    ```
 
-6. **Configure shell dev port** (`examples/shoelace-site/shell/.env.development`)
+6. **Configure shell dev port** (`examples/webawesome-site/shell/.env.development`)
    ```bash
    VITE_APP_PORT_MYAPP=3002
    ```
@@ -511,12 +511,12 @@ export const MyComponent = () => {
 
 ### Design System Components
 
-**Shoelace (Web Components):**
+**Web Awesome (Web Components):**
 ```typescript
 return (
-  <sl-button variant="primary" onClick={handleClick}>
+  <wa-button variant="primary" onClick={handleClick}>
     Click Me
-  </sl-button>
+  </wa-button>
 );
 ```
 

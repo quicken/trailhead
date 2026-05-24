@@ -30,7 +30,7 @@ export interface ShellConfig {
  * @example
  * ```typescript
  * import { Trailhead } from '@herdingbits/trailhead-core';
- * import { createAdapter } from '@herdingbits/trailhead-shoelace';
+ * import { WebAwesomeAdapter } from '@herdingbits/trailhead-webawesome';
  *
  * new Trailhead({ adapter: createAdapter() });
  * ```

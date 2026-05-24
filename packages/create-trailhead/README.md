@@ -14,14 +14,14 @@ npx @herdingbits/create-trailhead my-app
 npx @herdingbits/create-trailhead <project-name> [options]
 
 Options:
-  --design-system <name>   Design system to use (shoelace|cloudscape)
+  --design-system <name>   Design system to use (webawesome|cloudscape)
   --no-demo               Skip creating demo app
   --help, -h              Show help message
 ```
 
 ## Examples
 
-### Create with Shoelace (default)
+### Create with Web Awesome (default)
 ```bash
 npx @herdingbits/create-trailhead my-app
 ```
@@ -45,13 +45,13 @@ my-app/
 │   ├── public/
 │   │   └── shell.json
 │   ├── index.html
-│   ├── vite.config.js
+│   ├── vite.config.ts
 │   └── package.json
 ├── apps/
 │   └── demo/              # Demo SPA (if --no-demo not specified)
 │       ├── src/
 │       ├── index.html
-│       ├── vite.config.js
+│       ├── vite.config.ts
 │       └── package.json
 ├── deploy.js              # Deployment assembly script
 ├── package.json
@@ -101,7 +101,7 @@ Add your new app to `shell/public/shell.json`:
       "order": 1,
       "children": [
         { "type": "link", "label": "Demo", "icon": "star", "order": 1, "href": "/demo" },
-        { "type": "link", "label": "Users", "icon": "people", "order": 2, "href": "/users" }
+        { "type": "link", "label": "Users", "icon": "users", "order": 2, "href": "/users" }
       ]
     }
   ]

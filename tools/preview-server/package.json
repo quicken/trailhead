@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "node build.js both",
-    "build:shoelace": "node build.js shoelace",
+    "build:webawesome": "node build.js webawesome",
     "build:cloudscape": "node build.js cloudscape",
     "build:both": "node build.js both",
     "start": "node server.js"

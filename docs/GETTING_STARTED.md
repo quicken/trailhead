@@ -1,110 +1,64 @@
 # Getting Started with Trailhead
 
-This tutorial walks you through setting up Trailhead in your own project using the Shoelace design system. You'll create a shell and your first single page application (SPA).
+This guide walks you through creating a Trailhead shell and your first SPA using the Web Awesome design system.
 
 ## What You'll Build
 
-- An application shell that provides navigation and shared services
+- An application shell with navigation and shared services
 - A demo SPA that uses the shell's HTTP client and feedback system
 - A production-ready deployment structure
 
 ## Prerequisites
 
 - Node.js 18+ and npm
-- Basic knowledge of TypeScript and React (or your preferred framework)
-- Familiarity with Vite
+- Basic knowledge of TypeScript and Vite
 
-## Project Structure
+## Quickest Path
 
-We'll create this structure:
+Use the CLI — it scaffolds everything in one command:
 
+```bash
+npx @herdingbits/create-trailhead my-app
+cd my-app/shell && npm install && npm start
 ```
-my-app/
-├── shell/                  # Application shell
-│   ├── src/
-│   │   └── index.ts
-│   ├── public/
-│   │   └── navigation.json
-│   ├── index.html
-│   ├── vite.config.js
-│   └── package.json
-│
-└── apps/
-    └── demo/              # Your first SPA
-        ├── src/
-        │   └── index.tsx
-        ├── index.html
-        ├── vite.config.js
-        └── package.json
-```
+
+The rest of this guide walks you through what the CLI generates and why.
+
+---
 
 ## Step 1: Create the Shell
 
-### 1.1 Initialize the Shell Project
+### 1.1 Install Dependencies
 
 ```bash
-mkdir -p my-app/shell
-cd my-app/shell
+mkdir -p my-app/shell && cd my-app/shell
 npm init -y
+npm install @herdingbits/trailhead-core @herdingbits/trailhead-webawesome
+npm install -D vite typescript @awesome.me/webawesome
 ```
 
-### 1.2 Install Dependencies
-
-```bash
-npm install @herdingbits/trailhead-core @herdingbits/trailhead-shoelace
-npm install -D vite typescript
-```
-
-### 1.3 Create TypeScript Configuration
-
-Create `tsconfig.json`:
-
-```json
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "moduleResolution": "bundler",
-    "strict": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "resolveJsonModule": true
-  },
-  "include": ["src"]
-}
-```
-
-### 1.4 Create Shell Entry Point
-
-Create `src/index.ts`:
+### 1.2 Shell Entry Point (`src/shell.ts`)
 
 ```typescript
 import { Trailhead } from '@herdingbits/trailhead-core';
-import { ShoelaceAdapter, ShellApp } from '@herdingbits/trailhead-shoelace';
-import '@herdingbits/trailhead-shoelace/shell.css';
+import { WebAwesomeAdapter, ShellApp } from '@herdingbits/trailhead-webawesome';
+import '@herdingbits/trailhead-webawesome/shell.css';
 
-// Get configuration
 const appBasePath = import.meta.env.VITE_APP_BASE_PATH || '';
-const shellUrl = (window as any).SHELL_DEV_URL || appBasePath;
-const apiUrl = (window as any).APP_CONFIG?.apiUrl || '';
+const shellUrl    = (window as any).SHELL_DEV_URL || appBasePath;
+const apiUrl      = (window as any).APP_CONFIG?.apiUrl || '';
 
-// Initialize shell with Shoelace adapter
 const shell = new Trailhead({
-  adapter: new ShoelaceAdapter(),
+  adapter: new WebAwesomeAdapter(),
   appBasePath,
   shellUrl,
   apiUrl,
 });
 
 ShellApp.mount(shell);
-
-console.log('[Shell] Initialized');
 ```
 
-### 1.5 Create HTML Entry Point
-
-Create `index.html`:
+### 1.3 HTML Entry Point (`index.html`)
 
 ```html
 <!DOCTYPE html>
@@ -113,27 +67,17 @@ Create `index.html`:
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>My Application</title>
-    
-    <!-- Shoelace Design System -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/themes/light.css" />
-    
-    <!-- Optional: Runtime configuration -->
-    <script>
-      window.APP_CONFIG = {
-        apiUrl: 'https://api.example.com'
-      };
-    </script>
+    <link rel="stylesheet" href="/webawesome/styles/themes/default.css" />
   </head>
   <body>
-    <div id="app"></div>
-    <script type="module" src="/src/index.ts"></script>
+    <div id="shell-sidebar"></div>
+    <div id="shell-main"><div id="shell-content"></div></div>
+    <script type="module" src="/src/shell.ts"></script>
   </body>
 </html>
 ```
 
-### 1.6 Create Navigation Configuration
-
-Create `public/navigation.json`:
+### 1.4 Navigation Config (`public/navigation.json`)
 
 ```json
 [
@@ -148,11 +92,11 @@ Create `public/navigation.json`:
 ]
 ```
 
-### 1.7 Configure Vite
+Icons use Font Awesome free names — see [fontawesome.com/icons](https://fontawesome.com/icons).
 
-Create `vite.config.js`:
+### 1.5 Vite Config (`vite.config.ts`)
 
-```javascript
+```typescript
 import { defineConfig, loadEnv } from 'vite';
 
 export default defineConfig(({ mode }) => {
@@ -161,19 +105,13 @@ export default defineConfig(({ mode }) => {
 
   return {
     base,
-    server: {
-      port: 3001,
-      open: true,
-    },
+    server: { port: 3001 },
     build: {
-      outDir: 'dist',
+      manifest: true,
       rollupOptions: {
         output: {
           entryFileNames: 'shell.js',
-          assetFileNames: (assetInfo) => {
-            if (assetInfo.name === 'style.css') return 'shell.css';
-            return assetInfo.name;
-          },
+          assetFileNames: 'shell.[ext]',
         },
       },
     },
@@ -181,549 +119,210 @@ export default defineConfig(({ mode }) => {
 });
 ```
 
-### 1.8 Add Scripts to package.json
-
-Update `package.json`:
+### 1.6 Build Script (`package.json`)
 
 ```json
 {
-  "name": "my-app-shell",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build": "vite build && npm run copy-webawesome",
+    "copy-webawesome": "rm -rf dist/webawesome && cp -R node_modules/@awesome.me/webawesome/dist-cdn dist/webawesome"
   }
 }
 ```
 
-### 1.9 Create Development Environment File
+The `copy-webawesome` step bundles Web Awesome into the shell's static output so it's served from the same origin as the shell.
 
-Create `.env.development`:
-
-```bash
-# App base path (empty for root)
-VITE_APP_BASE_PATH=
-```
-
-**Note:** In the current implementation, the shell loads SPAs from their built output. For hot reload during development, run each SPA in standalone mode on its own port.
+---
 
 ## Step 2: Create Your First SPA
 
-### 2.1 Initialize the SPA Project
+SPAs can use any framework. Here's a vanilla TypeScript example — no framework needed.
+
+### 2.1 Install Dependencies
 
 ```bash
-cd ..
-mkdir -p apps/demo
-cd apps/demo
+cd .. && mkdir -p apps/demo && cd apps/demo
 npm init -y
+npm install -D vite typescript @herdingbits/trailhead-types
 ```
 
-### 2.2 Install Dependencies
-
-```bash
-npm install react react-dom
-npm install -D vite typescript @vitejs/plugin-react @types/react @types/react-dom
-npm install -D @herdingbits/trailhead-types
-```
-
-### 2.3 Create TypeScript Configuration
-
-Create `tsconfig.json`:
-
-```json
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "jsx": "react-jsx",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "resolveJsonModule": true
-  },
-  "include": ["src"]
-}
-```
-
-### 2.4 Create SPA Entry Point
-
-Create `src/index.tsx`:
+### 2.2 SPA Entry Point (`src/index.ts`)
 
 ```typescript
 import type { ShellAPI } from '@herdingbits/trailhead-types';
-import { createRoot } from 'react-dom/client';
-import { DemoApp } from './DemoApp';
 
-/**
- * SPA initialization function called by the shell
- */
-export function init(shell: ShellAPI) {
-  const container = document.getElementById('app-content');
-  if (!container) {
-    console.error('[Demo] Container #app-content not found');
-    return;
-  }
-
-  const root = createRoot(container);
-  root.render(<DemoApp shell={shell} />);
-  
-  console.log('[Demo] Mounted');
+declare global {
+  interface Window { shell: ShellAPI; }
 }
 
-/**
- * Standalone development mode
- */
-if (import.meta.env.DEV && !window.shell) {
-  // Mock shell API for standalone development
+// Mock shell for standalone development
+if (!window.shell) {
   window.shell = {
-    version: '1.0.0-dev',
     feedback: {
-      busy: (msg) => console.log('[Mock] busy:', msg),
-      clear: () => console.log('[Mock] clear'),
-      success: (msg) => console.log('[Mock] success:', msg),
-      error: (msg) => console.error('[Mock] error:', msg),
-      warning: (msg) => console.warn('[Mock] warning:', msg),
-      info: (msg) => console.log('[Mock] info:', msg),
-      alert: (msg) => console.log('[Mock] alert:', msg),
-      confirm: async (msg) => {
-        console.log('[Mock] confirm:', msg);
-        return window.confirm(msg);
-      },
-      ok: async (msg) => {
-        console.log('[Mock] ok:', msg);
-        window.alert(msg);
-      },
-      yesNo: async (msg) => {
-        console.log('[Mock] yesNo:', msg);
-        return window.confirm(msg);
-      },
-      yesNoCancel: async (msg) => {
-        console.log('[Mock] yesNoCancel:', msg);
-        const result = window.confirm(msg);
-        return result ? 'yes' : 'no';
-      },
+      busy: (msg: string) => console.log('[Mock] busy:', msg),
+      clear: () => {},
+      success: (msg: string) => console.log('[Mock] success:', msg),
+      error: (msg: string) => console.error('[Mock] error:', msg),
+      warning: (msg: string) => console.warn('[Mock] warning:', msg),
+      info: (msg: string) => console.log('[Mock] info:', msg),
+      confirm: async () => true,
+      yesNo: async () => true,
+      yesNoCancel: async () => 'yes' as const,
+      alert: async () => {},
+      ok: async () => {},
       custom: async () => null,
     },
     http: {
-      get: async (url) => {
-        console.log('[Mock] GET:', url);
-        return { success: true, data: { message: 'Mock data' } };
-      },
-      post: async (url, data) => {
-        console.log('[Mock] POST:', url, data);
-        return { success: true, data: { message: 'Mock response' } };
-      },
-      put: async (url, data) => {
-        console.log('[Mock] PUT:', url, data);
-        return { success: true, data: { message: 'Mock response' } };
-      },
-      patch: async (url, data) => {
-        console.log('[Mock] PATCH:', url, data);
-        return { success: true, data: { message: 'Mock response' } };
-      },
-      delete: async (url) => {
-        console.log('[Mock] DELETE:', url);
-        return { success: true, data: { message: 'Mock response' } };
-      },
+      get: async (url: string) => { console.log('[Mock] GET', url); return { success: true, data: {} as any }; },
+      post: async (url: string) => { console.log('[Mock] POST', url); return { success: true, data: {} as any }; },
+      put: async (url: string) => { console.log('[Mock] PUT', url); return { success: true, data: {} as any }; },
+      patch: async (url: string) => { console.log('[Mock] PATCH', url); return { success: true, data: {} as any }; },
+      delete: async (url: string) => { console.log('[Mock] DELETE', url); return { success: true, data: {} as any }; },
     },
     navigation: {
-      navigate: (path) => console.log('[Mock] navigate:', path),
+      navigate: (path: string) => console.log('[Mock] navigate:', path),
       getCurrentPath: () => '/demo',
       onRouteChange: () => () => {},
     },
-  };
-
-  // Auto-mount for standalone dev
-  const container = document.getElementById('root');
-  if (container) {
-    const root = createRoot(container);
-    root.render(<DemoApp shell={window.shell} />);
-  }
+  } as unknown as ShellAPI;
 }
+
+function mount(container: HTMLElement): void {
+  container.innerHTML = `
+    <div style="padding: 2rem">
+      <h1>Demo App</h1>
+      <wa-button variant="brand" id="greet-btn">
+        <wa-icon slot="prefix" name="hand-wave"></wa-icon>
+        Say Hello
+      </wa-button>
+    </div>
+  `;
+  container.querySelector('#greet-btn')!.addEventListener('click', () => {
+    window.shell.feedback.success('Hello from your first Trailhead SPA!');
+  });
+}
+
+// Called by shell when your app.js is loaded
+window.AppMount = (container: HTMLElement, _basePath: string) => mount(container);
+
+// Auto-mount for standalone dev
+const root = document.getElementById('root');
+if (root) mount(root);
 ```
 
-### 2.5 Create the App Component
-
-Create `src/DemoApp.tsx`:
+### 2.3 Vite Config (`vite.config.ts`)
 
 ```typescript
-import type { ShellAPI } from '@herdingbits/trailhead-types';
-import { useState } from 'react';
-
-interface DemoAppProps {
-  shell: ShellAPI;
-}
-
-export function DemoApp({ shell }: DemoAppProps) {
-  const [count, setCount] = useState(0);
-  const [data, setData] = useState<any>(null);
-
-  const handleIncrement = () => {
-    setCount(count + 1);
-    shell.feedback.success(`Count is now ${count + 1}`);
-  };
-
-  const handleFetchData = async () => {
-    const result = await shell.http.get('/api/data', {
-      busyMessage: 'Loading data...',
-      successMessage: 'Data loaded!',
-      showSuccess: true,
-    });
-
-    if (result.success) {
-      setData(result.data);
-    }
-  };
-
-  const handleConfirm = async () => {
-    const confirmed = await shell.feedback.confirm(
-      'Are you sure you want to do this?',
-      'Confirm Action'
-    );
-
-    if (confirmed) {
-      shell.feedback.success('Action confirmed!');
-    } else {
-      shell.feedback.info('Action cancelled');
-    }
-  };
-
-  return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Demo Application</h1>
-      <p>This is a demo SPA using the Trailhead shell.</p>
-
-      <div style={{ marginTop: '2rem' }}>
-        <h2>Counter Example</h2>
-        <p>Count: {count}</p>
-        <sl-button variant="primary" onClick={handleIncrement}>
-          Increment
-        </sl-button>
-      </div>
-
-      <div style={{ marginTop: '2rem' }}>
-        <h2>HTTP Client Example</h2>
-        <sl-button variant="primary" onClick={handleFetchData}>
-          Fetch Data
-        </sl-button>
-        {data && (
-          <pre style={{ marginTop: '1rem', padding: '1rem', background: '#f5f5f5' }}>
-            {JSON.stringify(data, null, 2)}
-          </pre>
-        )}
-      </div>
-
-      <div style={{ marginTop: '2rem' }}>
-        <h2>Feedback Example</h2>
-        <sl-button variant="primary" onClick={handleConfirm}>
-          Show Confirmation
-        </sl-button>
-      </div>
-    </div>
-  );
-}
-```
-
-### 2.6 Create HTML for Standalone Development
-
-Create `index.html`:
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Demo App - Standalone</title>
-    
-    <!-- Shoelace Design System -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/themes/light.css" />
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/shoelace-autoloader.js"></script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/index.tsx"></script>
-  </body>
-</html>
-```
-
-### 2.7 Configure Vite
-
-Create `vite.config.js`:
-
-```javascript
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-  plugins: [react()],
   server: {
     port: 3000,
     cors: true,
+    proxy: {
+      '/webawesome': { target: 'http://localhost:3001', changeOrigin: true },
+      '/shell.json':  { target: 'http://localhost:3001', changeOrigin: true },
+    },
   },
   build: {
     lib: {
-      entry: 'src/index.tsx',
+      entry: 'src/index.ts',
       formats: ['es'],
       fileName: () => 'app.js',
     },
     rollupOptions: {
-      output: {
-        inlineDynamicImports: true,
-      },
+      output: { inlineDynamicImports: true },
     },
   },
 });
 ```
 
-### 2.8 Add Scripts to package.json
+The proxy ensures Web Awesome assets resolve in standalone dev mode without the shell running.
 
-Update `package.json`:
-
-```json
-{
-  "name": "demo-app",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  }
-}
-```
+---
 
 ## Step 3: Development Workflow
 
-### 3.1 Standalone SPA Development (Recommended)
-
-Develop your SPA independently with hot reload:
+### Standalone SPA development (fastest)
 
 ```bash
-cd my-app/apps/demo
-npm run dev
+cd my-app/apps/demo && npm run dev
+# http://localhost:3000 — mock shell, hot reload
 ```
 
-Open `http://localhost:3000` to see the SPA with the mock shell API. This provides the fastest development experience with instant hot reload.
+### Integration testing with the shell
 
-### 3.2 Testing with the Shell
-
-To test the SPA integrated with the shell:
-
-1. Build the SPA:
 ```bash
-cd my-app/apps/demo
-npm run build
-```
+# 1. Build the SPA
+cd my-app/apps/demo && npm run build
 
-2. Copy the built SPA to the shell's public directory:
-```bash
+# 2. Copy into the shell's public directory
 mkdir -p ../shell/public/demo
 cp dist/app.js ../shell/public/demo/
+
+# 3. Start the shell
+cd ../shell && npm run dev
+# http://localhost:3001 — click "Demo" in the nav
 ```
 
-3. Start the shell:
-```bash
-cd ../shell
-npm run dev
-```
-
-4. Open `http://localhost:3000` and click "Demo" in the navigation
-
-### 3.3 Development Tips
-
-**For rapid iteration:**
-- Develop SPAs in standalone mode (port 3000)
-- Use the mock shell API for testing
-- Only test with the shell when you need to verify integration
-
-**For integration testing:**
-- Build the SPA
-- Copy to shell's public directory
-- Test in the shell
-
-**Production-like testing:**
-- Use the preview server (see Step 4)
+---
 
 ## Step 4: Build for Production
 
-### 4.1 Build the Shell
-
 ```bash
-cd my-app/shell
-npm run build
+cd my-app/shell  && npm run build   # → shell/dist/
+cd my-app/apps/demo && npm run build # → apps/demo/dist/app.js
 ```
 
-Output in `shell/dist/`:
-- `index.html`
-- `shell.js`
-- `shell.css`
-- `navigation.json`
-
-### 4.2 Build the Demo SPA
-
-```bash
-cd my-app/apps/demo
-npm run build
-```
-
-Output in `apps/demo/dist/`:
-- `app.js`
-
-### 4.3 Create Deployment Structure
-
-Create a deployment directory:
-
-```bash
-mkdir -p deploy
-cp shell/dist/* deploy/
-mkdir -p deploy/demo
-cp apps/demo/dist/app.js deploy/demo/
-cp shell/dist/index.html deploy/demo/
-```
-
-Your deployment structure:
+Assemble the deployment:
 
 ```
 deploy/
-├── index.html
+├── index.html          # Shell HTML
 ├── shell.js
 ├── shell.css
 ├── navigation.json
+├── webawesome/         # Web Awesome assets
 └── demo/
-    ├── index.html
+    ├── index.html      # Copy of shell HTML
     └── app.js
 ```
 
-### 4.4 Deploy to Static Host
+Upload `deploy/` to any static host — S3, Netlify, GitHub Pages. No URL rewrites needed.
 
-Upload the `deploy/` directory to any static file host:
+---
 
-- **AWS S3 + CloudFront**
-- **Netlify**
-- **Vercel**
-- **GitHub Pages**
-- **Any web server**
+## Step 5: Using Web Awesome Components
 
-No URL rewrites needed between SPAs - each route has its own `index.html`.
+Because the shell loads the Web Awesome autoloader, all `wa-*` components are available in every SPA with zero imports:
 
-## Step 5: Add More SPAs
-
-### 5.1 Create a New SPA
-
-```bash
-cd my-app/apps
-mkdir users
-cd users
-# Follow steps 2.1-2.8 with "users" instead of "demo"
+```html
+<wa-button variant="brand">Save</wa-button>
+<wa-input label="Email" type="email"></wa-input>
+<wa-card>...</wa-card>
+<wa-icon name="envelope"></wa-icon>
+<wa-dialog label="Confirm">...</wa-dialog>
 ```
 
-### 5.2 Add to Navigation
+This works in vanilla TS, React, Vue — whatever your SPAs use.
 
-Update `shell/public/navigation.json`:
-
-```json
-[
-  {
-    "id": "demo",
-    "path": "/demo",
-    "app": "demo",
-    "icon": "house",
-    "label": "Demo",
-    "order": 1
-  },
-  {
-    "id": "users",
-    "path": "/users",
-    "app": "users",
-    "icon": "people",
-    "label": "Users",
-    "order": 2
-  }
-]
-```
-
-### 5.3 Development Workflow
-
-For each new SPA, develop in standalone mode, then copy the build to the shell for integration testing:
-
-```bash
-# Develop
-cd my-app/apps/users
-npm run dev  # Port 3000
-
-# Test with shell
-npm run build
-mkdir -p ../shell/public/users
-cp dist/app.js ../shell/public/users/
-```
-
-The navigation menu updates automatically - no rebuild needed!
-
-## Next Steps
-
-### Using Different Frameworks
-
-Each SPA can use any framework:
-
-- **React** - Follow this tutorial
-- **Vue** - Use `@vitejs/plugin-vue`
-- **Svelte** - Use `@sveltejs/vite-plugin-svelte`
-- **Vanilla JS** - No framework needed
-
-Just export the `init(shell)` function and you're good to go.
-
-### Adding Internationalization
-
-See the [i18n plugin documentation](../tools/vite-i18n-plugin/README.md) for build-time translations.
-
-### Custom Design Systems
-
-Want to use a different design system? See [Creating Adapters](./CREATING_ADAPTERS.md).
-
-### CloudScape (React)
-
-For a React-first architecture with AWS CloudScape:
-
-```bash
-npm install @herdingbits/trailhead-cloudscape @cloudscape-design/components
-```
-
-See the [CloudScape example](../examples/cloudscape-site/) for details.
+---
 
 ## Troubleshooting
 
-### SPA Not Loading
+**SPA not loading** — check `app.js` is in `shell/public/<app-name>/`, verify `navigation.json` path is correct, check browser console.
 
-1. Check that the SPA is built (`npm run build` in the SPA directory)
-2. Verify the built `app.js` is in `shell/public/<app-name>/`
-3. Check browser console for loading errors
-4. Verify `navigation.json` has the correct path
+**404 on `/webawesome/...`** — ensure the shell's `copy-webawesome` step ran after build, or that the Vite proxy is configured for standalone mode.
 
-### Navigation Not Updating
+**Type errors** — ensure `@herdingbits/trailhead-types` is installed as a dev dependency.
 
-1. Verify `navigation.json` is in `shell/public/`
-2. Check JSON syntax is valid
-3. Restart the shell dev server
+---
 
-### Type Errors
+## Next Steps
 
-1. Ensure `@herdingbits/trailhead-types` is installed
-2. Check `tsconfig.json` has correct settings
-3. Restart TypeScript server in your editor
-
-## Summary
-
-You've learned how to:
-
-✅ Create an application shell with Shoelace  
-✅ Build a SPA that uses shell services  
-✅ Run in development mode with hot reload  
-✅ Build and deploy for production  
-✅ Add multiple SPAs to your application  
-
-The shell provides shared infrastructure while each SPA focuses on business logic. Deploy independently, use any framework, and scale to dozens of modules without coordination overhead.
-
-**Happy building!** 🚀
+- [Architecture Overview](./ARCHITECTURE.md)
+- [Creating custom adapters](./CREATING_ADAPTERS.md)
+- [CloudScape adapter](../examples/cloudscape-site/) for React-first teams
+- [i18n plugin](../tools/vite-i18n-plugin/README.md) for build-time translations

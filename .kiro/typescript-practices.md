@@ -34,9 +34,9 @@ package/
 
 **Shell Package:**
 ```
-packages/shoelace/
+packages/webawesome/
 ├── src/
-│   ├── adapter.ts     # Shoelace adapter implementation
+│   ├── adapter.ts     # Web Awesome adapter implementation
 │   └── ShellApp.ts    # Shell mounting logic
 ├── shell.css          # Shell styles
 └── package.json
@@ -44,7 +44,7 @@ packages/shoelace/
 
 **SPA:**
 ```
-examples/shoelace-site/apps/demo/
+examples/webawesome-site/apps/demo/
 ├── src/
 │   ├── index.tsx      # Entry point with init(shell)
 │   └── DemoApp.tsx    # App component
@@ -129,15 +129,15 @@ test: {
 ### Published Packages
 - Use published NPM packages: `@herdingbits/trailhead-core`, `@herdingbits/trailhead-types`, etc.
 - For development: `npm install -D @herdingbits/trailhead-types`
-- For shell: `npm install @herdingbits/trailhead-core @herdingbits/trailhead-shoelace`
+- For shell: `npm install @herdingbits/trailhead-core @herdingbits/trailhead-webawesome`
 
 ### External Libraries
-- Shell uses: `@shoelace-style/shoelace` (for Shoelace adapter) or `@cloudscape-design/components` (for CloudScape)
+- Shell uses: `@awesome.me/webawesome (for Web Awesome adapter)) or `@cloudscape-design/components` (for CloudScape)
 - SPAs bundle their own frameworks (React, Vue, etc.)
 - No externalization - SPAs are self-contained
 
 ### Design Systems
-- **Shoelace**: Web components, framework-agnostic
+- **Web Awesome**: Web components, framework-agnostic
 - **CloudScape**: React components, React-first architecture
 
 ## Environment Variables
@@ -177,7 +177,7 @@ test: {
 ### Loading Strategy
 - Shell loads first (21 KB / 8 KB gzipped)
 - SPAs loaded on-demand via ES module imports
-- Design system components (Shoelace/CloudScape) loaded once by shell
+- Design system components (Web Awesome/CloudScape) loaded once by shell
 
 ## Security
 

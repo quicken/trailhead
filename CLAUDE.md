@@ -12,13 +12,13 @@ No root `package.json`. Each directory is independent with its own `npm install`
 
 ```
 packages/core          → @herdingbits/trailhead-core (TypeScript, tsc only)
-packages/shoelace      → @herdingbits/trailhead-shoelace (TypeScript, tsc only)
+packages/webawesome    → @herdingbits/trailhead-webawesome (TypeScript, tsc only)
 packages/cloudscape    → @herdingbits/trailhead-cloudscape (TypeScript + React)
 packages/types         → @herdingbits/trailhead-types (type-only, auto-generated from core build)
 packages/create-trailhead → CLI scaffolding tool (npx @herdingbits/create-trailhead)
 
-examples/shoelace-site/  → Reference implementation: Shoelace design system
-examples/cloudscape-site/ → Reference implementation: CloudScape design system
+examples/webawesome-site/  → Reference implementation: Web Awesome design system
+examples/cloudscape-site/  → Reference implementation: CloudScape design system
   shell/                 → Shell entry point (Vite, port 3001)
   apps/demo/             → React SPA (Vite, port 3000)
   apps/saas-demo/        → React SPA (Vite, port 3000)
@@ -34,15 +34,15 @@ The `examples/` directories are **reference implementations** showing how to use
 **Packages:**
 ```bash
 cd packages/core && npm run build        # compile + regenerates packages/types
-cd packages/shoelace && npm run build
+cd packages/webawesome && npm run build
 cd packages/cloudscape && npm run build
 ```
 
 **Examples:**
 ```bash
-cd examples/shoelace-site/shell && npm run dev        # shell, port 3001
-cd examples/shoelace-site/apps/demo && npm start      # SPA standalone, port 3000
-cd examples/shoelace-site/apps/demo && npm run build  # → dist/app.js
+cd examples/webawesome-site/shell && npm run dev        # shell, port 3001
+cd examples/webawesome-site/apps/demo && npm start      # SPA standalone, port 3000
+cd examples/webawesome-site/apps/demo && npm run build  # → dist/app.js
 ```
 
 **Tests (core only):**

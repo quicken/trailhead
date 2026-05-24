@@ -15,11 +15,11 @@ trailhead/
 ├── packages/
 │   ├── core/                     # @herdingbits/trailhead-core
 │   ├── types/                    # @herdingbits/trailhead-types
-│   ├── shoelace/                 # @herdingbits/trailhead-shoelace
+│   ├── webawesome/               # @herdingbits/trailhead-webawesome
 │   ├── cloudscape/               # @herdingbits/trailhead-cloudscape
 │   └── create-trailhead/         # @herdingbits/create-trailhead (CLI scaffolding)
 ├── examples/
-│   ├── shoelace-site/            # Shoelace reference implementation
+│   ├── webawesome-site/          # Web Awesome reference implementation
 │   └── cloudscape-site/          # CloudScape reference implementation
 └── tools/
     ├── vite-i18n-plugin/         # Build-time i18n
@@ -29,8 +29,8 @@ trailhead/
 ## Installation
 
 ```bash
-# Shoelace shell
-npm install @herdingbits/trailhead-core @herdingbits/trailhead-shoelace
+# Web Awesome shell (vanilla TypeScript)
+npm install @herdingbits/trailhead-core @herdingbits/trailhead-webawesome
 
 # CloudScape shell (React)
 npm install @herdingbits/trailhead-core @herdingbits/trailhead-cloudscape
@@ -50,14 +50,14 @@ cd my-app/shell && npm install && npm start
 
 Visit http://localhost:3001
 
-### Shoelace Shell
+### Web Awesome Shell
 
 ```typescript
 import { Trailhead } from '@herdingbits/trailhead-core';
-import { ShoelaceAdapter, ShellApp } from '@herdingbits/trailhead-shoelace';
+import { WebAwesomeAdapter, ShellApp } from '@herdingbits/trailhead-webawesome';
 
 const shell = new Trailhead({
-  adapter: new ShoelaceAdapter(),
+  adapter: new WebAwesomeAdapter(),
   appBasePath: import.meta.env.VITE_APP_BASE_PATH || '',
   shellUrl: (window as any).SHELL_DEV_URL || '',
   apiUrl: (window as any).APP_CONFIG?.apiUrl || '',
@@ -98,7 +98,7 @@ if (!window.shell) {
 window.AppMount = (container: HTMLElement, basePath: string) => {
   window.shell.feedback.success('App loaded!');
   container.innerHTML = '<div id="root"></div>';
-  // Mount your framework here
+  // Mount your framework here — or go frameworkless
 };
 
 // Auto-mount when running standalone
@@ -122,7 +122,7 @@ Set `appBasePath` when deploying to a subdirectory (e.g. `VITE_APP_BASE_PATH=/ap
 
 | Adapter | Option | Purpose |
 |---|---|---|
-| `ShoelaceAdapter` | `shoelaceUrl` | Where Shoelace is hosted. Defaults to `${shellUrl}/shoelace` |
+| `WebAwesomeAdapter` | `webAwesomeUrl` | Where Web Awesome is hosted. Defaults to `${shellUrl}/webawesome` |
 | `CloudScapeAdapter` | `cloudscapeUrl` | CloudScape global-styles CSS URL. Omit if importing the CSS directly |
 
 ### Runtime globals
@@ -136,7 +136,7 @@ Set `appBasePath` when deploying to a subdirectory (e.g. `VITE_APP_BASE_PATH=/ap
 
 ```bash
 # SPA standalone (port 3000, hot reload)
-cd examples/shoelace-site/apps/demo && npm install && npm start
+cd examples/webawesome-site/apps/demo && npm install && npm start
 
 # Test with shell: build the SPA, copy it, then start the shell (port 3001)
 npm run build && cp dist/app.js ../shell/public/demo/
@@ -148,7 +148,7 @@ cd ../shell && npm install && npm start
 ```bash
 cd tools/preview-server
 npm run build:both && npm start
-# http://localhost:8081/sample/trailhead/shoelace
+# http://localhost:8081/sample/trailhead/webawesome
 # http://localhost:8081/sample/trailhead/cloudscape
 ```
 
@@ -157,16 +157,18 @@ npm run build:both && npm start
 `navigation.json` is read at runtime — add, remove, or reorder menu items without rebuilding:
 
 ```json
-{ "id": "customers", "path": "/customers", "app": "customers", "icon": "people", "label": "Customers" }
+{ "id": "customers", "path": "/customers", "app": "customers", "icon": "users", "label": "Customers" }
 ```
+
+Icons use Font Awesome free names when using the Web Awesome adapter.
 
 ## Published Packages
 
-- **[@herdingbits/trailhead-core](packages/core)** - Core shell orchestration
-- **[@herdingbits/trailhead-types](packages/types)** - TypeScript type definitions
-- **[@herdingbits/trailhead-shoelace](packages/shoelace)** - Shoelace design system adapter
-- **[@herdingbits/trailhead-cloudscape](packages/cloudscape)** - CloudScape design system adapter
-- **[@herdingbits/create-trailhead](packages/create-trailhead)** - CLI scaffolding tool
+- **[@herdingbits/trailhead-core](packages/core)** — Core shell orchestration
+- **[@herdingbits/trailhead-types](packages/types)** — TypeScript type definitions
+- **[@herdingbits/trailhead-webawesome](packages/webawesome)** — Web Awesome adapter (vanilla TypeScript)
+- **[@herdingbits/trailhead-cloudscape](packages/cloudscape)** — CloudScape adapter (React)
+- **[@herdingbits/create-trailhead](packages/create-trailhead)** — CLI scaffolding tool
 
 ## Further Reading
 

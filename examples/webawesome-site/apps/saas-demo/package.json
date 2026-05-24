@@ -1,0 +1,16 @@
+{
+  "name": "plugin-saas-demo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@herdingbits/trailhead-types": "^0.1.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.14"
+  }
+}

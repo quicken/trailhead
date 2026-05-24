@@ -62,7 +62,7 @@ export interface FeedbackAdapter {
  * Implement this interface to support a new component library as the shell's UI layer.
  */
 export interface DesignSystemAdapter {
-  /** Identifier used in startup logs and diagnostics (e.g., `"shoelace"`, `"cloudscape"`). */
+  /** Identifier used in startup logs and diagnostics (e.g., `"webawesome"`, `"cloudscape"`). */
   name: string;
 
   /** Adapter package version, logged at shell startup. */

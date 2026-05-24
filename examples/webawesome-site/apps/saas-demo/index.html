@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+   <title>SaaS Demo - Standalone</title>
+    <!-- Load shell CSS from shell dev server -->
+    <link rel="stylesheet" href="/webawesome/styles/themes/default.css" />
+    <link rel="stylesheet" href="/trailhead/shell/shell.css" />
+    <link rel="stylesheet" href="/saas-demo.css" />
+    <style>
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Shell structure loaded from shell dev server -->
+    <div id="shell-sidebar">
+      <div id="shell-header">
+        <h2 id="shell-title">Application</h2>
+        <button id="shell-collapse" class="shell-icon-btn">
+          <span class="shell-icon">☰</span>
+        </button>
+      </div>
+      <nav id="shell-navigation">
+        <!-- Navigation will be populated by shell.js -->
+      </nav>
+    </div>
+
+    <div id="shell-main">
+      <div id="shell-content">
+        <div id="root"></div>
+      </div>
+    </div>
+
+    <!-- Load shell JS from shell dev server -->
+    <script type="module" src="/trailhead/shell/shell.js"></script>
+
+    <!-- Load plugin with hot reload -->
+    <script type="module" src="/src/index.ts"></script>
+  </body>
+</html>
