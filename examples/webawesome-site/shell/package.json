@@ -1,6 +1,6 @@
 {
   "name": "trailhead-webawesome-example",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "private": true,
   "type": "module",
   "description": "Example Trailhead shell with Web Awesome design system",
@@ -12,14 +12,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@herdingbits/trailhead-core": "^0.1.0",
-    "@herdingbits/trailhead-webawesome": "^0.1.1"
+    "@herdingbits/trailhead-core": "^0.1.1",
+    "@herdingbits/trailhead-webawesome": "^0.1.2"
   },
   "devDependencies": {
     "@herdingbits/trailhead-types": "^0.1.0",
-    "@types/node": "^25.9.1",
+    "@types/node": "^26.1.0",
     "typescript": "^6.0.3",
-    "vite": "^8.0.14",
-    "@awesome.me/webawesome": "^3.7.0"
+    "vite": "^8.1.3",
+    "@awesome.me/webawesome": "^3.10.0"
   }
 }
