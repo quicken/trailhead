@@ -235,7 +235,8 @@ export class Trailhead {
 
     const renderLink = (item: NavLink, isChild = false): string => {
       const external = isExternal(item.href);
-      return `<a href="${item.href}"
+      const href = external ? item.href : this.appBasePath + item.href;
+      return `<a href="${href}"
          class="shell-nav-item${isChild ? " shell-nav-item-child" : ""}"
          data-path="${item.href}"
          data-external="${external}">
@@ -287,10 +288,12 @@ export class Trailhead {
   }
 
   /**
-   * Navigate to path
+   * Navigate to path. `path` is relative to `appBasePath` — the same convention used by
+   * `shell.json`'s nav `href`s and by `AppEntry.basePath` — so callers (nav links, and
+   * `window.shell.navigation.navigate()`) don't need to know the deployment's base path.
    */
   private navigate(path: string): void {
-    window.location.href = path;
+    window.location.href = this.appBasePath + path;
   }
 
   /**

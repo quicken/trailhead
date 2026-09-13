@@ -64,6 +64,7 @@ async function createShell(adapter: DesignSystemAdapter) {
 afterEach(() => {
   vi.unstubAllGlobals();
   delete (window as any).shell;
+  document.body.innerHTML = '';
 });
 
 describe('Trailhead shell API — confirmation dialogs', () => {
@@ -204,5 +205,56 @@ describe('Trailhead shell API — auth', () => {
     const attempt = vi.fn(async () => true);
     expect(await shell.auth.reauthenticate(attempt)).toBe(false);
     expect(attempt).not.toHaveBeenCalled();
+  });
+});
+
+describe('Trailhead shell API — navigation under a non-root appBasePath', () => {
+  /** Renders the shell against a `#shell-navigation` element with a single nav link. */
+  async function createShellWithNav(appBasePath: string) {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        json: async () => ({
+          apps: [{ id: 'demo', basePath: '/demo', src: 'demo' }],
+          nav: [{ type: 'link', label: 'Demo', order: 1, href: '/demo' }],
+        }),
+      })
+    );
+    document.body.innerHTML = '<nav id="shell-navigation"></nav><div id="shell-content"></div>';
+    const { adapter } = createFakeAdapter();
+    new Trailhead({ adapter, appBasePath });
+    // Extra ticks beyond createShell()'s: loadNavigation() awaits both the fetch and its
+    // .json() call before renderNavigation() runs, each adding its own microtask hop.
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    return window.shell;
+  }
+
+  it('renders nav link hrefs prefixed with appBasePath rather than the bare shell.json href', async () => {
+    await createShellWithNav('/sample/trailhead/webawesome');
+
+    const link = document.querySelector('#shell-navigation a[data-path="/demo"]') as HTMLAnchorElement | null;
+    expect(link?.getAttribute('href')).toBe('/sample/trailhead/webawesome/demo');
+  });
+
+  it('window.shell.navigation.navigate() prepends appBasePath before the hard redirect', async () => {
+    const shell = await createShellWithNav('/sample/trailhead/webawesome');
+
+    const assignedHrefs: string[] = [];
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        ...window.location,
+        set href(value: string) {
+          assignedHrefs.push(value);
+        },
+      },
+    });
+
+    shell.navigation.navigate('/demo');
+    expect(assignedHrefs).toEqual(['/sample/trailhead/webawesome/demo']);
   });
 });
