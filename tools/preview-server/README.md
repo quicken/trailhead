@@ -14,7 +14,8 @@ npm run build:cloudscape
 # Start production server
 npm start
 
-# Visit http://localhost:8081/sample/trailhead
+# Visit http://localhost:8081/sample/trailhead/webawesome
+# or   http://localhost:8081/sample/trailhead/cloudscape
 ```
 
 ## What It Does
@@ -23,19 +24,28 @@ npm start
    - Builds shell (production)
    - Builds SPAs (production)
    - Copies all artefacts to `public/` directory
-   - Structure:
+   - Structure (each design system gets its own full copy, side by side):
      ```
      public/sample/trailhead/
-     ├── index.html              (Shell entry)
-     ├── shell.js                (Shell bundle)
-     ├── shell.css               (Shell styles)
-     ├── shell.json              (Shell config: SPA registry + nav)
-     ├── webawesome/             (Web Awesome assets)
-     └── apps/
+     ├── webawesome/
+     │   ├── index.html          (Shell entry)
+     │   ├── shell.js            (Shell bundle)
+     │   ├── shell.css           (Shell styles)
+     │   ├── shell.json          (Shell config: SPA registry + nav)
+     │   ├── webawesome/         (Web Awesome assets)
+     │   ├── demo/
+     │   │   └── app.js          (SPA bundle)
+     │   └── saas-demo/
+     │       └── app.js          (SPA bundle)
+     └── cloudscape/
+         ├── index.html
+         ├── shell.js
+         ├── shell.css
+         ├── shell.json
          ├── demo/
-         │   └── app.js          (SPA bundle)
+         │   └── app.js
          └── saas-demo/
-             └── app.js          (SPA bundle)
+             └── app.js
      ```
 
 2. **Server** (`server.js`):
@@ -46,7 +56,7 @@ npm start
 
 1. Build: `npm run build:webawesome` or `npm run build:cloudscape`
 2. Start: `npm start`
-3. Open: http://localhost:8081/sample/trailhead
+3. Open: http://localhost:8081/sample/trailhead/webawesome (or `/cloudscape`)
 4. Check Network tab:
    - Shell loaded once
    - SPAs load as ES modules

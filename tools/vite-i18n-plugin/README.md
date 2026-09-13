@@ -1,4 +1,4 @@
-# @cfkit/vite-plugin-i18n
+# @cfkit/vite-i18n-plugin
 
 Build-time i18n plugin for Vite with zero runtime overhead.
 
@@ -75,8 +75,8 @@ Add to your `package.json`:
 ```json
 {
   "scripts": {
-    "i18n:extract": "node ../vite-plugin-i18n/extract.js",
-    "i18n:validate": "node ../vite-plugin-i18n/validate.js",
+    "i18n:extract": "node ../vite-i18n-plugin/extract.js",
+    "i18n:validate": "node ../vite-i18n-plugin/validate.js",
     "build:de": "vite build --config vite.config.de.js"
   }
 }
