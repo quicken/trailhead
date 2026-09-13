@@ -113,7 +113,7 @@ if (rootEl) window.AppMount(rootEl, '');
 | Field | Purpose | Default |
 |---|---|---|
 | `appBasePath` | URL prefix for SPA routing, asset loading, and nav links | `""` |
-| `shellUrl` | Where `navigation.json` and shell assets are served from | `appBasePath` |
+| `shellUrl` | Where `shell.json` and shell assets are served from | `appBasePath` |
 | `apiUrl` | Base URL for all HTTP requests via `shell.http` | `""` |
 
 Set `appBasePath` when deploying to a subdirectory (e.g. `VITE_APP_BASE_PATH=/app`). Leave empty for root deployments.
@@ -176,13 +176,28 @@ Each design system adapter renders this prompt with its own native components (a
 
 ## Navigation
 
-`navigation.json` is read at runtime — add, remove, or reorder menu items without rebuilding:
+`shell.json` is read at runtime — add, remove, or reorder menu items without rebuilding. It has two parts: `apps` (the SPAs the shell can mount) and `nav` (the menu structure):
 
 ```json
-{ "id": "customers", "path": "/customers", "app": "customers", "icon": "users", "label": "Customers" }
+{
+  "apps": [
+    { "id": "customers", "basePath": "/customers", "src": "customers" }
+  ],
+  "nav": [
+    {
+      "type": "section",
+      "label": "Applications",
+      "icon": "grid",
+      "order": 1,
+      "children": [
+        { "type": "link", "label": "Customers", "icon": "users", "order": 1, "href": "/customers" }
+      ]
+    }
+  ]
+}
 ```
 
-Icons use Font Awesome free names when using the Web Awesome adapter.
+A nav item is one of three types: `link` (points at a `href`, optionally with a `badge` count callback), `section` (a labelled group of links), or `divider` (a visual separator). Icons use Font Awesome free names when using the Web Awesome adapter.
 
 ## Published Packages
 

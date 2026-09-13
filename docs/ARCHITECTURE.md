@@ -102,7 +102,7 @@ Sessions expire, and an app shouldn't have to reinvent "what do we do when they 
 
 ```
 1. User navigates to /customers
-2. Shell reads navigation.json
+2. Shell reads shell.json
 3. Shell finds matching route
 4. Shell creates <script> tag for app
 5. App loads and assigns window.AppMount
@@ -184,23 +184,21 @@ Sessions expire, and an app shouldn't have to reinvent "what do we do when they 
 
 ```
 CDN/
-├── shell/
-│   ├── index.html
-│   ├── shell.js
-│   ├── shell.css
-│   ├── navigation.json
-│   └── webawesome/           # Web Awesome assets (served from here)
+├── index.html                # Shell HTML
+├── shell.js
+├── shell.css
+├── shell.json                # Manifest: apps + nav
+├── webawesome/                # Web Awesome assets (served from here)
 ├── customers/
 │   ├── index.html            # Copy of shell HTML
 │   └── app.js                # Customer SPA bundle
-├── orders/
-│   ├── index.html
-│   └── app.js
-└── navigation.json
+└── orders/
+    ├── index.html
+    └── app.js
 ```
 
 **Key Points:**
-- Each app is a separate directory
+- The shell's own files sit at the CDN root; each app gets its own sibling directory
 - Each app has its own `index.html` (copy of shell HTML)
 - Web Awesome loaded once by the shell, available to all SPAs
 - No URL rewrite rules needed

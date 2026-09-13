@@ -102,7 +102,7 @@ Instead of fighting CSS conflicts and JavaScript namespace collisions, we embrac
 /app/
 ├── index.html
 ├── shell.js
-├── navigation.json
+├── shell.json
 ├── billing/
 │   ├── index.html
 │   └── app.js
@@ -120,7 +120,7 @@ No URL rewrites. No server-side routing. Just files.
 
 ### 5. Design System Adapters
 
-Want to use Shoelace? There's an adapter.
+Want to use Web Awesome? There's an adapter.
 Want to use CloudScape? There's an adapter.
 Want to use Material-UI? Write a 50-line adapter.
 
@@ -150,7 +150,7 @@ Done. No CloudFront rules, no server configuration.
 Navigation, HTTP, and feedback are provided by the shell. Apps don't duplicate this code.
 
 ### ✅ Design System Flexibility
-Switch from Shoelace to CloudScape? Just swap the adapter. Apps don't change.
+Switch from Web Awesome to CloudScape? Just swap the adapter. Apps don't change.
 
 ### ✅ Framework Agnostic
 Use any framework, any version. The shell loads ES modules and calls `init()`. That's the entire contract.

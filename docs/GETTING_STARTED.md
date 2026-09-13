@@ -77,22 +77,26 @@ ShellApp.mount(shell);
 </html>
 ```
 
-### 1.4 Navigation Config (`public/navigation.json`)
+### 1.4 Shell Manifest (`public/shell.json`)
 
 ```json
-[
-  {
-    "id": "demo",
-    "path": "/demo",
-    "app": "demo",
-    "icon": "house",
-    "label": "Demo",
-    "order": 1
-  }
-]
+{
+  "apps": [
+    { "id": "demo", "basePath": "/demo", "src": "demo" }
+  ],
+  "nav": [
+    {
+      "type": "link",
+      "label": "Demo",
+      "icon": "house",
+      "order": 1,
+      "href": "/demo"
+    }
+  ]
+}
 ```
 
-Icons use Font Awesome free names — see [fontawesome.com/icons](https://fontawesome.com/icons).
+`apps` lists the SPAs the shell can mount; `nav` describes the menu — a mix of `link`, `section` (a labelled group of links), and `divider` items. Icons use Font Awesome free names — see [fontawesome.com/icons](https://fontawesome.com/icons).
 
 ### 1.5 Vite Config (`vite.config.ts`)
 
@@ -286,7 +290,7 @@ deploy/
 ├── index.html          # Shell HTML
 ├── shell.js
 ├── shell.css
-├── navigation.json
+├── shell.json          # Manifest: apps + nav
 ├── webawesome/         # Web Awesome assets
 └── demo/
     ├── index.html      # Copy of shell HTML
@@ -341,7 +345,7 @@ In real code, you'd call this from wherever you handle a 401, not from a button 
 
 ## Troubleshooting
 
-**SPA not loading** — check `app.js` is in `shell/public/<app-name>/`, verify `navigation.json` path is correct, check browser console.
+**SPA not loading** — check `app.js` is in `shell/public/<app-name>/`, verify `shell.json` path is correct, check browser console.
 
 **404 on `/webawesome/...`** — ensure the shell's `copy-webawesome` step ran after build, or that the Vite proxy is configured for standalone mode.
 
