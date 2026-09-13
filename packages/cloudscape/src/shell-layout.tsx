@@ -6,17 +6,22 @@ import type { NavItem, NavLink } from '@herdingbits/trailhead-core';
 interface ShellLayoutProps {
   navigation: NavItem[];
   currentPath: string;
+  /** URL prefix under which the shell is hosted — prepended to nav hrefs so they resolve
+   * correctly under a non-root deployment (e.g. `/sample/trailhead/cloudscape`). */
+  appBasePath: string;
   onNavigate: (path: string) => void;
   children: React.ReactNode;
 }
 
-export function ShellLayout({ navigation, currentPath, onNavigate, children }: ShellLayoutProps) {
+const isExternal = (href: string) => /^https?:\/\/|^\/\//.test(href);
+
+export function ShellLayout({ navigation, currentPath, appBasePath, onNavigate, children }: ShellLayoutProps) {
   const [navigationOpen, setNavigationOpen] = useState(true);
 
   const mapLink = (item: NavLink): SideNavigationProps.Link => ({
     type: 'link',
     text: item.label,
-    href: item.href,
+    href: isExternal(item.href) ? item.href : appBasePath + item.href,
   });
 
   const navItems: SideNavigationProps['items'] = [...navigation]
