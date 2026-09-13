@@ -33,6 +33,9 @@ if (!window.shell) {
       yesNoCancel: async (msg) => { console.log("[Mock] yesNoCancel:", msg); return "yes"; },
       custom: async (msg) => { console.log("[Mock] custom:", msg); return null; },
     },
+    auth: {
+      reauthenticate: async () => { console.log("[Mock] reauthenticate"); return true; },
+    },
     http: {
       get: async (url) => { console.log("[Mock] GET:", url); return { success: true, data: {} }; },
       post: async (url) => { console.log("[Mock] POST:", url); return { success: true, data: {} }; },

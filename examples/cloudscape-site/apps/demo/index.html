@@ -12,12 +12,15 @@
     <link rel="stylesheet" href="http://localhost:3001/shell.css" />
   </head>
   <body>
-    <!-- React shell mount point -->
+    <!-- React shell mount point (used when the shell dev server is also running) -->
     <div id="app"></div>
+
+    <!-- Standalone mount point (used by this plugin's own index.tsx when no shell is present) -->
+    <div id="root"></div>
 
     <!-- Load shell JS from shell dev server -->
     <script type="module" src="http://localhost:3001/src/index.tsx"></script>
-    
+
     <!-- Load plugin with hot reload -->
     <script type="module" src="/src/index.tsx"></script>
   </body>

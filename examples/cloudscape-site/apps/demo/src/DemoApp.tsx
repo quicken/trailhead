@@ -10,6 +10,7 @@ import "@cloudscape-design/global-styles/index.css";
 export function DemoApp() {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [authResult, setAuthResult] = useState("");
 
   const handleSuccess = () => {
     window.shell.feedback.success("Operation completed successfully!");
@@ -33,6 +34,15 @@ export function DemoApp() {
       "Confirm Action"
     );
     window.shell.feedback.info(`You clicked: ${result ? "Confirm" : "Cancel"}`);
+  };
+
+  const handleReauth = async () => {
+    const attempt = async (username: string, password: string) => {
+      await new Promise((r) => setTimeout(r, 500)); // simulate a login request
+      return username === "demo" && password === "demo123";
+    };
+    const ok = await window.shell.auth.reauthenticate(attempt);
+    setAuthResult(`Re-authentication ${ok ? "succeeded" : "was cancelled"}`);
   };
 
   const handleApiCall = async () => {
@@ -106,6 +116,22 @@ export function DemoApp() {
         <Button onClick={handleApiCall} loading={loading}>
           Simulate API Call
         </Button>
+      </Container>
+
+      <Container
+        header={
+          <Header
+            variant="h2"
+            description="In-place re-authentication when a session expires — no page reload, no lost work. Try demo / demo123 to succeed, or anything else to see the retry-with-error flow."
+          >
+            Authentication
+          </Header>
+        }
+      >
+        <SpaceBetween size="m">
+          <Button onClick={handleReauth}>Simulate Session Expiry</Button>
+          {authResult && <div>{authResult}</div>}
+        </SpaceBetween>
       </Container>
     </SpaceBetween>
   );
