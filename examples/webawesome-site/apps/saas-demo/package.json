@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@herdingbits/trailhead-types": "^0.1.0",
+    "@herdingbits/trailhead-types": "^0.3.0",
     "typescript": "^6.0.3",
     "vite": "^8.1.3"
   }

@@ -53,6 +53,16 @@ export const DemoApp: React.FC = () => {
     setResult(`Custom result: ${answer}`);
   };
 
+  // Authentication Demo
+  const handleReauth = async () => {
+    const attempt = async (username: string, password: string) => {
+      await new Promise((r) => setTimeout(r, 500)); // simulate a login request
+      return username === "demo" && password === "demo123";
+    };
+    const ok = await window.shell.auth.reauthenticate(attempt);
+    setResult(`Re-authentication ${ok ? "succeeded" : "was cancelled"}`);
+  };
+
   // HTTP Client Demos
   const handleHttpGet = async () => {
     const result = await window.shell.http.get("https://jsonplaceholder.typicode.com/users/1", {
@@ -156,6 +166,20 @@ export const DemoApp: React.FC = () => {
               Custom Dialog
             </button>
           </div>
+        </div>
+      </section>
+
+      {/* Authentication */}
+      <section style={sectionStyle}>
+        <h2 style={headingStyle}>Authentication</h2>
+        <p style={descStyle}>
+          In-place re-authentication when a session expires — no page reload, no lost work. Try{" "}
+          <code>demo</code> / <code>demo123</code> to succeed, or anything else to see the retry-with-error flow.
+        </p>
+        <div style={buttonGroupStyle}>
+          <button onClick={handleReauth} style={buttonStyle}>
+            Simulate Session Expiry
+          </button>
         </div>
       </section>
 
