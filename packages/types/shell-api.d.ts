@@ -21,6 +21,37 @@ export interface ShellAPI {
     http: HttpAPI;
     /** Navigation and routing utilities */
     navigation: NavigationAPI;
+    /** In-place session re-authentication — see `AuthAPI`. */
+    auth: AuthAPI;
+}
+/**
+ * In-place session re-authentication API.
+ *
+ * Lets an app recover from an expired session without a full page reload: show a credential
+ * prompt over whatever the user was doing, retry the failed action once they're signed back in.
+ * Always present — backed by `NoopAuthAdapter` (always resolves as cancelled) on adapters that
+ * don't have a real implementation yet, so calling this is always safe.
+ */
+export interface AuthAPI {
+    /**
+     * Prompts for credentials and calls `attempt` with them, re-prompting on failure until it
+     * succeeds or the user cancels. Concurrent calls share a single prompt, and a successful
+     * re-authentication in one browser tab resolves a pending prompt in every other open tab too.
+     *
+     * @param attempt - Validates one username/password pair against the app's own login endpoint
+     *   and returns whether it succeeded. The shell never sees the credentials otherwise, and has
+     *   no opinion on the authentication mechanism.
+     * @returns `true` once a session has been re-established, `false` if the user cancelled.
+     * @example
+     * ```typescript
+     * const ok = await shell.auth.reauthenticate(async (username, password) => {
+     *   const res = await fetch('/api/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+     *   return res.ok;
+     * });
+     * if (ok) retryOriginalRequest();
+     * ```
+     */
+    reauthenticate(attempt: (username: string, password: string) => Promise<boolean>): Promise<boolean>;
 }
 /**
  * Contract implemented by applications that can be hosted by the Shell.
