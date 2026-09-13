@@ -19,6 +19,7 @@ This package provides the core shell logic for the Trailhead micro-frontend patt
 - **Independent Deployment**: Deploy one SPA without touching others
 - **Simple Deployment**: No URL rewrites, works on any static host
 - **Design System Adapters**: Pluggable UI layer (Web Awesome, CloudScape, or custom)
+- **Session Re-authentication**: `window.shell.auth.reauthenticate()` shows an in-place credential prompt on an expired session, retries the failed request, and syncs across tabs — no full-page login redirect
 
 ## Installation
 

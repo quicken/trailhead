@@ -56,7 +56,7 @@ const shell = new Trailhead({
 
 ## What's Included
 
-- **CloudScapeAdapter** - Implements the Trailhead adapter interface
+- **CloudScapeAdapter** - Implements the Trailhead adapter interface, including a `<Modal>`-based re-authentication prompt for expired sessions
 - **ShellApp** - React component that renders the shell UI
 - **ShellLayout** - CloudScape AppLayout with navigation
 - **shell.css** - Base styles for the shell UI

@@ -47,7 +47,7 @@ const shell = new Trailhead({
 
 ## What's Included
 
-- **WebAwesomeAdapter** — implements the Trailhead adapter interface
+- **WebAwesomeAdapter** — implements the Trailhead adapter interface, including a `<wa-dialog>`-based re-authentication prompt for expired sessions
 - **ShellApp** — minimal mounting wrapper for API consistency
 - **shell.css** — base styles for the shell UI
 

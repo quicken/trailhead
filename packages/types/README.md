@@ -44,7 +44,8 @@ export function init() {
 ### For Custom Adapter Development
 
 ```typescript
-import type { DesignSystemAdapter, FeedbackAdapter } from '@herdingbits/trailhead-types/adapters';
+import type { DesignSystemAdapter, FeedbackAdapter, AuthAdapter } from '@herdingbits/trailhead-types/adapters';
+import { NoopAuthAdapter } from '@herdingbits/trailhead-core';
 
 export class MyAdapter implements DesignSystemAdapter {
   name = 'my-adapter';
@@ -57,6 +58,10 @@ export class MyAdapter implements DesignSystemAdapter {
   feedback: FeedbackAdapter = {
     // Implement feedback methods
   };
+
+  // AuthAdapter is required on every adapter. NoopAuthAdapter declines every
+  // re-authentication attempt, so you can ship before building a real login prompt.
+  auth: AuthAdapter = new NoopAuthAdapter();
 }
 ```
 
