@@ -38,15 +38,17 @@ mkdirSync(OUTPUT_DIR, { recursive: true });
 console.log('\n2. Copying shell...');
 cpSync(shellDist, OUTPUT_DIR, { recursive: true });
 
-// Read navigation to determine which apps to assemble
-const navigation = JSON.parse(readFileSync(join(OUTPUT_DIR, 'navigation.json'), 'utf-8'));
+// Read the shell manifest to determine which apps to assemble. This used to be a flat
+// navigation.json array (app/path per entry); that was split into shell.json's {apps, nav}
+// shape (separate SPA manifest vs. menu definition) — this script just never caught up.
+const manifest = JSON.parse(readFileSync(join(OUTPUT_DIR, 'shell.json'), 'utf-8'));
 const indexTemplate = readFileSync(join(OUTPUT_DIR, 'index.html'), 'utf-8');
 
 // Copy each app
 let step = 3;
-navigation.forEach(route => {
-  const appName = route.app;
-  const routePath = route.path.substring(1); // Remove leading slash
+manifest.apps.forEach(app => {
+  const appName = app.src;
+  const routePath = app.basePath.substring(1); // Remove leading slash
   const appDist = join(__dirname, 'apps', appName, 'dist');
   
   // Check app is built
