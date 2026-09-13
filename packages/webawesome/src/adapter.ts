@@ -1,35 +1,68 @@
 /**
  * Web Awesome Design System Adapter
  */
-import type { DesignSystemAdapter, FeedbackAdapter, DialogConfig, DialogResult, ToastVariant } from '@herdingbits/trailhead-types/adapters';
+import type { DesignSystemAdapter, FeedbackAdapter, DialogConfig, DialogResult, ToastVariant, AuthAdapter, Credentials, CredentialPromptHandle } from '@herdingbits/trailhead-types/adapters';
+
+const TOAST_ICONS: Record<ToastVariant, string> = {
+  success: "circle-check",
+  error: "circle-exclamation",
+  warning: "triangle-exclamation",
+  info: "circle-info",
+};
+
+// wa-callout has no "error"/"info" variant — map onto its brand/danger vocabulary.
+function toastCalloutVariant(variant: ToastVariant): "brand" | "success" | "warning" | "danger" {
+  if (variant === "error") return "danger";
+  if (variant === "info") return "brand";
+  return variant;
+}
+
+// DialogButton.variant is a free-form string set by callers (only "primary"/"secondary" are
+// used anywhere in practice); map it onto wa-button's variant/appearance vocabulary.
+function dialogButtonAppearance(variant?: string): { variant: string; appearance: string } {
+  if (variant === "primary") return { variant: "brand", appearance: "filled" };
+  if (variant === "secondary") return { variant: "neutral", appearance: "outlined" };
+  return { variant: "neutral", appearance: "plain" };
+}
 
 class WebAwesomeFeedbackAdapter implements FeedbackAdapter {
-  private busyOverlay: HTMLElement | null = null;
+  private busyDialog: (HTMLElement & { open: boolean }) | null = null;
+  private busyActive = false;
   private toastContainer: HTMLElement | null = null;
 
   showBusy(message: string): void {
-    if (!this.busyOverlay) {
-      this.busyOverlay = document.createElement("div");
-      this.busyOverlay.id = "shell-busy-overlay";
-      this.busyOverlay.innerHTML = `
+    if (!this.busyDialog) {
+      const dialog = document.createElement("wa-dialog") as HTMLElement & { open: boolean };
+      dialog.setAttribute("without-header", "");
+      dialog.className = "shell-busy-dialog";
+      dialog.innerHTML = `
         <div class="shell-busy-content">
-          <div class="shell-spinner"></div>
+          <wa-spinner></wa-spinner>
           <div class="shell-busy-message"></div>
         </div>
       `;
-      document.body.appendChild(this.busyOverlay);
+      // Busy is a blocking state — Escape (or any other close trigger) must not dismiss it
+      // early; only our own clearBusy() call is allowed to close it. See "Preventing the
+      // Dialog from Closing" in the wa-dialog docs.
+      dialog.addEventListener("wa-hide", (e) => {
+        if (this.busyActive) e.preventDefault();
+      });
+      document.body.appendChild(dialog);
+      this.busyDialog = dialog;
     }
 
-    const messageEl = this.busyOverlay.querySelector(".shell-busy-message");
+    const messageEl = this.busyDialog.querySelector(".shell-busy-message");
     if (messageEl) {
       messageEl.textContent = message;
     }
-    this.busyOverlay.style.display = "flex";
+    this.busyActive = true;
+    this.busyDialog.open = true;
   }
 
   clearBusy(): void {
-    if (this.busyOverlay) {
-      this.busyOverlay.style.display = "none";
+    this.busyActive = false;
+    if (this.busyDialog) {
+      this.busyDialog.open = false;
     }
   }
 
@@ -40,9 +73,13 @@ class WebAwesomeFeedbackAdapter implements FeedbackAdapter {
       document.body.appendChild(this.toastContainer);
     }
 
-    const toast = document.createElement("div");
-    toast.className = `shell-toast shell-toast-${variant}`;
-    toast.textContent = message;
+    const toast = document.createElement("wa-callout");
+    toast.setAttribute("variant", toastCalloutVariant(variant));
+    toast.setAttribute("appearance", "filled");
+    toast.className = "shell-toast";
+    // "solid" (the default) is the only style free Font Awesome kits are guaranteed to carry —
+    // "regular"/"light"/"thin" are Pro-only and 403 silently on a free kit.
+    toast.innerHTML = `<wa-icon slot="icon" name="${TOAST_ICONS[variant]}"></wa-icon>${message}`;
     this.toastContainer.appendChild(toast);
 
     setTimeout(() => toast.classList.add("shell-toast-show"), 10);
@@ -54,41 +91,111 @@ class WebAwesomeFeedbackAdapter implements FeedbackAdapter {
 
   showDialog<T extends string>(config: DialogConfig<T>): Promise<DialogResult<T>> {
     return new Promise((resolve) => {
-      const dialog = document.createElement("div");
-      dialog.className = "shell-dialog-overlay";
+      let settled = false;
+
+      const dialog = document.createElement("wa-dialog") as HTMLElement & { open: boolean };
+      if (config.title) {
+        dialog.setAttribute("label", config.title);
+      } else {
+        dialog.setAttribute("without-header", "");
+      }
+      dialog.setAttribute("light-dismiss", "");
+      dialog.className = "shell-dialog";
       dialog.innerHTML = `
-        <div class="shell-dialog">
-          ${config.title ? `<div class="shell-dialog-title">${config.title}</div>` : ''}
-          <div class="shell-dialog-message">${config.message}</div>
-          <div class="shell-dialog-buttons">
-            ${config.buttons
-              .map(
-                (btn) =>
-                  `<button class="shell-btn shell-btn-${btn.variant || "default"}" data-value="${btn.value}">${btn.label}</button>`
-              )
-              .join("")}
-          </div>
-        </div>
+        <p class="shell-dialog-message">${config.message}</p>
+        ${config.buttons
+          .map((btn) => {
+            const { variant, appearance } = dialogButtonAppearance(btn.variant);
+            return `<wa-button slot="footer" variant="${variant}" appearance="${appearance}" data-value="${btn.value}">${btn.label}</wa-button>`;
+          })
+          .join("")}
       `;
 
-      dialog.querySelectorAll("button").forEach((btn) => {
-        btn.onclick = () => {
-          const value = btn.getAttribute("data-value") as T;
-          dialog.remove();
-          resolve({ value });
-        };
-      });
-
-      // Click outside to cancel
-      dialog.onclick = (e) => {
-        if (e.target === dialog) {
-          dialog.remove();
-          resolve({ value: null });
-        }
+      const settleOnce = (value: T | null) => {
+        if (settled) return;
+        settled = true;
+        resolve({ value });
+        dialog.open = false;
       };
 
+      dialog.addEventListener("wa-after-hide", () => dialog.remove());
+      // Escape, the header close button, and light-dismiss all fire wa-hide — treat as no selection.
+      dialog.addEventListener("wa-hide", () => settleOnce(null));
+
+      dialog.querySelectorAll("wa-button[data-value]").forEach((btn) => {
+        btn.addEventListener("click", () => settleOnce(btn.getAttribute("data-value") as T));
+      });
+
       document.body.appendChild(dialog);
+      dialog.open = true;
     });
+  }
+}
+
+class WebAwesomeAuthAdapter implements AuthAdapter {
+  promptCredentials(errorMessage?: string): CredentialPromptHandle {
+    let settle!: (value: Credentials | null) => void;
+    const result = new Promise<Credentials | null>((resolve) => {
+      settle = resolve;
+    });
+    let settled = false;
+
+    const formId = `shell-auth-form-${Math.random().toString(36).slice(2)}`;
+
+    const dialog = document.createElement("wa-dialog") as HTMLElement & { open: boolean };
+    dialog.setAttribute("label", "Session Expired");
+    dialog.setAttribute("light-dismiss", "");
+    dialog.className = "shell-auth-dialog";
+    dialog.innerHTML = `
+      <p class="shell-auth-message">Sign in to continue where you left off.</p>
+      ${errorMessage
+        ? `<wa-callout variant="danger" size="small" class="shell-auth-error">
+             <wa-icon slot="icon" name="circle-exclamation"></wa-icon>
+             ${errorMessage}
+           </wa-callout>`
+        : ""}
+      <form id="${formId}" class="shell-auth-form">
+        <wa-input name="username" label="Username" autocomplete="username" autofocus required></wa-input>
+        <wa-input name="password" type="password" label="Password" autocomplete="current-password" password-toggle required></wa-input>
+      </form>
+      <wa-button slot="footer" appearance="outlined" data-action="cancel">Cancel</wa-button>
+      <wa-button slot="footer" variant="brand" appearance="filled" type="submit" form="${formId}">Sign In</wa-button>
+    `;
+
+    const settleOnce = (value: Credentials | null) => {
+      if (settled) return;
+      settled = true;
+      settle(value);
+      dialog.open = false;
+    };
+
+    // wa-dialog owns its own close animation; only remove the element once it's finished.
+    dialog.addEventListener("wa-after-hide", () => dialog.remove());
+    // Escape, the header close button, and light-dismiss all fire wa-hide — treat every one as cancel.
+    dialog.addEventListener("wa-hide", () => settleOnce(null));
+
+    const form = dialog.querySelector("form") as HTMLFormElement;
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const data = new FormData(form);
+      settleOnce({
+        username: String(data.get("username") ?? ""),
+        password: String(data.get("password") ?? ""),
+      });
+    });
+
+    dialog.querySelector('[data-action="cancel"]')?.addEventListener("click", () => settleOnce(null));
+
+    document.body.appendChild(dialog);
+    dialog.open = true;
+    requestAnimationFrame(() => {
+      (dialog.querySelector('wa-input[name="username"]') as (HTMLElement & { focus(): void }) | null)?.focus();
+    });
+
+    return {
+      result,
+      close: () => settleOnce(null),
+    };
   }
 }
 
@@ -101,11 +208,13 @@ export class WebAwesomeAdapter implements DesignSystemAdapter {
   name = "webawesome";
   version = "1.0.0";
   feedback: FeedbackAdapter;
+  auth: AuthAdapter;
   private readonly config?: WebAwesomeAdapterConfig;
 
   constructor(config?: WebAwesomeAdapterConfig) {
     this.config = config;
     this.feedback = new WebAwesomeFeedbackAdapter();
+    this.auth = new WebAwesomeAuthAdapter();
   }
 
   async init(shellUrl: string): Promise<void> {
