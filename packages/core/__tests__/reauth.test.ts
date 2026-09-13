@@ -117,4 +117,30 @@ describe('createReauthenticator', () => {
     expect(await pendingA).toBe(true);
     expect(promptsA[0].closed).toBe(true);
   });
+
+  it('ignores a broadcast that is not a well-formed success message from this mechanism', async () => {
+    const { adapter, prompts } = createFakeAdapter();
+    const reauth = createReauthenticator(adapter);
+
+    const pending = reauth.reauthenticate(async () => true);
+    await vi.waitFor(() => expect(prompts.length).toBe(1));
+
+    // Some other same-origin script — an unrelated feature, or one reusing this channel name
+    // by accident — posting a bare string or a differently-shaped object must not satisfy this
+    // prompt. (It cannot defend against a script that deliberately reproduces the exact message
+    // shape — see the trust-boundary note in reauth.ts — but it must not be satisfied by chance.)
+    const foreignChannel = new BroadcastChannel('trailhead-reauth');
+    foreignChannel.postMessage('success');
+    foreignChannel.postMessage({ type: 'success' }); // missing `channel`
+    foreignChannel.postMessage({ channel: 'trailhead-reauth', type: 'other' }); // wrong `type`
+    foreignChannel.close();
+
+    // Give any (incorrect) resolution a chance to land before proving it didn't.
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(prompts[0].closed).toBe(false);
+
+    // The real shape still works.
+    prompts[0].resolve({ username: 'quicken', password: 'password' });
+    expect(await pending).toBe(true);
+  });
 });

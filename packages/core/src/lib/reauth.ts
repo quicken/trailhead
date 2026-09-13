@@ -11,6 +11,35 @@ import type { AuthAdapter } from "../adapters/types.js";
 
 const CHANNEL_NAME = "trailhead-reauth";
 
+/**
+ * Message shape posted on success, rather than a bare string — cheap insurance against an
+ * unrelated same-origin feature that happens to also use a `BroadcastChannel` named
+ * "trailhead-reauth" (or broadcasts the string "success" on it for some other reason)
+ * accidentally satisfying a pending prompt here.
+ *
+ * This is not, and cannot be, a real security boundary: `BroadcastChannel` has no built-in way
+ * to authenticate a same-origin sender, and this file's source is public. Any co-hosted script
+ * — including a malicious or compromised one — already has the same DOM/JS access as this code
+ * and can construct an identical message. Trailhead's whole model is multiple independent SPAs
+ * sharing one origin and one `window.shell`; that shared trust boundary is what actually backs
+ * this mechanism, not the message shape. If that's not an acceptable trust assumption for a
+ * given deployment, don't co-host mutually-untrusted apps on the same origin — no in-page check
+ * can substitute for that.
+ */
+interface ReauthSuccessMessage {
+  channel: typeof CHANNEL_NAME;
+  type: "success";
+}
+
+function isReauthSuccessMessage(data: unknown): data is ReauthSuccessMessage {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    (data as Partial<ReauthSuccessMessage>).channel === CHANNEL_NAME &&
+    (data as Partial<ReauthSuccessMessage>).type === "success"
+  );
+}
+
 export interface Reauthenticator {
   /**
    * Prompts for credentials and calls `attempt` with them, re-prompting (with an error message)
@@ -54,7 +83,7 @@ export function createReauthenticator(adapter: AuthAdapter): Reauthenticator {
       const otherTabSucceeded = new Promise<true>((resolve) => {
         if (!channel) return; // no BroadcastChannel support — never resolves, harmless
         onMessage = (e) => {
-          if (e.data === "success") resolve(true);
+          if (isReauthSuccessMessage(e.data)) resolve(true);
         };
         channel.addEventListener("message", onMessage);
       });
@@ -76,7 +105,7 @@ export function createReauthenticator(adapter: AuthAdapter): Reauthenticator {
 
       const ok = await attempt(outcome.credentials.username, outcome.credentials.password);
       if (ok) {
-        channel?.postMessage("success");
+        channel?.postMessage({ channel: CHANNEL_NAME, type: "success" } satisfies ReauthSuccessMessage);
         return true;
       }
       errorMessage = "Incorrect username or password.";
