@@ -36,7 +36,7 @@ sites.forEach(siteName => {
   execSync('npm run build', { 
     cwd: `${siteDir}/shell`,
     stdio: 'inherit',
-    env: { ...process.env, VITE_BASE_PATH: `/sample/trailhead/${siteName}` }
+    env: { ...process.env, VITE_APP_BASE_PATH: `/sample/trailhead/${siteName}` }
   });
   
   // Build apps (demo and saas-demo)
