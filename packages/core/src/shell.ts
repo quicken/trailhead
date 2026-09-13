@@ -5,6 +5,7 @@ import type { ShellAPI, NavItem, NavLink, AppEntry, ShellManifest } from "./type
 import type { DesignSystemAdapter } from "./adapters/types.js";
 import * as http from "./lib/http.js";
 import * as requestManager from "./lib/requestManager.js";
+import { createReauthenticator, type Reauthenticator } from "./lib/reauth.js";
 
 /**
  * Configuration passed to the `Trailhead` constructor.
@@ -47,6 +48,9 @@ export class Trailhead {
   /** The active design system adapter supplying UI components to the shell. */
   public readonly adapter: DesignSystemAdapter;
 
+  /** Backs `window.shell.auth.reauthenticate` — built from `adapter.auth`. */
+  private readonly reauthenticator: Reauthenticator;
+
   /**
    * Creates the shell and immediately begins async initialisation (adapter setup,
    * navigation load, initial route handling). Mount errors are logged to the console.
@@ -57,6 +61,7 @@ export class Trailhead {
     this.appBasePath = config.appBasePath || "";
     this.shellUrl = config.shellUrl || this.appBasePath;
     this.adapter = config.adapter;
+    this.reauthenticator = createReauthenticator(this.adapter.auth);
     this.init(config.apiUrl);
   }
 
@@ -196,6 +201,9 @@ export class Trailhead {
             }
           };
         },
+      },
+      auth: {
+        reauthenticate: (attempt) => this.reauthenticator.reauthenticate(attempt),
       },
     };
   }

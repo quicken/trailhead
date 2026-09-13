@@ -21,4 +21,5 @@ export type {
   NavDivider,
   AppEntry,
   ShellManifest,
+  AuthAPI,
 } from "./shell-api.js";

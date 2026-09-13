@@ -57,6 +57,53 @@ export interface FeedbackAdapter {
   showDialog<T extends string>(config: DialogConfig<T>): Promise<DialogResult<T>>;
 }
 
+/** Credentials collected by an `AuthAdapter`'s re-authentication prompt. */
+export interface Credentials {
+  username: string;
+  password: string;
+}
+
+/**
+ * A still-open (or just-closed) credential prompt. Returned by `AuthAdapter.promptCredentials`
+ * so the core orchestration in `lib/reauth.ts` can dismiss a stale prompt — e.g. when another
+ * browser tab's re-authentication already succeeded and this tab's own prompt is no longer
+ * needed. `close()` must be safe to call after the prompt has already resolved on its own.
+ */
+export interface CredentialPromptHandle {
+  /** Resolves with the entered credentials, or `null` if the user cancelled. */
+  result: Promise<Credentials | null>;
+  /** Dismisses the prompt programmatically, resolving `result` with `null` if still pending. */
+  close(): void;
+}
+
+/**
+ * Implemented by adapters to collect credentials for in-place session re-authentication —
+ * e.g. when a request fails because the session expired, and the app wants to recover without
+ * losing the user's place (no navigation, no lost form state) rather than forcing a full reload.
+ * Each adapter renders this however fits its design system; `lib/reauth.ts` only depends on the
+ * `promptCredentials` contract, never on how it's drawn.
+ */
+export interface AuthAdapter {
+  /**
+   * Prompts for a username and password.
+   * @param errorMessage - Set when re-prompting after a failed attempt (e.g. "Incorrect
+   *   username or password."); omitted on the first prompt.
+   */
+  promptCredentials(errorMessage?: string): CredentialPromptHandle;
+}
+
+/**
+ * `AuthAdapter` that never actually prompts — `promptCredentials` resolves `null` (cancelled)
+ * immediately. Lets an adapter satisfy the required `auth` field with zero UI work: requests
+ * that hit an expired session simply fail exactly as they would with no re-authentication
+ * support at all, until a real implementation is built for that design system.
+ */
+export class NoopAuthAdapter implements AuthAdapter {
+  promptCredentials(): CredentialPromptHandle {
+    return { result: Promise.resolve(null), close: () => {} };
+  }
+}
+
 /**
  * The integration contract between Trailhead core and a specific design system.
  * Implement this interface to support a new component library as the shell's UI layer.
@@ -76,4 +123,11 @@ export interface DesignSystemAdapter {
 
   /** Feedback implementation backed by this adapter's design system components. */
   feedback: FeedbackAdapter;
+
+  /**
+   * Credential-prompt implementation backed by this adapter's design system components.
+   * Required so every adapter has an explicit answer — use `NoopAuthAdapter` if this design
+   * system doesn't have a real implementation yet.
+   */
+  auth: AuthAdapter;
 }

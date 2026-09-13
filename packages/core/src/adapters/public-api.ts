@@ -9,4 +9,9 @@ export type {
   DialogButton,
   DialogConfig,
   DialogResult,
+  AuthAdapter,
+  Credentials,
+  CredentialPromptHandle,
 } from './types.js';
+
+export { NoopAuthAdapter } from './types.js';
