@@ -3,6 +3,7 @@
  */
 import { Trailhead } from '@herdingbits/trailhead-core';
 import { WebAwesomeAdapter, ShellApp } from '@herdingbits/trailhead-webawesome';
+import '@herdingbits/trailhead-webawesome/shell.css';
 
 // Get configuration
 const appBasePath = import.meta.env.VITE_APP_BASE_PATH || "";
