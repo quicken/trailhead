@@ -1,6 +1,6 @@
 {
   "name": "@herdingbits/trailhead-webawesome",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Web Awesome web components adapter for Trailhead. Vanilla TypeScript, no React required.",
   "type": "module",
   "main": "./dist/index.js",
@@ -23,14 +23,14 @@
   },
   "peerDependencies": {
     "@awesome.me/webawesome": "^3.6.0",
-    "@herdingbits/trailhead-core": "^0.3.0"
+    "@herdingbits/trailhead-core": "^0.4.0"
   },
   "devDependencies": {
-    "@awesome.me/webawesome": "^3.10.0",
-    "@herdingbits/trailhead-types": "^0.3.0",
-    "jsdom": "^29.1.1",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.9"
+    "@awesome.me/webawesome": "^3.12.0",
+    "@herdingbits/trailhead-types": "^0.4.0",
+    "jsdom": "^30.0.1",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.0"
   },
   "keywords": [
     "micro-frontend",
