@@ -2,7 +2,7 @@
  * CloudScape Design System Adapter
  * Uses CloudScape Flashbar, Modal, and Spinner components
  */
-import type { DesignSystemAdapter, FeedbackAdapter, DialogConfig, DialogResult, ToastVariant } from '@herdingbits/trailhead-types/adapters';
+import type { DesignSystemAdapter, FeedbackAdapter, AuthAdapter, Credentials, CredentialPromptHandle, DialogConfig, DialogResult, ToastVariant } from '@herdingbits/trailhead-types/adapters';
 
 interface FlashMessage {
   id: string;
@@ -75,6 +75,41 @@ class CloudScapeFeedbackAdapter implements FeedbackAdapter {
   }
 }
 
+class CloudScapeAuthAdapter implements AuthAdapter {
+  promptCredentials(errorMessage?: string): CredentialPromptHandle {
+    let settle!: (value: Credentials | null) => void;
+    const result = new Promise<Credentials | null>((resolve) => {
+      settle = resolve;
+    });
+    let settled = false;
+
+    const resolveOnce = (value: Credentials | null) => {
+      if (settled) return;
+      settled = true;
+      settle(value);
+    };
+
+    // Modal handled by React component (ShellApp), same event-bridge pattern as showDialog().
+    // Re-dispatching on retry (a fresh call per failed attempt) just updates the same modal's
+    // state in ShellApp rather than closing and reopening it.
+    window.dispatchEvent(
+      new CustomEvent('cloudscape-auth', {
+        detail: { errorMessage, resolve: resolveOnce },
+      })
+    );
+
+    return {
+      result,
+      close: () => {
+        resolveOnce(null);
+        // Tell ShellApp to hide the modal even though nothing here resolved it via user
+        // action — this fires when another tab has already succeeded.
+        window.dispatchEvent(new CustomEvent('cloudscape-auth-dismiss'));
+      },
+    };
+  }
+}
+
 export interface CloudScapeAdapterConfig {
   /** URL for the CloudScape global-styles CSS. If provided, injected dynamically instead of requiring a hardcoded HTML link tag. */
   cloudscapeUrl?: string;
@@ -84,11 +119,13 @@ export class CloudScapeAdapter implements DesignSystemAdapter {
   name = 'cloudscape';
   version = '3.0.0';
   feedback: FeedbackAdapter;
+  auth: AuthAdapter;
   private readonly config?: CloudScapeAdapterConfig;
 
   constructor(config?: CloudScapeAdapterConfig) {
     this.config = config;
     this.feedback = new CloudScapeFeedbackAdapter();
+    this.auth = new CloudScapeAuthAdapter();
   }
 
   async init(shellUrl: string): Promise<void> {
