@@ -19,12 +19,15 @@ if (!['webawesome', 'cloudscape', 'both'].includes(site)) {
 
 console.log(`Building and assembling sites for preview...\n`);
 
-// Clean public directory
-console.log('Cleaning public/...');
-rmSync('public', { recursive: true, force: true });
-mkdirSync('public/sample/trailhead', { recursive: true });
-
 const sites = site === 'both' ? ['webawesome', 'cloudscape'] : [site];
+
+// Clean only the site(s) being rebuilt — a single-site build must not destroy whatever's
+// already built for the other site.
+console.log(`Cleaning public/sample/trailhead/{${sites.join(',')}}...`);
+sites.forEach(siteName => {
+  rmSync(`public/sample/trailhead/${siteName}`, { recursive: true, force: true });
+});
+mkdirSync('public/sample/trailhead', { recursive: true });
 
 sites.forEach(siteName => {
   const siteDir = `../../examples/${siteName}-site`;
