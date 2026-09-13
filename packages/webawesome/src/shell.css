@@ -2,11 +2,23 @@
  * Shell Styles
  */
 
-/* Reset */
-* {
+/* Reset. Scoped to native elements rather than `*` — a blanket `* { padding: 0 }` also wins
+   against a Web Awesome (or any other) custom element's own internal `:host { padding: ... }`
+   rule, since Web Awesome deliberately lets outer page CSS override component internals this
+   way (it's their documented customisation mechanism). That silently stripped the padding
+   Web Awesome gives its own components — the toast's `<wa-callout>` included. box-sizing is
+   left universal since components already design around border-box and don't set their own. */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body,
+h1, h2, h3, h4, h5, h6,
+p,
+ul, ol,
+button {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
 
 body {
