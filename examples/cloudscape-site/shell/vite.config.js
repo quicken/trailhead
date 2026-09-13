@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     resolve: {
       alias: {
-        '../../core/shell/src': path.resolve(__dirname, '../../../core/shell/src'),
+        '../../core/shell/src': path.resolve(import.meta.dirname, '../../../core/shell/src'),
       },
     },
     build: {

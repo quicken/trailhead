@@ -1,9 +1,6 @@
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  esbuild: {
-    jsx: "automatic",
-  },
   define: {
     'process.env.NODE_ENV': JSON.stringify('production'),
   },
@@ -20,7 +17,7 @@ export default defineConfig({
     // Don't externalize React - bundle it
     rollupOptions: {
       output: {
-        inlineDynamicImports: true,
+        codeSplitting: false,
       },
     },
   },
