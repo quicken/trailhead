@@ -25,6 +25,19 @@ function dialogButtonAppearance(variant?: string): { variant: string; appearance
   return { variant: "neutral", appearance: "plain" };
 }
 
+// Toast/dialog/auth-error text below is interpolated into innerHTML template literals rather
+// than set via textContent, because it sits alongside real markup (icons, buttons). Escape it
+// so caller-supplied text — a message string a caller built from a server error response, say —
+// can never be parsed as an element or attribute rather than displayed as the text it is.
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 class WebAwesomeFeedbackAdapter implements FeedbackAdapter {
   private busyDialog: (HTMLElement & { open: boolean }) | null = null;
   private busyActive = false;
@@ -79,7 +92,7 @@ class WebAwesomeFeedbackAdapter implements FeedbackAdapter {
     toast.className = "shell-toast";
     // "solid" (the default) is the only style free Font Awesome kits are guaranteed to carry —
     // "regular"/"light"/"thin" are Pro-only and 403 silently on a free kit.
-    toast.innerHTML = `<wa-icon slot="icon" name="${TOAST_ICONS[variant]}"></wa-icon>${message}`;
+    toast.innerHTML = `<wa-icon slot="icon" name="${TOAST_ICONS[variant]}"></wa-icon>${escapeHtml(message)}`;
     this.toastContainer.appendChild(toast);
 
     setTimeout(() => toast.classList.add("shell-toast-show"), 10);
@@ -102,11 +115,11 @@ class WebAwesomeFeedbackAdapter implements FeedbackAdapter {
       dialog.setAttribute("light-dismiss", "");
       dialog.className = "shell-dialog";
       dialog.innerHTML = `
-        <p class="shell-dialog-message">${config.message}</p>
+        <p class="shell-dialog-message">${escapeHtml(config.message)}</p>
         ${config.buttons
           .map((btn) => {
             const { variant, appearance } = dialogButtonAppearance(btn.variant);
-            return `<wa-button slot="footer" variant="${variant}" appearance="${appearance}" data-value="${btn.value}">${btn.label}</wa-button>`;
+            return `<wa-button slot="footer" variant="${variant}" appearance="${appearance}" data-value="${escapeHtml(btn.value)}">${escapeHtml(btn.label)}</wa-button>`;
           })
           .join("")}
       `;
@@ -151,7 +164,7 @@ class WebAwesomeAuthAdapter implements AuthAdapter {
       ${errorMessage
         ? `<wa-callout variant="danger" size="small" class="shell-auth-error">
              <wa-icon slot="icon" name="circle-exclamation"></wa-icon>
-             ${errorMessage}
+             ${escapeHtml(errorMessage)}
            </wa-callout>`
         : ""}
       <form id="${formId}" class="shell-auth-form">

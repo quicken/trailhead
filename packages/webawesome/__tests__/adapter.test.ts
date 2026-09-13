@@ -249,3 +249,43 @@ describe('WebAwesomeAuthAdapter — promptCredentials', () => {
     expect(await prompt.result).toBeNull();
   });
 });
+
+describe('XSS hardening — caller-supplied text is never parsed as markup', () => {
+  const PAYLOAD = '<img src=x onerror="window.__pwned = true">';
+
+  it('showToast escapes the message', () => {
+    const adapter = new WebAwesomeAdapter();
+    adapter.feedback.showToast(PAYLOAD, 'info');
+
+    const toast = document.querySelector('.shell-toast')!;
+    expect(toast.querySelector('img')).toBeNull();
+    expect(toast.textContent).toContain(PAYLOAD);
+  });
+
+  it('showDialog escapes the message, and button label/value', () => {
+    const adapter = new WebAwesomeAdapter();
+    adapter.feedback.showDialog({
+      message: PAYLOAD,
+      buttons: [{ label: PAYLOAD, value: '"><img src=x onerror=alert(1)>' as any }],
+    });
+
+    const dialog = document.querySelector('.shell-dialog')!;
+    expect(dialog.querySelector('img')).toBeNull();
+    expect(dialog.querySelector('.shell-dialog-message')!.textContent).toContain(PAYLOAD);
+
+    // The button's value used to be interpolated unescaped inside data-value="...", so a `"`
+    // in it could break out of the attribute into new markup — confirm it can't anymore, and
+    // that the attribute value round-trips as the literal string (not truncated at the `"`).
+    const button = dialog.querySelector('wa-button[slot="footer"]')!;
+    expect(button.getAttribute('data-value')).toBe('"><img src=x onerror=alert(1)>');
+  });
+
+  it('promptCredentials escapes the error message', () => {
+    const adapter = new WebAwesomeAdapter();
+    adapter.auth.promptCredentials(PAYLOAD);
+
+    const callout = document.querySelector('.shell-auth-error')!;
+    expect(callout.querySelector('img')).toBeNull();
+    expect(callout.textContent).toContain(PAYLOAD);
+  });
+});
