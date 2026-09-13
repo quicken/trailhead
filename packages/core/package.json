@@ -1,6 +1,6 @@
 {
   "name": "@herdingbits/trailhead-core",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Simple application shell that orchestrates multiple SPAs. No webpack magic, just the browser's native module system.",
   "type": "module",
   "main": "./dist/index.js",
@@ -22,12 +22,12 @@
     "test": "vitest"
   },
   "dependencies": {
-    "ky": "^2.0.2"
+    "ky": "^2.1.0"
   },
   "devDependencies": {
-    "jsdom": "^29.1.1",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.9"
+    "jsdom": "^30.0.1",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.0"
   },
   "keywords": [
     "micro-frontend",
