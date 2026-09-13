@@ -174,6 +174,9 @@ if (!window.shell) {
       ok: async () => {},
       custom: async () => null,
     },
+    auth: {
+      reauthenticate: async () => { console.log('[Mock] reauthenticate'); return true; },
+    },
     http: {
       get: async (url: string) => { console.log('[Mock] GET', url); return { success: true, data: {} as any }; },
       post: async (url: string) => { console.log('[Mock] POST', url); return { success: true, data: {} as any }; },
@@ -310,6 +313,32 @@ This works in vanilla TS, React, Vue — whatever your SPAs use.
 
 ---
 
+## Step 6: Handling Session Expiry
+
+Real apps eventually hit an expired session — some API call comes back 401 partway through whatever the user was doing. Trailhead gives every SPA the same way to handle it, without a page reload and without losing that work. Extend `mount()` from Step 2.2:
+
+```typescript
+async function reauthAndRetry(): Promise<void> {
+  const attempt = async (username: string, password: string): Promise<boolean> => {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    return res.ok;
+  };
+
+  const ok = await window.shell.auth.reauthenticate(attempt);
+  window.shell.feedback.info(ok ? 'Signed back in!' : 'Sign-in cancelled.');
+}
+```
+
+Wire it to a button the same way as `greet-btn` above. `reauthenticate()` shows the shell's login prompt, hands whatever the user types to your `attempt` function, and — if it returns `false` — re-shows the prompt with an error message instead of giving up. Call it again from somewhere else while a prompt is already open (say, two API calls both hit a 401 around the same time) and it shares that one prompt rather than stacking a second on top. Log back in from another tab first, and this prompt closes on its own — nobody has to type their password twice.
+
+In real code, you'd call this from wherever you handle a 401, not from a button — but wiring it to a button here is the easiest way to see the prompt in standalone dev mode, since the mock shell in Step 2.2 has no real session to expire.
+
+---
+
 ## Troubleshooting
 
 **SPA not loading** — check `app.js` is in `shell/public/<app-name>/`, verify `navigation.json` path is correct, check browser console.
@@ -317,6 +346,8 @@ This works in vanilla TS, React, Vue — whatever your SPAs use.
 **404 on `/webawesome/...`** — ensure the shell's `copy-webawesome` step ran after build, or that the Vite proxy is configured for standalone mode.
 
 **Type errors** — ensure `@herdingbits/trailhead-types` is installed as a dev dependency.
+
+**"window.shell.auth is undefined"** — your mock shell (or a custom one) is missing the `auth` block from Step 2.2. Every `ShellAPI` needs one; use `NoopAuthAdapter` at the real-shell level if you haven't built a login prompt yet.
 
 ---
 

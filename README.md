@@ -152,6 +152,28 @@ npm run build:both && npm start
 # http://localhost:8081/sample/trailhead/cloudscape
 ```
 
+## Re-authentication
+
+Sessions expire. When one does, the last thing you want is for a user's work to just vanish behind a silent failure — or to bounce them to a full-page login that throws away whatever they were doing.
+
+Trailhead gives every app a shared way to handle this in place:
+
+```typescript
+async function fetchOrder(id: string) {
+  const res = await fetch(`/api/orders/${id}`);
+  if (res.status === 401) {
+    const attempt = (username: string, password: string) => tryLogin(username, password);
+    const ok = await window.shell.auth.reauthenticate(attempt);
+    if (ok) return fetchOrder(id); // retry now that the session is fresh
+  }
+  return res;
+}
+```
+
+`reauthenticate()` asks the adapter to show a credential prompt, calls your `attempt` function with whatever the user types, and keeps re-prompting (with an error message) until it succeeds or the user cancels. If a second tab logs back in first, every other tab's prompt closes itself automatically — nobody has to solve the same login twice.
+
+Each design system adapter renders this prompt with its own native components (a real `<wa-dialog>` for Web Awesome, a real `<Modal>` for CloudScape), so it looks and feels like the rest of your app. Building your own adapter and not ready to deal with a login UI yet? A `NoopAuthAdapter` is included — it just declines every re-authentication attempt, so requests fail the way they always did until you're ready to add a real prompt.
+
 ## Navigation
 
 `navigation.json` is read at runtime — add, remove, or reorder menu items without rebuilding:

@@ -23,7 +23,7 @@ Trailhead is built on a simple adapter pattern that separates core orchestration
 ┌─────────────────────────────────────────────────────────┐
 │            Design System Adapter                        │
 │  - Web Awesome / CloudScape / Material UI / etc.       │
-│  - Toasts, Dialogs, Busy States                        │
+│  - Toasts, Dialogs, Busy States, Re-auth Prompts       │
 │  - Component Loading                                    │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -55,6 +55,7 @@ interface DesignSystemAdapter {
   version: string;
   init(shellUrl: string): Promise<void>;
   feedback: FeedbackAdapter;
+  auth: AuthAdapter;
 }
 ```
 
@@ -67,6 +68,7 @@ interface DesignSystemAdapter {
 - Implement toast notifications
 - Implement modal dialogs
 - Implement busy/loading overlays
+- Implement the re-authentication prompt (or opt out with `NoopAuthAdapter`)
 - Provide consistent UI across all apps
 
 ### 3. Types Package (`packages/types/`)
@@ -84,6 +86,15 @@ Independent applications that:
 - Assign `window.AppMount(container, basePath)` for shell to call
 - Use `window.shell` API for services
 - Deploy independently
+
+### 5. Re-authentication (`packages/core/src/lib/reauth.ts`)
+
+Sessions expire, and an app shouldn't have to reinvent "what do we do when they do." The shell exposes one shared answer: `window.shell.auth.reauthenticate(attempt)`.
+
+- `createReauthenticator()` wraps the adapter's `AuthAdapter` in a small state machine: show a prompt, wait for credentials, call the app's `attempt` function, and loop with an error message if it fails.
+- Concurrent calls from the same tab share one in-flight prompt instead of stacking dialogs on top of each other.
+- A `BroadcastChannel` tells other open tabs when one of them succeeds, so the rest can dismiss their own prompt instead of asking the user to log in again per tab.
+- Because `AuthAdapter` is just another slot on `DesignSystemAdapter`, each design system renders the prompt with its own native components — a real dialog, not something bolted on.
 
 ## Data Flow
 
@@ -119,6 +130,18 @@ Independent applications that:
 5. New app initialises fresh
 ```
 
+### Re-authentication Flow
+
+```
+1. An API call comes back 401 (session expired)
+2. App calls window.shell.auth.reauthenticate(attempt)
+3. Shell asks adapter.auth.promptCredentials() to show the login prompt
+4. User submits credentials → shell calls the app's attempt(username, password)
+5. attempt() fails → prompt reopens with an error, back to step 4
+6. attempt() succeeds → shell resolves true, app retries its original request
+   (or another tab already succeeded → this tab's prompt closes automatically)
+```
+
 ## Design Decisions
 
 ### Why Hard Redirects?
@@ -143,6 +166,12 @@ Independent applications that:
 - **Isolation**: Page reloads provide automatic cleanup
 - **Static Hosting**: Works on any file server
 - **No URL Rewrites**: Each route has its own index.html
+
+### Why is `AuthAdapter` Required, With a No-op Default?
+
+- **One Contract, No Silent Gaps**: If `auth` were optional, it would be easy for an adapter to simply forget it, and nobody would notice until a real user hit an expired session in production
+- **But Never a Blocker**: `NoopAuthAdapter` implements the interface by declining every prompt, so a new or in-progress adapter still compiles and runs — you just don't get the in-place prompt until you build one
+- **Consistency**: Every app calls the same `window.shell.auth.reauthenticate()`, regardless of which adapter is behind it
 
 ### Why Build-Time i18n?
 
