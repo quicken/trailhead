@@ -134,6 +134,17 @@ body {
   color: #ef4444;
 }
 
+/* wa-dialog wraps a native <dialog>, which the browser promotes to the top layer once
+   `showModal()` runs — but the host custom element itself stays a normal-flow node until
+   that happens. Appended straight to body, a flex container, it briefly counts as a flex
+   item alongside #shell-sidebar/#shell-main and visibly nudges that split for one frame
+   before promotion takes effect. Take every dialog host out of flow unconditionally so it
+   never has layout to contribute in the first place. */
+body > wa-dialog {
+  position: fixed;
+  inset: 0;
+}
+
 /* Busy overlay */
 .shell-busy-content {
   display: flex;
