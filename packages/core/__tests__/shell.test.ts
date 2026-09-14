@@ -257,4 +257,34 @@ describe('Trailhead shell API — navigation under a non-root appBasePath', () =
     shell.navigation.navigate('/demo');
     expect(assignedHrefs).toEqual(['/sample/trailhead/webawesome/demo']);
   });
+
+  it('a link marked external:true is left exactly as written, not prefixed with appBasePath', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        json: async () => ({
+          apps: [{ id: 'demo', basePath: '/demo', src: 'demo' }],
+          nav: [
+            { type: 'link', label: 'Demo', order: 1, href: '/demo' },
+            // A same-origin absolute path outside this deployment's appBasePath — e.g. a legacy
+            // app mounted at a different root. Only `external: true` can express "leave alone";
+            // it isn't a full URL, so the http(s)://|// regex alone wouldn't catch it.
+            { type: 'link', label: 'Legacy App', order: 2, href: '/legacy/dashboard/', external: true },
+          ],
+        }),
+      })
+    );
+    document.body.innerHTML = '<nav id="shell-navigation"></nav><div id="shell-content"></div>';
+    const { adapter } = createFakeAdapter();
+    new Trailhead({ adapter, appBasePath: '/sample/trailhead/webawesome' });
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const link = document.querySelector('#shell-navigation a[data-path="/legacy/dashboard/"]') as HTMLAnchorElement | null;
+    expect(link?.getAttribute('href')).toBe('/legacy/dashboard/');
+    expect(link?.getAttribute('data-external')).toBe('true');
+  });
 });

@@ -555,8 +555,16 @@ export interface NavLink {
   icon?: string;
   /** Lower numbers appear earlier in the menu. */
   order: number;
-  /** Absolute URL (browser handles navigation; shell does not intercept) or relative path (shell loads the matching SPA). */
+  /**
+   * Relative path (resolved against `appBasePath`, shell intercepts the click and loads the
+   * matching SPA in place) by default. Set `external: true` for an href the shell should leave
+   * completely alone — a full `http(s)://`/`//` URL, or a same-origin absolute path that lives
+   * outside this deployment's `appBasePath` (e.g. a legacy app mounted at a different root).
+   * `http(s)://`/`//` URLs are always treated as external even without this flag.
+   */
   href: string;
+  /** Forces browser-native navigation for this link — see `href`. Default false. */
+  external?: boolean;
   /** Called on each render to get a live count shown as a badge on this item. */
   badge?: () => number;
 }

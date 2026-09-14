@@ -234,7 +234,7 @@ export class Trailhead {
     const isExternal = (href: string) => /^https?:\/\/|^\/\//.test(href);
 
     const renderLink = (item: NavLink, isChild = false): string => {
-      const external = isExternal(item.href);
+      const external = item.external === true || isExternal(item.href);
       const href = external ? item.href : this.appBasePath + item.href;
       return `<a href="${href}"
          class="shell-nav-item${isChild ? " shell-nav-item-child" : ""}"
