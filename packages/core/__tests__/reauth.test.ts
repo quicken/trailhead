@@ -73,7 +73,7 @@ describe('createReauthenticator', () => {
 
     const pending = reauth.reauthenticate(attempt);
     prompts[0].resolve({ username: 'quicken', password: 'wrong' });
-    await vi.waitFor(() => expect(prompts.length).toBe(2));
+    await vi.waitFor(() => expect(prompts).toHaveLength(2));
     expect(prompts[1].errorMessage).toBeTruthy();
     prompts[1].resolve({ username: 'quicken', password: 'password' });
 
@@ -90,7 +90,7 @@ describe('createReauthenticator', () => {
     const first = reauth.reauthenticate(attempt);
     const second = reauth.reauthenticate(attempt);
 
-    expect(prompts.length).toBe(1);
+    expect(prompts).toHaveLength(1);
     prompts[0].resolve({ username: 'a', password: 'b' });
 
     expect(await first).toBe(true);
@@ -107,10 +107,10 @@ describe('createReauthenticator', () => {
     // Tab A opens a prompt and never resolves it directly — its resolution comes from tab B's
     // own, independent login succeeding instead.
     const pendingA = reauthA.reauthenticate(async () => true);
-    await vi.waitFor(() => expect(promptsA.length).toBe(1));
+    await vi.waitFor(() => expect(promptsA).toHaveLength(1));
 
     const pendingB = reauthB.reauthenticate(async () => true);
-    await vi.waitFor(() => expect(promptsB.length).toBe(1));
+    await vi.waitFor(() => expect(promptsB).toHaveLength(1));
     promptsB[0].resolve({ username: 'quicken', password: 'password' });
 
     expect(await pendingB).toBe(true);
@@ -123,7 +123,7 @@ describe('createReauthenticator', () => {
     const reauth = createReauthenticator(adapter);
 
     const pending = reauth.reauthenticate(async () => true);
-    await vi.waitFor(() => expect(prompts.length).toBe(1));
+    await vi.waitFor(() => expect(prompts).toHaveLength(1));
 
     // Some other same-origin script — an unrelated feature, or one reusing this channel name
     // by accident — posting a bare string or a differently-shaped object must not satisfy this

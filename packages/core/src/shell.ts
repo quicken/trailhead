@@ -39,7 +39,7 @@ export interface ShellConfig {
 export class Trailhead {
   private apps: AppEntry[] = [];
   private nav: NavItem[] = [];
-  private routeChangeCallbacks: Array<(path: string) => void> = [];
+  private readonly routeChangeCallbacks: Array<(path: string) => void> = [];
 
   /** URL prefix under which SPAs are hosted. Empty string when hosted at the root. */
   public readonly appBasePath: string;
@@ -279,10 +279,10 @@ export class Trailhead {
       .join("");
 
     nav.querySelectorAll("a").forEach((link) => {
-      if (link.getAttribute("data-external") !== "true") {
+      if (link.dataset.external !== "true") {
         link.addEventListener("click", (e) => {
           e.preventDefault();
-          const path = link.getAttribute("data-path");
+          const path = link.dataset.path;
           if (path) {
             this.navigate(path);
           }
@@ -343,7 +343,7 @@ export class Trailhead {
     if (!nav) return;
 
     nav.querySelectorAll("a").forEach((link) => {
-      if (link.getAttribute("data-path") === path) {
+      if (link.dataset.path === path) {
         link.classList.add("shell-nav-item-active");
       } else {
         link.classList.remove("shell-nav-item-active");
