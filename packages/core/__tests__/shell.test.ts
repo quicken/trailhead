@@ -390,3 +390,29 @@ describe('Trailhead shell — routing', () => {
     expect(click.defaultPrevented).toBe(false);
   });
 });
+
+describe('Trailhead shell — start-up', () => {
+  it('ready resolves once window.shell is available', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: async () => ({ apps: [], nav: [] }) }));
+    const { adapter } = createFakeAdapter();
+
+    const trailhead = new Trailhead({ adapter });
+    await trailhead.ready;
+
+    expect(window.shell).toBeDefined();
+  });
+
+  it('shows an error instead of a blank page when the adapter fails to initialise', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    document.body.innerHTML = '<div id="shell-content"></div>';
+    const { adapter } = createFakeAdapter();
+    adapter.init = vi.fn(async () => {
+      throw new Error('theme failed to load');
+    });
+
+    const trailhead = new Trailhead({ adapter });
+
+    await expect(trailhead.ready).resolves.toBeUndefined();
+    expect(document.getElementById('shell-content')!.textContent).toContain('Failed to start the application shell');
+  });
+});

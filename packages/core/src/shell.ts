@@ -52,8 +52,15 @@ export class Trailhead {
   private readonly reauthenticator: Reauthenticator;
 
   /**
+   * Resolves once start-up has finished: the adapter is initialised, `window.shell` is
+   * exposed, navigation is rendered and the initial route is handled. Never rejects — a
+   * failed start-up is logged and shown in `#shell-content` instead.
+   */
+  public readonly ready: Promise<void>;
+
+  /**
    * Creates the shell and immediately begins async initialisation (adapter setup,
-   * navigation load, initial route handling). Mount errors are logged to the console.
+   * navigation load, initial route handling). Await {@link ready} to know when it's done.
    *
    * @param config - Shell configuration
    */
@@ -62,7 +69,13 @@ export class Trailhead {
     this.shellUrl = config.shellUrl || this.appBasePath;
     this.adapter = config.adapter;
     this.reauthenticator = createReauthenticator(this.adapter.auth);
-    this.init(config.apiUrl);
+    this.ready = this.init(config.apiUrl).catch((error) => {
+      console.error("[Trailhead] Shell failed to start:", error);
+      const root = document.getElementById("shell-content");
+      if (root) {
+        root.innerHTML = `<div class="shell-error">Failed to start the application shell</div>`;
+      }
+    });
   }
 
   /**
@@ -315,7 +328,8 @@ export class Trailhead {
       const isAlreadyMounted = rootElement && rootElement.children.length > 0;
 
       if (!isAlreadyMounted) {
-        this.loadPlugin(app.src, app.basePath);
+        // loadPlugin reports its own failures in #shell-content; nothing to await here.
+        void this.loadPlugin(app.src, app.basePath);
       }
       this.updateActiveNav(app.basePath);
     }
