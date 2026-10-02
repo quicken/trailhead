@@ -61,11 +61,22 @@ async function createShell(adapter: DesignSystemAdapter) {
   return window.shell;
 }
 
+// Some tests replace window.location with a stub; put the real one back between tests.
+const realLocation = window.location;
+
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   delete (window as any).shell;
+  delete (window as any).AppMount;
+  document.head.innerHTML = '';
   document.body.innerHTML = '';
+  Object.defineProperty(window, 'location', { configurable: true, value: realLocation });
+  window.history.replaceState(null, '', '/');
 });
+
+/** Lets every pending microtask (adapter init, fetch, .json()) settle. */
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('Trailhead shell API — confirmation dialogs', () => {
   it('confirm() shows a Cancel/Confirm dialog and resolves true only for "confirm"', async () => {
@@ -286,5 +297,96 @@ describe('Trailhead shell API — navigation under a non-root appBasePath', () =
     const link = document.querySelector('#shell-navigation a[data-path="/legacy/dashboard/"]') as HTMLAnchorElement | null;
     expect(link?.getAttribute('href')).toBe('/legacy/dashboard/');
     expect(link?.getAttribute('data-external')).toBe('true');
+  });
+});
+
+describe('Trailhead shell — routing', () => {
+  const apps = [
+    { id: 'demo', basePath: '/demo', src: 'demo' },
+    { id: 'other', basePath: '/other', src: 'other' },
+  ];
+  const nav = [
+    { type: 'link', label: 'Demo', order: 1, href: '/demo' },
+    { type: 'link', label: 'Other', order: 2, href: '/other' },
+    { type: 'link', label: 'Docs', order: 3, href: 'https://example.com/docs' },
+  ];
+
+  /** Starts a shell at `path` under appBasePath `/base` and waits for its first route. */
+  async function startShell(path: string, content = '') {
+    window.history.replaceState(null, '', path);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: async () => ({ apps, nav }) }));
+    document.body.innerHTML = `<nav id="shell-navigation"></nav><div id="shell-content">${content}</div>`;
+    const { adapter } = createFakeAdapter();
+    const trailhead = new Trailhead({ adapter, appBasePath: '/base' });
+    await flush();
+    return trailhead;
+  }
+
+  const appScript = () => document.querySelector<HTMLScriptElement>('script[src="/base/demo/app.js"]');
+  const content = () => document.getElementById('shell-content')!;
+
+  it("loads the matching app's module script and stylesheet for the initial route", async () => {
+    await startShell('/base/demo/orders');
+
+    expect(appScript()?.type).toBe('module');
+    expect(document.querySelector('link[rel="stylesheet"][href="/base/demo/demo.css"]')).not.toBeNull();
+    expect(content().textContent).toContain('Loading...');
+  });
+
+  it("mounts the app into #shell-content with its full base path once the script loads", async () => {
+    const appMount = vi.fn();
+    (window as any).AppMount = appMount;
+    await startShell('/base/demo');
+
+    appScript()!.dispatchEvent(new Event('load'));
+
+    expect(appMount).toHaveBeenCalledWith(content(), '/base/demo');
+    expect(content().textContent).not.toContain('Loading...');
+  });
+
+  it('shows an error in #shell-content when the app script fails to load', async () => {
+    await startShell('/base/demo');
+
+    appScript()!.dispatchEvent(new Event('error'));
+
+    expect(content().textContent).toContain('Failed to load application: demo');
+  });
+
+  it('does not load the app again when it is already mounted', async () => {
+    await startShell('/base/demo', '<div id="root"><p>mounted</p></div>');
+
+    expect(appScript()).toBeNull();
+  });
+
+  it("marks only the current app's nav link active", async () => {
+    await startShell('/base/demo');
+
+    const link = (path: string) => document.querySelector(`#shell-navigation a[data-path="${path}"]`)!;
+    expect(link('/demo').classList.contains('shell-nav-item-active')).toBe(true);
+    expect(link('/other').classList.contains('shell-nav-item-active')).toBe(false);
+  });
+
+  it('clicking an internal nav link navigates through appBasePath instead of following the href', async () => {
+    await startShell('/base/demo');
+    const assignedHrefs: string[] = [];
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...realLocation, set href(value: string) { assignedHrefs.push(value); } },
+    });
+
+    const click = new MouseEvent('click', { bubbles: true, cancelable: true });
+    document.querySelector('#shell-navigation a[data-path="/other"]')!.dispatchEvent(click);
+
+    expect(click.defaultPrevented).toBe(true);
+    expect(assignedHrefs).toEqual(['/base/other']);
+  });
+
+  it('clicking an external nav link is left to the browser', async () => {
+    await startShell('/base/demo');
+
+    const click = new MouseEvent('click', { bubbles: true, cancelable: true });
+    document.querySelector('#shell-navigation a[data-path="https://example.com/docs"]')!.dispatchEvent(click);
+
+    expect(click.defaultPrevented).toBe(false);
   });
 });
