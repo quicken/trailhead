@@ -192,9 +192,9 @@ export function ShellApp({ shell }: ShellAppProps) {
         footer={
           <Box float="right">
             <SpaceBetween direction="horizontal" size="xs">
-              {dialogState.buttons.map((btn, idx) => (
+              {dialogState.buttons.map((btn) => (
                 <Button
-                  key={idx}
+                  key={btn.value}
                   variant={btn.variant === 'primary' ? 'primary' : 'normal'}
                   onClick={() => handleDialogButton(btn.value)}
                 >
