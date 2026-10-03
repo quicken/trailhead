@@ -118,6 +118,8 @@ Each route has its own `index.html`. Works on:
 
 No URL rewrites. No server-side routing. Just files.
 
+**But each app can still use a client-side router.** Within a single SPA, React Router (or any router) works normally — Trailhead's "no client-side routing" rule is only about navigating *between* apps, not inside one. The one catch is deep links: load `/billing/invoices/42` directly and the host has to serve `billing/`'s `index.html` for that path so the router can take over. On a plain static host you get this by giving each app its own `index.html` (above) and keeping the baseline flat. If you want true deep links into nested routes, that's where *optional* URL rewriting comes in — and it's the hosting platform's job, not the app's. Our [aws-static-hosting](https://github.com/herdingbits/aws-static-hosting) JWT gateway does exactly this at the edge: an extensionless path like `/app/billing/invoices/42` is rewritten to `/app/billing/index.html`, and the app's router renders the view. So you can have both — flat static hosting with zero config, or full nested deep links when the host opts into the rewrite.
+
 ### 5. Design System Adapters
 
 Want to use Web Awesome? There's an adapter.
