@@ -23,7 +23,7 @@
   },
   "peerDependencies": {
     "@awesome.me/webawesome": "^3.6.0",
-    "@herdingbits/trailhead-core": "^0.4.0"
+    "@herdingbits/trailhead-core": "^0.5.0"
   },
   "devDependencies": {
     "@awesome.me/webawesome": "^3.12.0",
