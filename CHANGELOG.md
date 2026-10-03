@@ -2,7 +2,9 @@
 
 Notable changes to the Trailhead packages, newest first, with upgrade notes for existing shells and apps. Versions follow [semver](https://semver.org/); while Trailhead is on 0.x, a minor bump (0.4 → 0.5) can be breaking.
 
-## 0.5.0 — unreleased
+## 0.5.0 — 2026-10-03
+
+Released together: `@herdingbits/trailhead-core`, `@herdingbits/trailhead-cloudscape` and `@herdingbits/trailhead-webawesome` 0.5.0, and `@herdingbits/create-trailhead` 0.2.0, which scaffolds new shells with the API below. `@herdingbits/trailhead-types` is unchanged at 0.4.x; apps keep using it as before.
 
 ### Breaking: the shell starts in two explicit steps
 
