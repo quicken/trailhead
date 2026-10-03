@@ -81,10 +81,10 @@ export function mountSaasApp(root: HTMLElement): void {
             <p class="user-detail"><wa-icon name="building"></wa-icon>${escHtml(u.company.name)}</p>
           </div>
           <div class="card-actions">
-            <wa-button size="small" variant="neutral" data-action="edit"   data-id="${u.id}">
+            <wa-button size="s" variant="neutral" data-action="edit"   data-id="${u.id}">
               <wa-icon name="pencil"></wa-icon>
             </wa-button>
-            <wa-button size="small" variant="danger"  data-action="delete" data-id="${u.id}">
+            <wa-button size="s" variant="danger"  data-action="delete" data-id="${u.id}">
               <wa-icon name="trash"></wa-icon>
             </wa-button>
           </div>
