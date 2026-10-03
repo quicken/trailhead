@@ -347,6 +347,26 @@ describe('Trailhead shell — routing', () => {
     expect(link('/other').classList.contains('shell-nav-item-active')).toBe(false);
   });
 
+  it.each([
+    { case: "the nav href has a trailing slash and the app's basePath doesn't", href: '/demo/', basePath: '/demo' },
+    { case: "the app's basePath has a trailing slash and the nav href doesn't", href: '/demo', basePath: '/demo/' },
+  ])('marks the nav link active when $case', async ({ href, basePath }) => {
+    window.history.replaceState(null, '', '/demo/');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      json: async () => ({
+        apps: [{ id: 'demo', basePath, src: 'demo' }],
+        nav: [{ type: 'link', label: 'Demo', order: 1, href }],
+      }),
+    }));
+    document.body.innerHTML = '<nav id="shell-navigation"></nav><div id="shell-content"></div>';
+    const { adapter } = createFakeAdapter();
+
+    const trailhead = await Trailhead.create({ adapter });
+    trailhead.start();
+
+    expect(document.querySelector('#shell-navigation a')!.classList.contains('shell-nav-item-active')).toBe(true);
+  });
+
   it('clicking an internal nav link navigates through appBasePath instead of following the href', async () => {
     await startShell('/base/demo');
     const assignedHrefs: string[] = [];

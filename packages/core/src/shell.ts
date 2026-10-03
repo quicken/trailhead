@@ -350,8 +350,13 @@ export class Trailhead {
     const nav = document.getElementById("shell-navigation");
     if (!nav) return;
 
+    // shell.json often writes app links with a trailing slash ("/apps/x/") while the app's
+    // basePath has none ("/apps/x"), or the reverse; treat them as the same route.
+    const withoutTrailingSlash = (p: string) => (p.length > 1 && p.endsWith("/") ? p.slice(0, -1) : p);
+    const activePath = withoutTrailingSlash(path);
+
     nav.querySelectorAll("a").forEach((link) => {
-      if (link.dataset.path === path) {
+      if (link.dataset.path !== undefined && withoutTrailingSlash(link.dataset.path) === activePath) {
         link.classList.add("shell-nav-item-active");
       } else {
         link.classList.remove("shell-nav-item-active");
