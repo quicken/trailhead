@@ -6,7 +6,8 @@
  *
  * @example
  * ```typescript
- * export function init(shell: ShellAPI) {
+ * export function AppMount(root: HTMLElement, basePath: string) {
+ *   const shell = window.shell;
  *   shell.feedback.success('App loaded!');
  *   const result = await shell.http.get('/api/data');
  * }

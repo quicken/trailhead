@@ -162,8 +162,8 @@ Sessions expire. When one does, the last thing you want is for a user's work to 
 Trailhead supports two session-recovery strategies, chosen explicitly on the shell config (no auto-detection):
 
 ```typescript
-new Trailhead({ adapter, auth: { strategy: "credentials" } }); // default — app-owned login (nginx/Lucee)
-new Trailhead({ adapter, auth: { strategy: "cognito" } });      // hosted-UI identity provider at the edge
+Trailhead.create({ adapter, auth: { strategy: "credentials" } }); // default — app-owned login (nginx/Lucee)
+Trailhead.create({ adapter, auth: { strategy: "cognito" } });      // hosted-UI identity provider at the edge
 ```
 
 Omitting `auth` keeps the `credentials` strategy, so existing shells are unchanged.
@@ -201,7 +201,7 @@ const result = await window.shell.http.get("/orders"); // 401 → refresh+retry,
 To drive recovery manually, call `shell.auth.recoverSession()`: it resolves `true` when the session was refreshed in place (retry your request) and otherwise redirects (and never resolves, because the page is navigating away). The refresh and sign-in endpoints are overridable:
 
 ```typescript
-new Trailhead({ adapter, auth: { strategy: "cognito", refreshPath: "/_auth/refresh", signinPath: "/_auth/signin" } });
+Trailhead.create({ adapter, auth: { strategy: "cognito", refreshPath: "/_auth/refresh", signinPath: "/_auth/signin" } });
 ```
 
 Core stays identity-provider-agnostic — the only Cognito-shaped knowledge is those two overridable default paths.

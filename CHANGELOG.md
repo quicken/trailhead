@@ -21,9 +21,9 @@ Trailhead's existing `shell.auth.reauthenticate(attempt)` collects a username an
 - **`ShellConfig.auth`** selects the strategy explicitly (no auto-detection):
 
   ```typescript
-  new Trailhead({ adapter, auth: { strategy: "cognito" } });                 // redirect/refresh
-  new Trailhead({ adapter, auth: { strategy: "credentials" } });             // default — unchanged
-  new Trailhead({ adapter, auth: { strategy: "cognito", refreshPath: "/_auth/refresh", signinPath: "/_auth/signin" } });
+  Trailhead.create({ adapter, auth: { strategy: "cognito" } });                 // redirect/refresh
+  Trailhead.create({ adapter, auth: { strategy: "credentials" } });             // default — unchanged
+  Trailhead.create({ adapter, auth: { strategy: "cognito", refreshPath: "/_auth/refresh", signinPath: "/_auth/signin" } });
   ```
 
   Omitting `auth` keeps the previous behaviour (`credentials`).
