@@ -183,6 +183,8 @@ describe('WebAwesomeAuthAdapter — promptCredentials', () => {
 
     const callout = document.querySelector('.shell-auth-error')!;
     expect(callout.getAttribute('variant')).toBe('danger');
+    // Web Awesome 3.14 deprecates the long-form "small" (console warning); use the short form.
+    expect(callout.getAttribute('size')).toBe('s');
     expect(callout.textContent).toContain('Incorrect username or password.');
     // Same Pro-icon-style regression as toasts — must not request a Pro-only variant.
     expect(callout.querySelector('wa-icon')!.hasAttribute('variant')).toBe(false);

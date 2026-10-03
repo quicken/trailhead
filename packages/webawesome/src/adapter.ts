@@ -162,7 +162,7 @@ class WebAwesomeAuthAdapter implements AuthAdapter {
     dialog.innerHTML = `
       <p class="shell-auth-message">Sign in to continue where you left off.</p>
       ${errorMessage
-        ? `<wa-callout variant="danger" size="small" class="shell-auth-error">
+        ? `<wa-callout variant="danger" size="s" class="shell-auth-error">
              <wa-icon slot="icon" name="circle-exclamation"></wa-icon>
              ${escapeHtml(errorMessage)}
            </wa-callout>`
