@@ -2,6 +2,38 @@
 
 Notable changes to the Trailhead packages, newest first, with upgrade notes for existing shells and apps. Versions follow [semver](https://semver.org/); while Trailhead is on 0.x, a minor bump (0.4 → 0.5) can be breaking.
 
+## 0.5.3 — 2026-10-03
+
+`@herdingbits/trailhead-core` only. No upgrade steps: `^0.5.0` ranges pick it up with `npm update`.
+
+### Fixed
+
+- `shell.http` now prepends the configured `apiUrl` to **relative paths only**. An absolute URL (`http(s)://…`) or protocol-relative URL (`//host/…`) passed to `shell.http.get/post/…` is used verbatim. Previously the base was concatenated unconditionally, so under `apiUrl: "/api"` a call like `shell.http.get("https://example.com/x")` became the broken `/api/https://example.com/x`.
+
+## 0.5.2 — 2026-10-03
+
+`@herdingbits/trailhead-core` only (plus a dependency refresh across the published packages). No upgrade steps: `^0.5.0` ranges pick it up with `npm update`.
+
+### Added: redirect-based session recovery (hosted-UI / Cognito)
+
+Trailhead's existing `shell.auth.reauthenticate(attempt)` collects a username and password in-app — right for an app-owned login (nginx/Lucee), but not for a hosted-UI identity provider (e.g. Cognito Managed Login at the edge) where the app never sees credentials and tokens live in `HttpOnly` cookies. This release adds a second, explicit strategy without changing the first.
+
+- **`ShellConfig.auth`** selects the strategy explicitly (no auto-detection):
+
+  ```typescript
+  new Trailhead({ adapter, auth: { strategy: "cognito" } });                 // redirect/refresh
+  new Trailhead({ adapter, auth: { strategy: "credentials" } });             // default — unchanged
+  new Trailhead({ adapter, auth: { strategy: "cognito", refreshPath: "/_auth/refresh", signinPath: "/_auth/signin" } });
+  ```
+
+  Omitting `auth` keeps the previous behaviour (`credentials`).
+
+- **`shell.auth.recoverSession(): Promise<boolean>`** recovers an expired session per the configured strategy. For `cognito`: `POST`s the refresh endpoint (default `/_auth/refresh`); on a `2xx` resolves `true` (retry your request); otherwise redirects to the sign-in endpoint (default `/_auth/signin?return=<current path>`). For `credentials` it resolves `false` (apps use `reauthenticate` as before).
+
+- **`shell.http` auto-recovery:** under the `cognito` strategy, a `401` triggers one `recoverSession()` attempt and a single retry of the original request (no loops; the first `401`'s error toast is suppressed on the recovered path). Under `credentials`, a `401` is surfaced unchanged.
+
+Core stays identity-provider-agnostic: the only Cognito-shaped knowledge is the two overridable gateway default paths. `reauthenticate` and the credential path are untouched.
+
 ## 0.5.1 — 2026-10-03
 
 `@herdingbits/trailhead-core` only. No upgrade steps: `^0.5.0` ranges pick it up with `npm update`.
