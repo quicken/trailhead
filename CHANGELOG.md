@@ -8,8 +8,8 @@ Notable changes to the Trailhead packages, newest first, with upgrade notes for 
 
 `new Trailhead(...)` is gone. The constructor used to return immediately and finish starting up in the background, so anything holding the shell had no way to know when it was ready:
 
-- `getNavigation()` and `getApps()` returned `[]` until `shell.json` had loaded. The CloudScape `ShellApp` papered over this with a 100 ms retry, so a slow `shell.json` left the CloudScape nav menu empty.
-- In CloudScape, `#shell-content` only exists once React has rendered `ShellApp`. If `shell.json` loaded first, the initial app was silently never mounted.
+- `getNavigation()` and `getApps()` returned `[]` until `shell.json` had loaded. The CloudScape `ShellApp` papered over this with a single 100 ms retry, so a slow `shell.json` left a CloudScape shell with an empty nav menu and, since its routing waited for navigation, no app either.
+- The CloudScape `ShellApp` also ran its own copy of routing and app loading alongside core's, so the same app could be loaded twice into `#shell-content`.
 - A failed adapter initialisation surfaced only as an unhandled promise rejection and a blank page.
 
 Start-up is now:
@@ -72,4 +72,5 @@ No changes. `window.shell` has the same API and is still in place before any app
 
 ### Fixed
 
+- CloudScape shells now load apps through core, the same way Web Awesome shells do: each app is loaded exactly once, and dev mode (`window.__SHELL_DEV__`, loading an app's `src/index.ts` through Vite) works, which the CloudScape copy of the loader never supported.
 - `@herdingbits/trailhead-core` can now be loaded by Node's ES module loader, not only by bundlers. `dist/lib/http.js` imported `./requestManager` without its `.js` extension, so vitest suites, SSR and Node scripts that imported the package failed with "Cannot find module". Vite-built shells were unaffected.
