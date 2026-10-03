@@ -242,8 +242,12 @@ A nav item is one of three types: `link` (points at a `href`, optionally with a 
 ## Further Reading
 
 - [Building Trailhead — architecture decisions, AWS deployment, and the React exit strategy](https://www.herdingbits.com/blog/building-trailhead-micro-frontend-framework)
-- [Creating Adapters](docs/CREATING_ADAPTERS.md)
+- [Documentation index](docs/README.md)
 - [Architecture Overview](docs/ARCHITECTURE.md)
+- [Getting Started](docs/GETTING_STARTED.md)
+- [Shell API](docs/SHELL_API.md)
+- [Creating Adapters](docs/CREATING_ADAPTERS.md)
+- [Deployment](docs/DEPLOYMENT.md)
 
 ## License
 

@@ -1,221 +1,230 @@
 # Trailhead Architecture
 
-## Overview
+**Trailhead is a host application, not a framework.** It renders a navigation menu, hands every app a small shared API on `window.shell`, loads apps as ES modules, and reloads the page when you move between them. That last part is the whole trick: isolation comes from the browser, not from a runtime module loader. This page explains how the pieces fit, what each one is responsible for, and — just as important — which clever things it deliberately does *not* do.
 
-Trailhead is built on a simple adapter pattern that separates core orchestration logic from design system implementation.
+If you want the argument for *why* this shape instead of Module Federation or single-spa, read the [Problem Statement](../PROBLEM_STATEMENT.md). If you want to build something, [Getting Started](./GETTING_STARTED.md) and the [Shell API](./SHELL_API.md) are the practical paths.
+
+## The shape
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    Plugin Apps                          │
-│  (React, Vue, Svelte, Vanilla JS)                      │
-└────────────────┬────────────────────────────────────────┘
-                 │ Uses window.shell API
+│                      Apps (SPAs)                         │
+│          React · Vue · Svelte · vanilla — any            │
+└────────────────┬─────────────────────────────────────────┘
+                 │  window.shell  (feedback · http · navigation · auth)
                  ▼
 ┌─────────────────────────────────────────────────────────┐
-│                  Shell Core                             │
-│  - HTTP Client                                          │
-│  - Navigation & Routing                                 │
-│  - App Loading                                          │
-│  - API Exposure                                         │
-└────────────────┬────────────────────────────────────────┘
-                 │ Uses adapter interface
+│                      Shell Core                          │
+│   HTTP client · navigation & routing · app loading ·     │
+│   exposes window.shell · delegates all UI to the adapter │
+└────────────────┬─────────────────────────────────────────┘
+                 │  DesignSystemAdapter interface
                  ▼
 ┌─────────────────────────────────────────────────────────┐
-│            Design System Adapter                        │
-│  - Web Awesome / CloudScape / Material UI / etc.       │
-│  - Toasts, Dialogs, Busy States, Re-auth Prompts       │
-│  - Component Loading                                    │
+│                 Design System Adapter                    │
+│   Web Awesome · CloudScape · your own                    │
+│   toasts · dialogs · busy overlays · credential prompt   │
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Core Components
+The coupling between the three layers is deliberately thin. Apps know only `window.shell` and the `AppMount` contract. The core knows only the `DesignSystemAdapter` interface, never a specific component library. The adapter knows nothing about apps.
 
-### 1. Shell Core (`packages/core/src/shell.ts`)
+## Core components
 
-The shell is the orchestration layer that:
-- Loads and manages plugin applications
-- Provides HTTP client with automatic error handling
-- Manages navigation and routing
-- Exposes the `window.shell` API to apps
-- Delegates UI feedback to the design system adapter
+### Shell core — `packages/core/src/shell.ts`
 
-**Key Responsibilities:**
-- ✅ Framework-agnostic orchestration
-- ✅ App lifecycle management (loading only, no unmounting)
-- ✅ Navigation configuration from JSON
-- ✅ Hard redirects for true isolation
+The orchestration layer. It loads apps, provides the HTTP client, manages navigation, exposes `window.shell`, and delegates every piece of UI to the adapter. It is framework-agnostic; it loads apps but never unmounts them (a page reload does that); it reads its navigation from JSON at runtime; and it moves between apps with hard redirects rather than client-side routing.
 
-### 2. Design System Adapter (`packages/core/src/adapters/`)
+Start-up is **two explicit steps**:
 
-Adapters implement the `DesignSystemAdapter` interface:
+```typescript
+import { Trailhead } from '@herdingbits/trailhead-core';
+import { WebAwesomeAdapter, ShellApp } from '@herdingbits/trailhead-webawesome';
+
+const shell = await Trailhead.create({ adapter: new WebAwesomeAdapter() });
+ShellApp.mount(shell);
+```
+
+- `Trailhead.create(config)` does the async work — initialises the adapter, exposes `window.shell`, and loads `shell.json` — and resolves with a fully loaded shell (`getNavigation()`/`getApps()` are already populated). It rejects if the adapter fails to initialise.
+- `ShellApp.mount(shell)` wires the loaded shell to the page; the adapter's `mount` calls `shell.start()` for you once the layout (`#shell-navigation`, `#shell-content`) is in the DOM. `start()` renders the nav, begins listening for route changes, and loads the app for the current URL. It is idempotent — repeat calls do nothing.
+
+(`new Trailhead(...)` was removed in 0.5.0, which split start-up into these two steps so that holders of the shell have a real "ready" signal. See the [changelog](../CHANGELOG.md).)
+
+### Design system adapter — `packages/core/src/adapters/`
+
+An adapter implements one interface:
 
 ```typescript
 interface DesignSystemAdapter {
   name: string;
   version: string;
   init(shellUrl: string): Promise<void>;
-  feedback: FeedbackAdapter;
-  auth: AuthAdapter;
+  feedback: FeedbackAdapter;   // toasts, dialogs, busy overlays
+  auth: AuthAdapter;           // the credential prompt (or NoopAuthAdapter)
 }
 ```
 
-**Current Adapters:**
-- ✅ **Web Awesome** — `@herdingbits/trailhead-webawesome` (vanilla TypeScript)
-- ✅ **CloudScape** — `@herdingbits/trailhead-cloudscape` (React)
+It is responsible for loading its design system's assets in `init()`, and for backing every piece of shell UI — toasts, modal dialogs, busy overlays, and the re-authentication credential prompt — with that design system's native components, so every app gets a consistent look regardless of which framework the app itself uses. An adapter that isn't ready to build a login UI opts out with `NoopAuthAdapter` (see [why `auth` is required with a no-op default](#why-is-authadapter-required-with-a-no-op-default)).
 
-**Adapter Responsibilities:**
-- Load design system assets
-- Implement toast notifications
-- Implement modal dialogs
-- Implement busy/loading overlays
-- Implement the re-authentication prompt (or opt out with `NoopAuthAdapter`)
-- Provide consistent UI across all apps
+The two official adapters:
 
-### 3. Types Package (`packages/types/`)
+- **Web Awesome** — `@herdingbits/trailhead-webawesome`, vanilla TypeScript, a real `<wa-dialog>` credential prompt.
+- **CloudScape** — `@herdingbits/trailhead-cloudscape`, React, a real `<Modal>` credential prompt.
 
-TypeScript type definitions for:
-- Shell API (`ShellAPI`, `FeedbackAPI`, `HttpAPI`, `NavigationAPI`)
-- Adapter interfaces (`DesignSystemAdapter`, `FeedbackAdapter`)
+Building your own is a small job — see [Creating Adapters](./CREATING_ADAPTERS.md).
 
-Apps install this as a dev dependency for type safety.
+### Types package — `packages/types/`
 
-### 4. Plugin Apps
+TypeScript definitions for the shell API (`ShellAPI`, `FeedbackAPI`, `HttpAPI`, `NavigationAPI`, `AuthAPI`) and the adapter interfaces (`DesignSystemAdapter`, `FeedbackAdapter`, `AuthAdapter`). Apps install it as a dev dependency for type safety; it carries no runtime code.
 
-Independent applications that:
-- Use any framework (React, Vue, Svelte, vanilla)
-- Assign `window.AppMount(container, basePath)` for shell to call
-- Use `window.shell` API for services
-- Deploy independently
+### Apps (SPAs)
 
-### 5. Re-authentication (`packages/core/src/lib/reauth.ts`)
+Independent applications, each built with whatever framework its team prefers. An app's entire obligation to the shell is to assign `window.AppMount` and render into the element the shell hands it:
 
-Sessions expire, and an app shouldn't have to reinvent "what do we do when they do." The shell exposes one shared answer: `window.shell.auth.reauthenticate(attempt)`.
+```typescript
+window.AppMount = (root: HTMLElement, basePath: string) => {
+  // render into `root`; pass `basePath` to your router as its basename
+};
+```
 
-- `createReauthenticator()` wraps the adapter's `AuthAdapter` in a small state machine: show a prompt, wait for credentials, call the app's `attempt` function, and loop with an error message if it fails.
-- Concurrent calls from the same tab share one in-flight prompt instead of stacking dialogs on top of each other.
-- A `BroadcastChannel` tells other open tabs when one of them succeeds, so the rest can dismiss their own prompt instead of asking the user to log in again per tab.
-- Because `AuthAdapter` is just another slot on `DesignSystemAdapter`, each design system renders the prompt with its own native components — a real dialog, not something bolted on.
+Apps use `window.shell` for shared services and deploy independently as a single bundled `app.js`. There is no `init(shell)` function and no shell-provided unmount — the full `window.shell` API is the only coupling point. (The complete reference is the [Shell API](./SHELL_API.md).)
 
-## Data Flow
+### Re-authentication — `packages/core/src/lib/reauth.ts` and `session-recovery.ts`
 
-### App Loading Flow
+Sessions expire, and an app shouldn't have to reinvent "what do we do when they do." The shell exposes one `shell.auth` surface backed by two strategies — covered under [the two auth strategies](#the-two-auth-strategies) below.
+
+## Data flow
+
+### App loading
 
 ```
 1. User navigates to /customers
-2. Shell reads shell.json
-3. Shell finds matching route
-4. Shell creates <script> tag for app
-5. App loads and assigns window.AppMount
-6. Shell calls AppMount(container, basePath)
-7. App renders into container
-8. App uses window.shell for services
+2. Shell matches the URL against shell.json's apps[].basePath
+3. Shell injects a <script type="module"> for <basePath>/app.js
+4. app.js assigns window.AppMount
+5. On script load, the shell empties #shell-content and calls
+   window.AppMount(container, appBasePath + appPath)
+6. The app renders into the container and uses window.shell for services
 ```
 
-### Feedback Flow
+(In dev mode — `window.__SHELL_DEV__` — the shell instead `import()`s the app's `src/index.ts` through Vite for HMR, then calls the module's `AppMount`. Same contract, different fetch.)
+
+### Feedback
 
 ```
-1. App calls window.shell.feedback.success("Saved!")
-2. Shell delegates to adapter.feedback.showToast()
-3. Adapter uses design system components
-4. Toast appears using design system styling
+1. App calls shell.feedback.success("Saved!")
+2. Shell delegates to adapter.feedback.showToast(...)
+3. The adapter renders the toast with its design system's components
 ```
 
-### Navigation Flow
+### Navigation
 
 ```
-1. App calls window.shell.navigation.navigate("/orders")
-2. Shell performs hard redirect (window.location.href)
-3. Page reloads with new app
-4. Previous app is completely destroyed
-5. New app initialises fresh
+1. App calls shell.navigation.navigate("/orders")
+2. Shell performs a hard redirect (window.location.href = appBasePath + "/orders")
+3. The page reloads; the previous app is destroyed by the browser
+4. The shell boots fresh on the new URL and loads the /orders app
 ```
 
-### Re-authentication Flow
+### Session recovery — credentials strategy
 
 ```
 1. An API call comes back 401 (session expired)
-2. App calls window.shell.auth.reauthenticate(attempt)
+2. App calls shell.auth.reauthenticate(attempt)
 3. Shell asks adapter.auth.promptCredentials() to show the login prompt
-4. User submits credentials → shell calls the app's attempt(username, password)
+4. User submits → shell calls the app's attempt(username, password)
 5. attempt() fails → prompt reopens with an error, back to step 4
 6. attempt() succeeds → shell resolves true, app retries its original request
-   (or another tab already succeeded → this tab's prompt closes automatically)
+   (or another tab already succeeded → this tab's prompt closes automatically
+    via a BroadcastChannel message)
 ```
 
-## Design Decisions
-
-### Why Hard Redirects?
-
-- **True Isolation**: Each app gets a clean slate
-- **No Memory Leaks**: Browser handles cleanup
-- **Simple**: No complex state management
-- **Fast Enough**: Modern browsers are fast
-- **No Coordination**: Apps can't interfere with each other
-
-### Why Adapter Pattern?
-
-- **Flexibility**: Organisations choose their design system
-- **Maintainability**: Core logic separate from UI
-- **Extensibility**: Community can add adapters
-- **Testability**: Can mock adapters
-- **Simplicity**: Clear separation of concerns
-
-### Why No Client-Side Routing Between SPAs?
-
-- **Simplicity**: No router library needed
-- **Isolation**: Page reloads provide automatic cleanup
-- **Static Hosting**: Works on any file server
-- **No URL Rewrites**: Each route has its own index.html
-
-### Why is `AuthAdapter` Required, With a No-op Default?
-
-- **One Contract, No Silent Gaps**: If `auth` were optional, it would be easy for an adapter to simply forget it, and nobody would notice until a real user hit an expired session in production
-- **But Never a Blocker**: `NoopAuthAdapter` implements the interface by declining every prompt, so a new or in-progress adapter still compiles and runs — you just don't get the in-place prompt until you build one
-- **Consistency**: Every app calls the same `window.shell.auth.reauthenticate()`, regardless of which adapter is behind it
-
-### Why Build-Time i18n?
-
-- **Performance**: Zero runtime overhead
-- **Simplicity**: No i18n library in production
-- **Type Safety**: Compile-time validation
-- **Bundle Size**: Only one language per build
-
-## Deployment Architecture
+### Session recovery — cognito strategy
 
 ```
-CDN/
-├── index.html                # Shell HTML
+1. shell.http gets a 401 and a cognito strategy is configured
+2. Shell POSTs the refresh endpoint (default /_auth/refresh)
+3a. 2xx → the edge set a fresh cookie → shell retries the original request once
+3b. non-2xx or network error → shell redirects to the sign-in endpoint
+    (default /_auth/signin?return=<current path>); the page unloads
+```
+
+The app makes its call exactly as normal — the recovery is invisible to app code. Core carries no identity-provider knowledge beyond those two overridable default paths.
+
+## Design decisions
+
+### Why hard redirects?
+
+Moving between apps is a full page reload, and that is the point. A reload gives each app a genuinely clean slate — fresh CSS, fresh JS context, no leaked global state — so two apps built by two teams in two frameworks can't collide. The browser handles all the cleanup, which means no unmount lifecycle, no memory-leak hunting, and no coordination between apps. The trade-off is a ~100ms transition between apps instead of an instant client-side route change; for a SaaS console moving between modules, that is a trade worth making. Routing *inside* a single app is still as instant as that app's own router makes it.
+
+### Why the adapter pattern?
+
+Keeping the core design-system-agnostic lets an organisation bring its own component library, keeps orchestration logic separate from UI concerns, lets the community add adapters without touching core, and makes the core trivial to test against a mock adapter. The cost is a thin interface to implement per design system — a few dozen lines, not a framework.
+
+### Why no client-side routing *between* apps?
+
+A cross-app router would need a router library, would reintroduce the shared-runtime coupling the reload model avoids, and would need server-side URL rewrites to survive a deep-link refresh. Instead, every route is its own `index.html` on disk, so the site works on any static file server with zero rewrite rules. (This is the backbone of [Deployment](./DEPLOYMENT.md).)
+
+### The two auth strategies
+
+An expired session is recovered one of two ways, and the shell is told which **explicitly** on its config — `auth: { strategy: … }`. There is no auto-detection from the presence of `/_auth/*` endpoints.
+
+```typescript
+await Trailhead.create({ adapter, auth: { strategy: "credentials" } }); // default
+await Trailhead.create({ adapter, auth: { strategy: "cognito" } });
+await Trailhead.create({ adapter, auth: { strategy: "cognito", refreshPath: "/_auth/refresh", signinPath: "/_auth/signin" } });
+```
+
+Omitting `auth` is equivalent to `{ strategy: "credentials" }`, so existing shells are unchanged.
+
+- **`credentials` (default)** — the app owns its login endpoint (nginx/Lucee). `shell.auth.reauthenticate(attempt)` shows an in-place credential prompt (via the adapter), retries the app's `attempt`, and syncs tabs over a `BroadcastChannel`. `shell.http` does **not** auto-recover under this strategy; a `401` is surfaced to the caller.
+- **`cognito`** — a hosted-UI identity provider (e.g. Cognito Managed Login) sits at the edge behind the [aws-static-hosting](https://github.com/herdingbits/aws-static-hosting) gateway; the app never sees credentials. `shell.http` auto-recovers once on a `401` by refreshing at the edge, else redirecting to sign-in. `shell.auth.recoverSession()` exposes the same mechanism manually.
+
+Crucially the two layers are independent: the **strategy** lives in core/shell config and decides whether `shell.http` auto-recovers; the **adapter's `AuthAdapter`** only ever supplies the credential-prompt UI used by the `credentials` strategy. A cognito deployment needs no adapter auth UI at all (`NoopAuthAdapter` is fine). The app-facing side of both is documented in [Shell API → session recovery](./SHELL_API.md#shellauth--session-recovery).
+
+### Why `apiUrl` is relative-only
+
+`shell.http` prepends the configured `apiUrl` base to **relative** request paths only. An absolute (`http(s)://…`) or protocol-relative (`//host/…`) URL is used verbatim. Without this guard, a call like `shell.http.get("https://api.other.com/x")` under `apiUrl: "/api"` would become the nonsensical `/api/https://api.other.com/x`. (Fixed in core 0.5.3 — see the [changelog](../CHANGELOG.md).) The practical rule for apps: keep your calls relative and let deployment decide where the API lives.
+
+### Why is `AuthAdapter` required, with a no-op default?
+
+Making `auth` a required field with `NoopAuthAdapter` as the easy opt-out means an adapter can never *silently* forget re-authentication — a gap you'd otherwise only discover when a real user hit an expired session in production. But it's never a blocker: `NoopAuthAdapter` satisfies the interface by declining every prompt, so a new or in-progress adapter still compiles and runs — you just don't get the in-place prompt until you build one. Every app calls the same `window.shell.auth.reauthenticate()` regardless of which adapter is behind it.
+
+### Why build-time i18n?
+
+Translations are resolved at build time (`tools/vite-i18n-plugin`), so there is zero runtime i18n library, zero runtime overhead, compile-time validation of keys, and a bundle that carries only one language. The trade-off is one build per language — acceptable for apps that deploy per-locale.
+
+## Deployment architecture
+
+The shell's own files sit at the deployment root (or under `appBasePath`); each app gets a sibling directory, and — the load-bearing rule — **each app has its own `index.html`**, a copy of the shell page, so a deep-link or refresh on any route resolves to a real file and boots the shell there.
+
+```
+deploy/
+├── index.html          # shell page
 ├── shell.js
 ├── shell.css
-├── shell.json                # Manifest: apps + nav
-├── webawesome/                # Web Awesome assets (served from here)
+├── shell.json          # manifest: apps + nav, read at runtime
+├── webawesome/         # Web Awesome assets, loaded once by the shell
 ├── customers/
-│   ├── index.html            # Copy of shell HTML
-│   └── app.js                # Customer SPA bundle
+│   ├── index.html      # copy of the shell page
+│   ├── app.js
+│   └── customers.css
 └── orders/
     ├── index.html
-    └── app.js
+    ├── app.js
+    └── orders.css
 ```
 
-**Key Points:**
-- The shell's own files sit at the CDN root; each app gets its own sibling directory
-- Each app has its own `index.html` (copy of shell HTML)
-- Web Awesome loaded once by the shell, available to all SPAs
-- No URL rewrite rules needed
-- Works on S3 + CloudFront, Netlify, or any file server
+Because every route is a real file, no URL-rewrite rules are needed and the site runs on S3 + CloudFront, nginx, Netlify, or any file server. The full guide — plain static hosting and the Cognito gateway path — is [Deployment](./DEPLOYMENT.md).
 
-## Future Enhancements
+## What's next, and what was rejected
 
-### Planned
-- Material UI adapter
-- Adapter certification tests
+Planned: a Material UI adapter, and adapter certification tests. Deliberately rejected, each for the reason the design turns on: client-side routing between apps (simplicity / isolation), runtime i18n (performance), shared state across apps (isolation), and Webpack Module Federation (complexity). The [Problem Statement](../PROBLEM_STATEMENT.md) makes the case for each rejection.
 
-### Considered
-- Client-side routing (rejected for simplicity)
-- Runtime i18n (rejected for performance)
-- Shared state (rejected for isolation)
-- Webpack Module Federation (rejected for complexity)
+## See also
 
-## Contributing
-
-See [CREATING_ADAPTERS.md](CREATING_ADAPTERS.md) for creating custom design system adapters.
+- [Problem Statement](../PROBLEM_STATEMENT.md) — why this shape at all
+- [Getting Started](./GETTING_STARTED.md) — build a shell and first SPA
+- [Shell API](./SHELL_API.md) — the full `window.shell` reference
+- [Creating Adapters](./CREATING_ADAPTERS.md) — add a design system
+- [Deployment](./DEPLOYMENT.md) — ship it

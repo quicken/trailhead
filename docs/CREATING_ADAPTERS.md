@@ -1,6 +1,8 @@
 # Creating Custom Design System Adapters
 
-Trailhead's shell is design-system agnostic. You can create adapters for any design system (Material UI, Ant Design, Shoelace forks, etc.).
+**An adapter is the thin layer that lets the shell speak your design system's language — and it's smaller than you'd expect.** Trailhead's core is design-system agnostic: it knows how to orchestrate apps and expose `window.shell`, but it has no opinion on what a toast or a dialog looks like. An adapter supplies exactly that — toasts, dialogs, busy overlays, and (optionally) a credential prompt — in your component library of choice. Material UI, Ant Design, a Shoelace fork, your in-house system: if it can render a dialog, it can back Trailhead.
+
+New here? [Architecture → the adapter pattern](./ARCHITECTURE.md#why-the-adapter-pattern) explains where the adapter sits; this page is how to build one.
 
 ## Adapter Interface
 
@@ -62,6 +64,8 @@ shell.start();
 
 Sooner or later a user's session expires mid-task. Trailhead's answer is `window.shell.auth.reauthenticate(attempt)` — one shared API, backed by whatever login UI your adapter provides. Your job as an adapter author is just the UI: show a username/password form, hand back what the user typed.
 
+> **This prompt backs the `credentials` auth strategy only.** The shell has two session-recovery strategies, chosen on *its* config, not the adapter's (see [Architecture → the two auth strategies](./ARCHITECTURE.md#the-two-auth-strategies)). The `credentials` strategy — the default — is the one that calls your `promptCredentials()`. The `cognito` strategy recovers by redirecting to a hosted identity provider at the edge, so it needs **no adapter auth UI at all** — `NoopAuthAdapter` is entirely sufficient for an adapter only ever used behind that gateway. Build a real prompt when your adapter will be used with app-owned (`credentials`) login.
+
 ```typescript
 import type { AuthAdapter, Credentials, CredentialPromptHandle } from '@herdingbits/trailhead-types/adapters';
 
@@ -97,28 +101,28 @@ See `packages/webawesome/src/adapter.ts` or `packages/cloudscape/src/adapter.tsx
 
 ### Web Awesome
 - Package: `@herdingbits/trailhead-webawesome`
-- Status: ✅ Implemented
+- Status: implemented
 - Design System: [Web Awesome](https://webawesome.com/) (Font Awesome's web component library, successor to Shoelace)
 - Config: `WebAwesomeAdapterConfig { webAwesomeUrl? }` — explicit CDN or local path; defaults to `${shellUrl}/webawesome`
-- Auth: ✅ Real `<wa-dialog>` credential prompt
+- Auth: real `<wa-dialog>` credential prompt
 
 ### CloudScape
 - Package: `@herdingbits/trailhead-cloudscape`
-- Status: ✅ Implemented
+- Status: implemented
 - Design System: [CloudScape](https://cloudscape.design/)
 - Config: `CloudScapeAdapterConfig { cloudscapeUrl? }` — if provided, injects global-styles CSS dynamically
-- Auth: ✅ Real `<Modal>` credential prompt
+- Auth: real `<Modal>` credential prompt
 
 ## Adapter Requirements
 
 Your adapter must:
 
-1. ✅ Implement `DesignSystemAdapter` interface
-2. ✅ Handle all feedback methods (toasts, dialogs, busy states)
-3. ✅ Implement (or explicitly opt out of, via `NoopAuthAdapter`) the re-authentication prompt
-4. ✅ Initialise design system assets in `init()`
-5. ✅ Work with the shell's CSS (or provide its own)
-6. ✅ Run standalone in the browser — vanilla JS/TS, or a UI framework like React, whatever your design system needs
+1. Implement the `DesignSystemAdapter` interface.
+2. Handle all feedback methods (toasts, dialogs, busy states).
+3. Implement — or explicitly opt out of, via `NoopAuthAdapter` — the re-authentication prompt.
+4. Initialise design system assets in `init()`.
+5. Work with the shell's CSS, or provide its own.
+6. Run standalone in the browser — vanilla JS/TS, or a UI framework like React, whatever your design system needs.
 
 ## Testing Your Adapter
 
@@ -153,3 +157,10 @@ To contribute a new adapter:
 5. Submit a pull request
 
 Community adapters will be listed in the main README.
+
+## See also
+
+- [Architecture Overview](./ARCHITECTURE.md) — where the adapter sits and why the pattern exists
+- [Shell API](./SHELL_API.md) — the `feedback` and `auth` surfaces your adapter backs, as apps see them
+- [Getting Started](./GETTING_STARTED.md) — build a shell and app on top of an adapter
+- [Deployment](./DEPLOYMENT.md) — static hosting and the Cognito gateway

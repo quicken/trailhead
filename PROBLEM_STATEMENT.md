@@ -78,13 +78,13 @@ That's it. 8KB gzipped.
 ### 2. Apps are Just Functions
 
 ```typescript
-export function init(shell) {
+export function AppMount(root, basePath) {
   // Your app code here
   // Use React, Vue, Svelte, whatever
 }
 ```
 
-No framework adapters. No complex lifecycle. Just a function that gets called when your app loads.
+No framework adapters. No complex lifecycle. Just a function the shell calls when your app loads — it hands you a DOM element to render into and the base path you're mounted under.
 
 ### 3. Page Reloads Solve Isolation
 
@@ -153,7 +153,7 @@ Navigation, HTTP, and feedback are provided by the shell. Apps don't duplicate t
 Switch from Web Awesome to CloudScape? Just swap the adapter. Apps don't change.
 
 ### ✅ Framework Agnostic
-Use any framework, any version. The shell loads ES modules and calls `init()`. That's the entire contract.
+Use any framework, any version. The shell loads ES modules and calls `AppMount()`. That's the entire contract.
 
 ## What Problems Does This NOT Solve?
 
