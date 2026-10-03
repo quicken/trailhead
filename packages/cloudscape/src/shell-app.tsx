@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import Flashbar from '@cloudscape-design/components/flashbar';
 import Spinner from '@cloudscape-design/components/spinner';
 import Modal from '@cloudscape-design/components/modal';
@@ -38,7 +38,8 @@ interface AuthState {
 }
 
 export function ShellApp({ shell }: ShellAppProps) {
-  const [navigation, setNavigation] = useState<NavItem[]>([]);
+  // Trailhead.create() has already loaded shell.json, so navigation is ready on first render.
+  const [navigation] = useState<NavItem[]>(() => shell.getNavigation());
   const [flashMessages, setFlashMessages] = useState<FlashMessage[]>([]);
   const [busyMessage, setBusyMessage] = useState('');
   const [dialogState, setDialogState] = useState<DialogState>({
@@ -49,8 +50,6 @@ export function ShellApp({ shell }: ShellAppProps) {
   const [authState, setAuthState] = useState<AuthState>({ visible: false });
   const [authUsername, setAuthUsername] = useState('');
   const [authPassword, setAuthPassword] = useState('');
-  const contentRef = useRef<HTMLDivElement>(null);
-  const navigationLoadedRef = useRef(false);
 
   // Get current path without basePath
   const getCurrentPath = () => {
@@ -97,21 +96,6 @@ export function ShellApp({ shell }: ShellAppProps) {
     window.addEventListener('cloudscape-auth', handleAuthEvent as EventListener);
     window.addEventListener('cloudscape-auth-dismiss', handleAuthDismiss);
 
-    // Load navigation once (prevent React 18 double-mount in dev)
-    if (!navigationLoadedRef.current) {
-      navigationLoadedRef.current = true;
-      // Get navigation from core (already loaded)
-      const nav = shell.getNavigation();
-      if (nav.length > 0) {
-        setNavigation(nav);
-      } else {
-        // Wait for core to load navigation
-        setTimeout(() => {
-          setNavigation(shell.getNavigation());
-        }, 100);
-      }
-    }
-
     return () => {
       window.removeEventListener('cloudscape-dialog', handleDialogEvent as EventListener);
       window.removeEventListener('cloudscape-auth', handleAuthEvent as EventListener);
@@ -119,60 +103,11 @@ export function ShellApp({ shell }: ShellAppProps) {
     };
   }, []);
 
+  // #shell-content exists once this first render has committed, so core can route into it.
+  // start() ignores repeat calls, which covers StrictMode's double effects.
   useEffect(() => {
-    // Handle route when navigation is loaded
-    if (navigation.length > 0) {
-      handleRoute(currentPath);
-    }
-  }, [navigation, currentPath]);
-
-  const handleRoute = (path: string) => {
-    const normalizedPath = path.endsWith('/') && path !== '/' ? path.slice(0, -1) : path;
-    const app = shell.getApps().find(entry => normalizedPath.startsWith(entry.basePath));
-    if (app && contentRef.current) {
-      loadApp(app.src, app.basePath);
-    }
-  };
-
-  const loadApp = async (appName: string, appPath: string) => {
-    if (!contentRef.current) return;
-
-    contentRef.current.innerHTML = '<div>Loading...</div>';
-
-    const appBasePath = shell.appBasePath + appPath;
-
-    try {
-      const pluginUrl = `${shell.appBasePath}${appPath}/app.js`;
-      const pluginCss = `${shell.appBasePath}${appPath}/${appName}.css`;
-
-      // Load CSS
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = pluginCss;
-      document.head.appendChild(link);
-
-      // Load JS
-      const script = document.createElement("script");
-      script.src = pluginUrl;
-      script.type = "module";
-
-      script.onload = () => {
-        contentRef.current!.innerHTML = "";
-        if ((window as any).AppMount) {
-          (window as any).AppMount(contentRef.current, appBasePath);
-        }
-      };
-
-      script.onerror = () => {
-        contentRef.current!.innerHTML = `<div>Failed to load application: ${appName}</div>`;
-      };
-
-      document.body.appendChild(script);
-    } catch (error) {
-      console.error("Failed to load plugin:", error);
-      contentRef.current.innerHTML = '<div>Failed to load application</div>';
-    }
-  };
+    shell.start();
+  }, []);
 
   const handleNavigate = (path: string) => {
     // Use full page reload for navigation (no server rewrites needed)
@@ -306,7 +241,7 @@ export function ShellApp({ shell }: ShellAppProps) {
         appBasePath={shell.appBasePath}
         onNavigate={handleNavigate}
       >
-        <div id="shell-content" ref={contentRef} />
+        <div id="shell-content" />
       </ShellLayout>
     </>
   );

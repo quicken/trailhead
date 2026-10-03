@@ -35,7 +35,7 @@ import { CloudScapeAdapter, ShellApp } from '@herdingbits/trailhead-cloudscape';
 import '@cloudscape-design/global-styles/index.css';
 import '@herdingbits/trailhead-cloudscape/shell.css';
 
-const shell = new Trailhead({
+const shell = await Trailhead.create({
   adapter: new CloudScapeAdapter(),
   appBasePath: '/app',
   apiUrl: 'https://api.example.com'
@@ -48,7 +48,7 @@ root.render(<ShellApp shell={shell} />);
 To load the CloudScape global styles from a CDN instead of bundling via npm import, pass `cloudscapeUrl` to the adapter (and remove the `@cloudscape-design/global-styles/index.css` import from your entry point):
 
 ```typescript
-const shell = new Trailhead({
+const shell = await Trailhead.create({
   adapter: new CloudScapeAdapter({ cloudscapeUrl: 'https://unpkg.com/@cloudscape-design/global-styles@1.0.0/index.css' }),
   appBasePath: '/app',
 });
@@ -57,7 +57,7 @@ const shell = new Trailhead({
 ## What's Included
 
 - **CloudScapeAdapter** - Implements the Trailhead adapter interface, including a `<Modal>`-based re-authentication prompt for expired sessions
-- **ShellApp** - React component that renders the shell UI
+- **ShellApp** - React component that renders the shell UI, then starts the shell (navigation, routing, app loading) once `#shell-content` is in the DOM
 - **ShellLayout** - CloudScape AppLayout with navigation
 - **shell.css** - Base styles for the shell UI
 
