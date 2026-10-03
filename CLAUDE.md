@@ -57,7 +57,7 @@ Tests live in `packages/core/src/__tests__/`, using vitest with jsdom.
 
 **SPA contract:** SPAs assign `window.AppMount(root: HTMLElement, basePath: string)` — the shell calls this global after loading `<app>/app.js`. The shell is accessed via `window.shell`. SPAs also mock `window.shell` for standalone dev and auto-mount to `#root` when running without the shell.
 
-**Shell instantiation:** `new Trailhead({ adapter, appBasePath, shellUrl, apiUrl })` + `ShellApp.mount(shell)`. See `examples/*/shell/src/shell.ts`.
+**Shell instantiation:** `const shell = await Trailhead.create({ adapter, appBasePath, shellUrl, apiUrl })` + `ShellApp.mount(shell)`; `ShellApp.mount` calls `shell.start()` once the layout is in the DOM. The constructor is private. See `examples/*/shell/src/shell.ts` and the 0.5.0 notes in `CHANGELOG.md`.
 
 **Adapter pattern:** `packages/core` is design-system agnostic. Adapters implement `DesignSystemAdapter` from `packages/core/src/adapters/types.ts`.
 

@@ -47,11 +47,16 @@ export class MyAdapter implements DesignSystemAdapter {
 import { Trailhead } from '@herdingbits/trailhead-core';
 import { MyAdapter } from './my-adapter';
 
-const shell = new Trailhead({
+const shell = await Trailhead.create({
   adapter: new MyAdapter(),
   appBasePath: '/app',
 });
+
+// Once your layout (#shell-navigation, #shell-content) is in the DOM:
+shell.start();
 ```
+
+`Trailhead.create()` initialises your adapter (`init()`), exposes `window.shell` and loads `shell.json`; `shell.start()` then renders navigation into `#shell-navigation`, starts routing and loads the current app into `#shell-content`. If your adapter ships a `ShellApp` like the built-in ones, have its `mount` call `shell.start()` once those elements exist — synchronously for static HTML, or after the first render commits for a framework-rendered layout (e.g. a React `useEffect`). `start()` ignores repeat calls, so React StrictMode's double effects are safe.
 
 ## Implementing Authentication Prompts
 

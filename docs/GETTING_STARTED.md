@@ -48,7 +48,7 @@ const appBasePath = import.meta.env.VITE_APP_BASE_PATH || '';
 const shellUrl    = (window as any).SHELL_DEV_URL || appBasePath;
 const apiUrl      = (window as any).APP_CONFIG?.apiUrl || '';
 
-const shell = new Trailhead({
+const shell = await Trailhead.create({
   adapter: new WebAwesomeAdapter(),
   appBasePath,
   shellUrl,

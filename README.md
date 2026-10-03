@@ -56,7 +56,7 @@ Visit http://localhost:3001
 import { Trailhead } from '@herdingbits/trailhead-core';
 import { WebAwesomeAdapter, ShellApp } from '@herdingbits/trailhead-webawesome';
 
-const shell = new Trailhead({
+const shell = await Trailhead.create({
   adapter: new WebAwesomeAdapter(),
   appBasePath: import.meta.env.VITE_APP_BASE_PATH || '',
   shellUrl: (window as any).SHELL_DEV_URL || '',
@@ -74,7 +74,7 @@ import { Trailhead } from '@herdingbits/trailhead-core';
 import { CloudScapeAdapter, ShellApp } from '@herdingbits/trailhead-cloudscape';
 import '@cloudscape-design/global-styles/index.css';
 
-const shell = new Trailhead({
+const shell = await Trailhead.create({
   adapter: new CloudScapeAdapter(),
   appBasePath: import.meta.env.VITE_APP_BASE_PATH || '',
   shellUrl: (window as any).SHELL_DEV_URL || '',

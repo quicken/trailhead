@@ -71,7 +71,7 @@ examples/
 import { Trailhead } from '@herdingbits/trailhead-core';
 import { WebAwesomeAdapter, ShellApp } from '@herdingbits/trailhead-webawesome';
 
-const shell = new Trailhead({
+const shell = await Trailhead.create({
   adapter: new WebAwesomeAdapter(),
   appBasePath: import.meta.env.VITE_APP_BASE_PATH || '',
   apiUrl: (window as any).APP_CONFIG?.apiUrl || ''
@@ -86,7 +86,7 @@ import { createRoot } from 'react-dom/client';
 import { Trailhead } from '@herdingbits/trailhead-core';
 import { CloudScapeAdapter, ShellApp } from '@herdingbits/trailhead-cloudscape';
 
-const shell = new Trailhead({
+const shell = await Trailhead.create({
   adapter: new CloudScapeAdapter(),
   appBasePath: import.meta.env.VITE_APP_BASE_PATH || '',
   apiUrl: (window as any).APP_CONFIG?.apiUrl || ''
