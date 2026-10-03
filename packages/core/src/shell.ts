@@ -474,8 +474,10 @@ export class Trailhead {
     nav.querySelectorAll("a").forEach((link) => {
       if (link.dataset.path !== undefined && withoutTrailingSlash(link.dataset.path) === activePath) {
         link.classList.add("shell-nav-item-active");
+        link.setAttribute("aria-current", "page");
       } else {
         link.classList.remove("shell-nav-item-active");
+        link.removeAttribute("aria-current");
       }
     });
   }

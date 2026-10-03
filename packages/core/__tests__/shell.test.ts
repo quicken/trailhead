@@ -347,6 +347,15 @@ describe('Trailhead shell — routing', () => {
     expect(link('/other').classList.contains('shell-nav-item-active')).toBe(false);
   });
 
+  it("tells assistive technology which nav link is the current page with aria-current", async () => {
+    await startShell('/base/demo');
+
+    const link = (path: string) => document.querySelector(`#shell-navigation a[data-path="${path}"]`)!;
+    expect(link('/demo').getAttribute('aria-current')).toBe('page');
+    expect(link('/other').hasAttribute('aria-current')).toBe(false);
+    expect(link('https://example.com/docs').hasAttribute('aria-current')).toBe(false);
+  });
+
   it.each([
     { case: "the nav href has a trailing slash and the app's basePath doesn't", href: '/demo/', basePath: '/demo' },
     { case: "the app's basePath has a trailing slash and the nav href doesn't", href: '/demo', basePath: '/demo/' },
