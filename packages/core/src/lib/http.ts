@@ -17,21 +17,36 @@ let kyInstance: KyInstance;
  */
 let recoverSession: (() => Promise<boolean>) | null = null;
 
+/** Base URL prepended to RELATIVE request paths only (see {@link isAbsoluteUrl}). */
+let baseUrl = "";
+
+/**
+ * True for a URL that already names its own origin and so must NOT have `apiUrl` prepended:
+ * an absolute `http(s)://…` URL or a protocol-relative `//host/…` one. Everything else is a
+ * path relative to `apiUrl` (e.g. `/orders`, `orders/5`). Without this guard, ky's `prefix`
+ * concatenates and a call to `shell.http.get("https://api.example.com/x")` under
+ * `apiUrl: "/api"` becomes the nonsensical `/api/https://api.example.com/x`.
+ */
+function isAbsoluteUrl(url: string): boolean {
+  return /^[a-z][a-z0-9+.-]*:\/\//i.test(url) || url.startsWith("//");
+}
+
 /**
  * Initialize HTTP client.
  *
- * @param baseUrl - Prefix prepended to every request URL.
+ * @param apiUrl - Base URL prepended to RELATIVE request paths. Absolute URLs (`http(s)://…`)
+ *   and protocol-relative URLs (`//host/…`) bypass it and are used as-is.
  * @param onRecoverSession - Optional session-recovery hook. When provided (the redirect/`cognito`
  *   strategy), a `401` triggers one recovery attempt and, on success, one retry of the original
  *   request — the first `401`'s error toast is suppressed on that auto-recovered path. Omitted
  *   for the credentials strategy, where `401`s are surfaced to the caller and apps call
- *   `shell.auth.reauthenticate` themselves. Backward compatible: a call with only `baseUrl`
+ *   `shell.auth.reauthenticate` themselves. Backward compatible: a call with only `apiUrl`
  *   installs no recovery and behaves exactly as before.
  */
-export function init(baseUrl: string = "", onRecoverSession: (() => Promise<boolean>) | null = null): void {
+export function init(apiUrl: string = "", onRecoverSession: (() => Promise<boolean>) | null = null): void {
+  baseUrl = apiUrl;
   recoverSession = onRecoverSession;
   kyInstance = ky.create({
-    prefix: baseUrl,
     timeout: 30000,
     retry: 0,
   });
@@ -73,7 +88,10 @@ async function request<T>(
       kyOptions.json = data;
     }
 
-    const response = await kyInstance(url, kyOptions);
+    // Prepend the configured base to RELATIVE paths only; absolute/protocol-relative URLs are
+    // used verbatim so they never get mangled into `${apiUrl}/https://…`.
+    const resolvedUrl = isAbsoluteUrl(url) ? url : `${baseUrl}${url}`;
+    const response = await kyInstance(resolvedUrl, kyOptions);
     const result = await response.json<T>();
 
     requestManager.endRequest(requestKey, noFeedback);
