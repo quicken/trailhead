@@ -61,7 +61,7 @@ trailhead/
 │   │   │   ├── src/
 │   │   │   │   └── index.ts    # Shell entry point
 │   │   │   └── public/
-│   │   │       └── navigation.json  # Dynamic menu config
+│   │   │       └── shell.json  # Dynamic menu config
 │   │   └── apps/
 │   │       ├── demo/            # React demo SPA
 │   │       └── saas-demo/       # SaaS example SPA
@@ -128,21 +128,22 @@ const unsubscribe = window.shell.navigation.onRouteChange((path) => {
 
 ### 1. SPA Entry Point (index.tsx)
 
-Every SPA exports an `init` function that receives the shell API:
+Every SPA assigns a `window.AppMount` function; the shell calls it with the container element and base path after dynamic-importing the app's `app.js`. The shell itself is exposed as `window.shell`:
 
 ```typescript
 import type { ShellAPI } from '@herdingbits/trailhead-types';
 import ReactDOM from "react-dom/client";
 import { MyApp } from "./MyApp";
 
-// SPA init function - called by shell
-export function init(shell: ShellAPI) {
-  const container = document.getElementById('app-content');
-  if (!container) return;
-  
-  const root = ReactDOM.createRoot(container);
-  root.render(<MyApp shell={shell} />);
+declare global {
+  interface Window { shell: ShellAPI; AppMount?: (root: HTMLElement, basePath: string) => void; }
 }
+
+// Called by the shell after it loads your app.js
+window.AppMount = (root: HTMLElement, basePath: string) => {
+  const reactRoot = ReactDOM.createRoot(root);
+  reactRoot.render(<MyApp basePath={basePath} />);
+};
 
 // Standalone dev mode - provide mock shell
 if (!window.shell) {
@@ -210,26 +211,24 @@ declare global {
   }
 }
 
-export function init(shell: ShellAPI) {
-  // Your SPA logic
-}
+window.AppMount = (root: HTMLElement, basePath: string) => {
+  // Your SPA logic — render into `root`
+};
 ```
 
 ## Navigation Configuration
 
-Update `examples/webawesome-site/shell/public/navigation.json` to add SPAs:
+Update `examples/webawesome-site/shell/public/shell.json` to add SPAs. It has two parts: `apps` (the SPAs the shell can mount) and `nav` (the menu):
 
 ```json
-[
-  {
-    "id": "my-app",
-    "path": "/my-app",
-    "app": "my-app",
-    "icon": "star",
-    "label": "My App",
-    "order": 1
-  }
-]
+{
+  "apps": [
+    { "id": "my-app", "basePath": "/my-app", "src": "my-app" }
+  ],
+  "nav": [
+    { "type": "link", "label": "My App", "icon": "star", "order": 1, "href": "/my-app" }
+  ]
+}
 ```
 
 Changes take effect immediately - no rebuild needed.
@@ -296,7 +295,7 @@ npm start  # http://localhost:8081/sample/trailhead
 
 ### Build Process
 
-1. Reads `navigation.json` to discover SPAs
+1. Reads `shell.json` to discover SPAs
 2. Builds shell → `public/sample/trailhead/`
 3. For each SPA:
    - Builds SPA → `public/sample/trailhead/<app-path>/app.js`
@@ -309,7 +308,7 @@ public/sample/trailhead/
 ├── index.html           # Shell HTML
 ├── shell.js             # Shell bundle (21 KB / 8 KB gzipped)
 ├── shell.css            # Shell styles
-├── navigation.json      # Menu config
+├── shell.json      # Menu config
 ├── webawesome/            # Design system (Web Awesome assets)
 ├── demo/
 │   ├── index.html       # Copy of shell HTML
@@ -333,11 +332,11 @@ Trailhead uses full page reloads for navigation between SPAs:
 
 1. User navigates to `/demo`
 2. Shell loads `demo/index.html` (contains shell)
-3. Shell reads `navigation.json`
+3. Shell reads `shell.json`
 4. Shell finds route: `{ path: "/demo", app: "demo" }`
 5. Shell loads `/demo/app.js` as ES module
-6. SPA exports `init(shell)` function
-7. Shell calls `init(shell)` with shell API
+6. SPA assigns `window.AppMount` function
+7. Shell calls `window.AppMount(root, basePath)` with the container and base path
 8. SPA renders into container
 
 ### Unmounting
@@ -440,7 +439,7 @@ const msg = "Hallo, Welt!";
    ```
 
 3. **Create entry point** (`src/index.tsx`)
-   - Export `init(shell)` function
+   - Assign `window.AppMount(root, basePath)` function
    - Add mock shell for dev
    - Auto-mount for standalone mode
 
@@ -449,7 +448,7 @@ const msg = "Hallo, Welt!";
    - Output: `app.js`
    - Enable CORS
 
-5. **Add to navigation** (`examples/webawesome-site/shell/public/navigation.json`)
+5. **Add to navigation** (`examples/webawesome-site/shell/public/shell.json`)
    ```json
    {
      "id": "my-app",

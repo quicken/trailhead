@@ -46,7 +46,7 @@ packages/webawesome/
 ```
 examples/webawesome-site/apps/demo/
 ├── src/
-│   ├── index.tsx      # Entry point with init(shell)
+│   ├── index.tsx      # Entry point — assigns window.AppMount(root, basePath)
 │   └── DemoApp.tsx    # App component
 ├── translations/      # i18n files
 ├── vite.config.js
