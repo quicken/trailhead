@@ -33,7 +33,7 @@ npm install @herdingbits/trailhead-core
 import { Trailhead } from '@herdingbits/trailhead-core';
 import { YourAdapter, ShellApp } from '@herdingbits/trailhead-your-design-system';
 
-// Async: initialises the adapter, exposes window.shell and loads shell.json.
+// Async: initialises the adapter, loads shell.json and exposes window.shell.
 const shell = await Trailhead.create({
   adapter: new YourAdapter(),
   appBasePath: '/app',       // URL prefix where SPAs are hosted
@@ -46,6 +46,21 @@ ShellApp.mount(shell);
 ```
 
 `Trailhead.create()` rejects if the adapter fails to initialise; a missing `shell.json` only leaves navigation empty. Upgrading from 0.4? See the [changelog](https://github.com/quicken/trailhead/blob/master/CHANGELOG.md).
+
+### Deployment config in `shell.json`
+
+`apiUrl` and `auth` can be left out of `Trailhead.create()` and set per deployment in `shell.json` instead, with no rebuild and no inline script:
+
+```json
+{
+  "apiUrl": "/api",
+  "auth": { "strategy": "cognito" },
+  "apps": [],
+  "nav": []
+}
+```
+
+Values passed to `create()` take precedence. From `shell.json`, `apiUrl` and the `auth` endpoints must be same-origin paths starting with `/`; anything else is ignored with a console warning.
 
 ## Available Adapters
 

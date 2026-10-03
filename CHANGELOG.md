@@ -2,6 +2,49 @@
 
 Notable changes to the Trailhead packages, newest first, with upgrade notes for existing shells and apps. Versions follow [semver](https://semver.org/); while Trailhead is on 0.x, a minor bump (0.4 → 0.5) can be breaking.
 
+## 0.6.0 — 2026-10-03
+
+`@herdingbits/trailhead-core` only. Backward compatible for shells that pass their config to `Trailhead.create()`; see **Upgrading** for the `shell.json` entries that are now rejected.
+
+### Added: deployment config in `shell.json`
+
+`shell.json` can now carry the deployment's `apiUrl` and `auth` strategy, so one built shell can be configured per environment without a rebuild or an injected `window.APP_CONFIG` `<script>` (which a `script-src 'self'` Content-Security-Policy blocks):
+
+```json
+{
+  "apiUrl": "/api",
+  "auth": { "strategy": "cognito" },
+  "apps": [ … ],
+  "nav": [ … ]
+}
+```
+
+- **Precedence:** a value passed to `Trailhead.create()` wins; `shell.json` supplies the default; then the built-in defaults (`""`, `{ strategy: "credentials" }`). An empty-string `apiUrl` in `create()` counts as unset.
+- **Validated:** `apiUrl`, `auth.refreshPath` and `auth.signinPath` from `shell.json` must be same-origin paths starting with `/`. An unsafe value, or an unknown strategy, is ignored with a console warning; an invalid `auth` falls back to `credentials` rather than enabling redirect recovery. Values passed to `create()` are trusted as before.
+- If `shell.json` can't be loaded, the `create()` config still applies.
+
+### Security
+
+Hardening from the shell/adapter security review. `shell.json` is treated as data rather than markup or trusted URLs:
+
+- **Navigation is built with DOM APIs**, not an HTML string. Labels, icons and hrefs from `shell.json` can no longer inject markup or attributes (stored XSS via `innerHTML`).
+- **Nav hrefs are validated** by resolving them as the browser would. A link whose href isn't `http(s)` (`javascript:`, `data:`, `vbscript:`, including whitespace/tab-obfuscated forms) is dropped with a warning, as is an internal link that resolves to another origin (e.g. `/\evil.example`). External links get `rel="noopener noreferrer"`.
+- **`shell.navigation.navigate(path)`** refuses script URLs and off-origin targets (`//host`, `https://…`) with a warning instead of assigning them to `location.href`.
+- **App entries are validated:** an `apps[]` entry whose `basePath` isn't `/` or `/`-separated segments (no `..`, `//`, scheme, or segment starting with `.`), or whose `src` isn't a single file-name-safe segment, is dropped with a warning and never loaded.
+- The "Failed to load application" message is set as text.
+
+### Changed
+
+- `Trailhead.create()` now fetches `shell.json` **before** wiring `shell.http` and exposing `window.shell` (it previously exposed `window.shell` first). `create()` still resolves at the same point, so start-up timing is unchanged; only code that reads `window.shell` from inside `adapter.init()` would notice.
+
+### Upgrading
+
+- No code changes required.
+- Check your `shell.json`, since entries that previously loaded may now be dropped (look for `[Trailhead]` warnings in the console):
+  - nav links with a non-`http(s)` href;
+  - app `basePath`s with a segment starting with `.`;
+  - `apiUrl`/`auth` keys already present in the file, which are now honoured.
+
 ## 0.5.3 — 2026-10-03
 
 `@herdingbits/trailhead-core` only. No upgrade steps: `^0.5.0` ranges pick it up with `npm update`.

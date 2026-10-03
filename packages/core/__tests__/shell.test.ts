@@ -499,3 +499,198 @@ describe('Trailhead shell API — auth.recoverSession strategy wiring', () => {
     expect(fetchMock).toHaveBeenCalledWith('/_auth/refresh', { method: 'POST' });
   });
 });
+
+describe('Trailhead shell — navigation rendering', () => {
+  /** Starts a shell under `appBasePath` with the given nav and returns `#shell-navigation`. */
+  async function renderNav(nav: unknown[], appBasePath = '/base') {
+    window.history.replaceState(null, '', '/elsewhere');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: async () => ({ apps: [], nav }) }));
+    document.body.innerHTML = '<nav id="shell-navigation"></nav><div id="shell-content"></div>';
+    const { adapter } = createFakeAdapter();
+    const trailhead = await Trailhead.create({ adapter, appBasePath });
+    trailhead.start();
+    return document.getElementById('shell-navigation')!;
+  }
+
+  it('renders a link with its label, icon class and nav item class', async () => {
+    const nav = await renderNav([{ type: 'link', label: 'Orders', icon: 'cart', order: 1, href: '/orders' }]);
+
+    const link = nav.querySelector('a')!;
+    expect(link.className).toBe('shell-nav-item');
+    expect(link.querySelector('.shell-nav-label')!.textContent).toBe('Orders');
+    expect(link.querySelector('i')!.className).toBe('shell-icon shell-icon-cart');
+    expect(link.dataset.external).toBe('false');
+  });
+
+  it('renders a link without an icon using the bare icon class', async () => {
+    const nav = await renderNav([{ type: 'link', label: 'Orders', order: 1, href: '/orders' }]);
+
+    expect(nav.querySelector('a i')!.className).toBe('shell-icon shell-icon-');
+  });
+
+  it('renders sections with a header and child links, dividers as <hr>, all sorted by order', async () => {
+    const nav = await renderNav([
+      { type: 'divider', order: 2 },
+      {
+        type: 'section',
+        label: 'Admin',
+        icon: 'gear',
+        order: 3,
+        children: [
+          { type: 'link', label: 'Users', order: 2, href: '/users' },
+          { type: 'link', label: 'Roles', order: 1, href: '/roles' },
+        ],
+      },
+      { type: 'link', label: 'Home', order: 1, href: '/' },
+    ]);
+
+    expect([...nav.children].map((el) => el.tagName)).toEqual(['A', 'HR', 'DIV']);
+    expect(nav.querySelector('hr')!.className).toBe('shell-nav-divider');
+
+    const section = nav.querySelector('.shell-nav-section')!;
+    expect(section.querySelector('.shell-nav-section-header .shell-nav-label')!.textContent).toBe('Admin');
+    expect(section.querySelector('.shell-nav-section-header i')!.className).toBe('shell-icon shell-icon-gear');
+
+    const children = [...section.querySelectorAll('a')];
+    expect(children.map((a) => a.querySelector('.shell-nav-label')!.textContent)).toEqual(['Roles', 'Users']);
+    expect(children.every((a) => a.classList.contains('shell-nav-item-child'))).toBe(true);
+    expect(children.map((a) => a.getAttribute('href'))).toEqual(['/base/roles', '/base/users']);
+  });
+
+  it('auto-detects http(s) and protocol-relative hrefs as external and leaves them unprefixed', async () => {
+    const nav = await renderNav([
+      { type: 'link', label: 'A', order: 1, href: 'https://example.com/a' },
+      { type: 'link', label: 'B', order: 2, href: '//cdn.example.com/b' },
+    ]);
+
+    const links = [...nav.querySelectorAll('a')];
+    expect(links.map((a) => a.getAttribute('href'))).toEqual(['https://example.com/a', '//cdn.example.com/b']);
+    expect(links.every((a) => a.dataset.external === 'true')).toBe(true);
+  });
+});
+
+describe('Trailhead shell — hostile shell.json (H-1 / M-2)', () => {
+  async function renderNav(nav: unknown[], appBasePath = '') {
+    window.history.replaceState(null, '', '/elsewhere');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: async () => ({ apps: [], nav }) }));
+    document.body.innerHTML = '<nav id="shell-navigation"></nav><div id="shell-content"></div>';
+    const { adapter } = createFakeAdapter();
+    const trailhead = await Trailhead.create({ adapter, appBasePath });
+    trailhead.start();
+    return document.getElementById('shell-navigation')!;
+  }
+
+  const payload = '</span><img src=x onerror="window.__pwned=true">';
+
+  it('renders a hostile label and icon as text, never as markup', async () => {
+    const nav = await renderNav([
+      { type: 'link', label: payload, icon: `x"><img src=x>`, order: 1, href: '/a' },
+      { type: 'section', label: payload, order: 2, children: [{ type: 'link', label: payload, order: 1, href: '/b' }] },
+    ]);
+
+    expect(nav.querySelector('img')).toBeNull();
+    expect([...nav.querySelectorAll('.shell-nav-label')].map((el) => el.textContent)).toEqual([payload, payload, payload]);
+  });
+
+  it('keeps a hostile href inside the href attribute instead of breaking out into new attributes', async () => {
+    const nav = await renderNav([{ type: 'link', label: 'A', order: 1, href: '/a" onclick="window.__pwned=true' }]);
+
+    const link = nav.querySelector('a')!;
+    expect(link.hasAttribute('onclick')).toBe(false);
+    expect(link.dataset.path).toBe('/a" onclick="window.__pwned=true');
+  });
+
+  it.each(['javascript:alert(1)', ' JavaScript:alert(1)', 'java\tscript:alert(1)', 'data:text/html,<script>alert(1)</script>', 'vbscript:msgbox(1)'])(
+    'drops a link whose href resolves to a non-http(s) scheme: %j',
+    async (href) => {
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const nav = await renderNav([
+        { type: 'link', label: 'Bad', order: 1, href },
+        { type: 'link', label: 'Bad external', order: 2, href, external: true },
+        { type: 'link', label: 'Good', order: 3, href: '/good' },
+      ]);
+
+      expect([...nav.querySelectorAll('a')].map((a) => a.textContent!.trim())).toEqual(['Good']);
+      expect(console.warn).toHaveBeenCalled();
+    }
+  );
+
+  it('drops an internal link that resolves off-origin (e.g. a backslash-smuggled host)', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const nav = await renderNav([{ type: 'link', label: 'Bad', order: 1, href: '/\\evil.example/x' }]);
+
+    expect(nav.querySelector('a')).toBeNull();
+  });
+
+  it('marks external links rel="noopener noreferrer"; internal links get no rel', async () => {
+    const nav = await renderNav([
+      { type: 'link', label: 'Int', order: 1, href: '/a' },
+      { type: 'link', label: 'Ext', order: 2, href: 'https://example.com' },
+    ]);
+
+    const [internal, external] = [...nav.querySelectorAll('a')];
+    expect(internal.hasAttribute('rel')).toBe(false);
+    expect(external.getAttribute('rel')).toBe('noopener noreferrer');
+  });
+
+  it('navigation.navigate() refuses script URLs and off-origin targets', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    await renderNav([]);
+    const assignedHrefs: string[] = [];
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...realLocation, set href(value: string) { assignedHrefs.push(value); } },
+    });
+
+    window.shell.navigation.navigate('javascript:alert(1)');
+    window.shell.navigation.navigate('//evil.example/x');
+    window.shell.navigation.navigate('https://evil.example/x');
+    window.shell.navigation.navigate('/ok');
+
+    expect(assignedHrefs).toEqual(['/ok']);
+  });
+});
+
+describe('Trailhead shell — app manifest validation (M-1)', () => {
+  async function startWithApps(apps: unknown[], path: string) {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    window.history.replaceState(null, '', path);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: async () => ({ apps, nav: [] }) }));
+    document.body.innerHTML = '<nav id="shell-navigation"></nav><div id="shell-content"></div>';
+    const { adapter } = createFakeAdapter();
+    const trailhead = await Trailhead.create({ adapter });
+    trailhead.start();
+    return trailhead;
+  }
+
+  const scripts = () => [...document.querySelectorAll('script')].map((s) => s.getAttribute('src'));
+
+  it.each([
+    { case: 'a parent-directory traversal in basePath', app: { id: 'x', basePath: '/x/../../evil', src: 'x' }, path: '/x/../../evil' },
+    { case: 'a protocol-relative basePath', app: { id: 'x', basePath: '//evil.example', src: 'x' }, path: '/' },
+    { case: 'a basePath not starting with /', app: { id: 'x', basePath: 'https://evil.example', src: 'x' }, path: '/' },
+    { case: 'a src with a path separator', app: { id: 'x', basePath: '/x', src: '../evil' }, path: '/x' },
+    { case: 'a src with markup', app: { id: 'x', basePath: '/x', src: '"><img src=x>' }, path: '/x' },
+  ])('ignores an app entry with $case', async ({ app, path }) => {
+    const trailhead = await startWithApps([app], path);
+
+    expect(trailhead.getApps()).toEqual([]);
+    expect(scripts()).toEqual([]);
+    expect(console.warn).toHaveBeenCalled();
+  });
+
+  it('keeps valid entries alongside rejected ones', async () => {
+    const good = { id: 'demo', basePath: '/demo', src: 'demo' };
+    const trailhead = await startWithApps([{ id: 'x', basePath: '/../x', src: 'x' }, good], '/demo');
+
+    expect(trailhead.getApps()).toEqual([good]);
+    expect(scripts()).toEqual(['/demo/app.js']);
+  });
+
+  it('renders the load-failure message as text even if the src were hostile', async () => {
+    await startWithApps([{ id: 'demo', basePath: '/demo', src: 'demo' }], '/demo');
+    document.querySelector('script')!.dispatchEvent(new Event('error'));
+
+    expect(document.querySelector('#shell-content .shell-error')!.textContent).toBe('Failed to load application: demo');
+  });
+});

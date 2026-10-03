@@ -615,6 +615,18 @@ export interface AppEntry {
 export interface ShellManifest {
   apps: AppEntry[];
   nav: NavItem[];
+  /**
+   * Deployment default for {@link ShellConfig.apiUrl}, used when `Trailhead.create()` isn't given
+   * one. Must be a same-origin path starting with `/` (e.g. `"/api"`); anything else is ignored
+   * with a warning.
+   */
+  apiUrl?: string;
+  /**
+   * Deployment default for {@link ShellConfig.auth}, used when `Trailhead.create()` isn't given
+   * one. An unknown strategy, or a `refreshPath`/`signinPath` that isn't a same-origin path, is
+   * ignored with a warning and the shell falls back to `{ strategy: "credentials" }`.
+   */
+  auth?: AuthStrategyConfig;
 }
 
 /** A leaf nav item that links to a URL or SPA route. */

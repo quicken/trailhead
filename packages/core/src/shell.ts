@@ -8,6 +8,63 @@ import * as requestManager from "./lib/requestManager.js";
 import { createReauthenticator, type Reauthenticator } from "./lib/reauth.js";
 import { createRedirectSessionRecovery, type SessionRecoverer } from "./lib/session-recovery.js";
 
+/** `http(s)://…` or protocol-relative `//…` — an href the shell treats as external by default. */
+const isExternalHref = (href: string) => /^https?:\/\/|^\/\//.test(href);
+
+/**
+ * Resolves `href` against the current page and returns it only when it is safe to navigate to:
+ * an `http(s)` URL and, unless `allowCrossOrigin`, on this page's origin. Resolving through the
+ * URL parser (rather than pattern-matching the string) is what catches the browser's own
+ * normalisation — leading whitespace, tabs inside `java\tscript:`, `\` read as `/`. Resolves
+ * against `document.baseURI`, exactly as the browser resolves an `<a href>`.
+ */
+function isSafeHref(href: string, allowCrossOrigin: boolean): boolean {
+  let url: URL;
+  try {
+    url = new URL(href, document.baseURI);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== "http:" && url.protocol !== "https:") return false;
+  return allowCrossOrigin || url.origin === new URL(document.URL).origin;
+}
+
+/** A same-origin path such as `/api` or `/_auth/refresh` — the only form `shell.json` may give for endpoints. */
+const isSameOriginPath = (value: unknown): value is string =>
+  typeof value === "string" && value.startsWith("/") && isSafeHref(value, false);
+
+/** `shell.json`'s `apiUrl`, or `undefined` (with a warning) when absent or unsafe. */
+function manifestApiUrl(manifest: Partial<ShellManifest> | null): string | undefined {
+  const value = manifest?.apiUrl;
+  if (value === undefined) return undefined;
+  if (isSameOriginPath(value)) return value;
+  console.warn("[Trailhead] Ignoring shell.json apiUrl — it must be a same-origin path such as \"/api\":", value);
+  return undefined;
+}
+
+/** `shell.json`'s `auth`, or `undefined` (with a warning) when absent or unsafe. */
+function manifestAuth(manifest: Partial<ShellManifest> | null): AuthStrategyConfig | undefined {
+  const value: unknown = manifest?.auth;
+  if (value === undefined) return undefined;
+  const auth = value as { strategy?: unknown; refreshPath?: unknown; signinPath?: unknown } | null;
+  if (auth?.strategy === "credentials") return { strategy: "credentials" };
+  if (
+    auth?.strategy === "cognito" &&
+    (auth.refreshPath === undefined || isSameOriginPath(auth.refreshPath)) &&
+    (auth.signinPath === undefined || isSameOriginPath(auth.signinPath))
+  ) {
+    return { strategy: "cognito", refreshPath: auth.refreshPath as string | undefined, signinPath: auth.signinPath as string | undefined };
+  }
+  console.warn("[Trailhead] Ignoring shell.json auth — unknown strategy or an endpoint that isn't a same-origin path:", value);
+  return undefined;
+}
+
+/** An `AppEntry.basePath`: `/`, or `/`-separated segments that don't start with `.` (no `..`, no `//`). */
+const SAFE_BASE_PATH = /^(?:\/|(?:\/[\w~-][\w.~-]*)+\/?)$/;
+
+/** An `AppEntry.src`: a single file-name-safe segment — it becomes part of the stylesheet URL. */
+const SAFE_SRC = /^[\w~-][\w.~-]*$/;
+
 /**
  * Configuration passed to {@link Trailhead.create}.
  */
@@ -18,7 +75,10 @@ export interface ShellConfig {
   /** URL prefix under which SPAs are hosted (e.g., `"/sample/trailhead"`). Used to strip the prefix from routes, construct SPA asset URLs, and build navigation links. */
   appBasePath?: string;
 
-  /** Base URL prepended to all SPA HTTP requests made via `shell.http`. */
+  /**
+   * Base URL prepended to all SPA HTTP requests made via `shell.http`. Falls back to `apiUrl` in
+   * `shell.json` when omitted or empty, so a deployment can set it without rebuilding the shell.
+   */
   apiUrl?: string;
 
   /** URL from which the shell bundle and static assets (e.g., `shell.json`) are fetched. Defaults to `appBasePath`. */
@@ -29,7 +89,8 @@ export interface ShellConfig {
    * `/_auth/*` endpoints. Omit it for the default `{ strategy: "credentials" }` (in-place
    * username/password re-authentication via the adapter; `shell.http` does not auto-recover).
    * Pass `{ strategy: "cognito" }` for redirect-based recovery behind the jwt-auth-gateway, where
-   * `shell.http` auto-recovers once on a `401`. See {@link AuthStrategyConfig}.
+   * `shell.http` auto-recovers once on a `401`. When omitted, `auth` in `shell.json` is used if
+   * present. See {@link AuthStrategyConfig}.
    */
   auth?: AuthStrategyConfig;
 }
@@ -60,7 +121,6 @@ export class Trailhead {
   /** URL prefix under which SPAs are hosted. Empty string when hosted at the root. */
   public readonly appBasePath: string;
   private readonly shellUrl: string;
-  private readonly apiUrl: string;
   private started = false;
 
   /** The active design system adapter supplying UI components to the shell. */
@@ -72,28 +132,22 @@ export class Trailhead {
   /**
    * Backs `window.shell.auth.recoverSession` and `shell.http`'s 401 auto-recovery. `null` under
    * the credentials strategy (the default), where there's nothing to recover without a prompt.
+   * Set by {@link create} once `shell.json` has been read, since it may name the strategy.
    */
-  private readonly sessionRecoverer: SessionRecoverer | null;
+  private sessionRecoverer: SessionRecoverer | null = null;
 
   private constructor(config: ShellConfig) {
     this.appBasePath = config.appBasePath || "";
     this.shellUrl = config.shellUrl || this.appBasePath;
-    this.apiUrl = config.apiUrl || "";
     this.adapter = config.adapter;
     this.reauthenticator = createReauthenticator(this.adapter.auth);
-
-    // Default strategy is credentials: no redirect recoverer, http does not auto-recover.
-    const auth = config.auth ?? { strategy: "credentials" };
-    this.sessionRecoverer =
-      auth.strategy === "cognito"
-        ? createRedirectSessionRecovery({ refreshPath: auth.refreshPath, signinPath: auth.signinPath })
-        : null;
   }
 
   /**
-   * Creates the shell: initialises the design system adapter, exposes `window.shell` and
-   * loads `shell.json`. The returned shell is fully loaded — {@link getNavigation} and
-   * {@link getApps} are populated — but hasn't touched the page yet; call {@link start}
+   * Creates the shell: initialises the design system adapter, loads `shell.json`, then wires
+   * `shell.http` and the auth strategy and exposes `window.shell`. `apiUrl` and `auth` come from
+   * `config` when given, otherwise from `shell.json`. The returned shell is fully loaded —
+   * {@link getNavigation} and {@link getApps} are populated — but hasn't touched the page yet; call {@link start}
    * (or an adapter's `ShellApp.mount`) once the layout is in the DOM.
    *
    * A missing or unreadable `shell.json` is logged and leaves navigation empty. If the
@@ -114,11 +168,22 @@ export class Trailhead {
       throw error;
     }
 
+    const manifest = await shell.loadManifest();
+
+    // create() config wins; shell.json supplies deployment defaults; then the built-in defaults.
+    // Default strategy is credentials: no redirect recoverer, http does not auto-recover.
+    const apiUrl = config.apiUrl || manifestApiUrl(manifest) || "";
+    const auth = config.auth ?? manifestAuth(manifest) ?? { strategy: "credentials" };
+    const recoverer =
+      auth.strategy === "cognito"
+        ? createRedirectSessionRecovery({ refreshPath: auth.refreshPath, signinPath: auth.signinPath })
+        : null;
+    shell.sessionRecoverer = recoverer;
+
     requestManager.init(shell.adapter.feedback);
-    http.init(shell.apiUrl, shell.sessionRecoverer ? () => shell.sessionRecoverer!.recoverSession() : null);
+    http.init(apiUrl, recoverer ? () => recoverer.recoverSession() : null);
     window.shell = shell.createAPI();
 
-    await shell.loadNavigation();
     return shell;
   }
 
@@ -254,73 +319,95 @@ export class Trailhead {
   }
 
   /**
-   * Load navigation configuration
+   * Loads `shell.json`: keeps its apps and nav, and returns the whole manifest so {@link create}
+   * can read its deployment config. Returns `null` (empty apps and nav) when it can't be loaded.
    */
-  private async loadNavigation(): Promise<void> {
+  private async loadManifest(): Promise<Partial<ShellManifest> | null> {
     try {
       const response = await fetch(`${this.shellUrl}/shell.json`);
-      const manifest: ShellManifest = await response.json();
-      this.apps = manifest.apps ?? [];
+      const manifest: Partial<ShellManifest> = await response.json();
+      this.apps = (manifest.apps ?? []).filter((app) => {
+        const valid = typeof app.basePath === "string" && SAFE_BASE_PATH.test(app.basePath) && typeof app.src === "string" && SAFE_SRC.test(app.src);
+        if (!valid) console.warn("[Trailhead] Ignoring shell.json app with an unsafe basePath or src:", app);
+        return valid;
+      });
       this.nav = manifest.nav ?? [];
+      return manifest;
     } catch (error) {
       console.error("Failed to load shell.json:", error);
       this.apps = [];
       this.nav = [];
+      return null;
     }
   }
 
   /**
-   * Render navigation menu
+   * Render navigation menu. Built with DOM APIs, never an HTML string: `shell.json` labels, icons
+   * and hrefs are data, and must not be able to inject markup. Links whose href is not a safe
+   * `http(s)` target (internal links must also stay on this origin) are dropped with a warning.
    */
   private renderNavigation(): void {
     const nav = document.getElementById("shell-navigation");
     if (!nav) return;
 
-    const isExternal = (href: string) => /^https?:\/\/|^\/\//.test(href);
-
-    const renderLink = (item: NavLink, isChild = false): string => {
-      const external = item.external === true || isExternal(item.href);
-      const href = external ? item.href : this.appBasePath + item.href;
-      return `<a href="${href}"
-         class="shell-nav-item${isChild ? " shell-nav-item-child" : ""}"
-         data-path="${item.href}"
-         data-external="${external}">
-        <i class="shell-icon shell-icon-${item.icon ?? ""}"></i>
-        <span class="shell-nav-label">${item.label}</span>
-      </a>`;
+    const el = <K extends keyof HTMLElementTagNameMap>(tag: K, className: string): HTMLElementTagNameMap[K] => {
+      const node = document.createElement(tag);
+      node.className = className;
+      return node;
     };
 
-    nav.innerHTML = [...this.nav]
-      .sort((a, b) => a.order - b.order)
-      .map((item) => {
-        switch (item.type) {
-          case "link":
-            return renderLink(item);
-          case "section":
-            return `<div class="shell-nav-section">
-              <span class="shell-nav-section-header">
-                <i class="shell-icon shell-icon-${item.icon ?? ""}"></i>
-                <span class="shell-nav-label">${item.label}</span>
-              </span>
-              ${[...item.children].sort((a, b) => a.order - b.order).map((c) => renderLink(c, true)).join("")}
-            </div>`;
-          case "divider":
-            return `<hr class="shell-nav-divider" />`;
-        }
-      })
-      .join("");
+    const iconAndLabel = (parent: HTMLElement, icon: string | undefined, label: string) => {
+      parent.append(el("i", `shell-icon shell-icon-${icon ?? ""}`));
+      parent.append(Object.assign(el("span", "shell-nav-label"), { textContent: label }));
+    };
 
-    nav.querySelectorAll("a").forEach((link) => {
-      if (link.dataset.external !== "true") {
+    const renderLink = (item: NavLink, isChild = false): HTMLAnchorElement | null => {
+      const external = item.external === true || isExternalHref(item.href);
+      const href = external ? item.href : this.appBasePath + item.href;
+      if (!isSafeHref(href, external)) {
+        console.warn("[Trailhead] Dropping shell.json nav link with an unsafe href:", item.href);
+        return null;
+      }
+
+      const link = el("a", `shell-nav-item${isChild ? " shell-nav-item-child" : ""}`);
+      link.setAttribute("href", href);
+      link.dataset.path = item.href;
+      link.dataset.external = String(external);
+      if (external) {
+        link.rel = "noopener noreferrer";
+      } else {
         link.addEventListener("click", (e) => {
           e.preventDefault();
-          const path = link.dataset.path;
-          if (path) {
-            this.navigate(path);
-          }
+          this.navigate(item.href);
         });
       }
+      iconAndLabel(link, item.icon, item.label);
+      return link;
+    };
+
+    const byOrder = (a: { order: number }, b: { order: number }) => a.order - b.order;
+
+    const nodes = [...this.nav].sort(byOrder).map((item): HTMLElement | null => {
+      switch (item.type) {
+        case "link":
+          return renderLink(item);
+        case "section": {
+          const section = el("div", "shell-nav-section");
+          const header = el("span", "shell-nav-section-header");
+          iconAndLabel(header, item.icon, item.label);
+          section.append(header);
+          for (const child of [...item.children].sort(byOrder)) {
+            const link = renderLink(child, true);
+            if (link) section.append(link);
+          }
+          return section;
+        }
+        case "divider":
+          return el("hr", "shell-nav-divider");
+      }
     });
+
+    nav.replaceChildren(...nodes.filter((node): node is HTMLElement => node !== null));
   }
 
   /**
@@ -338,7 +425,12 @@ export class Trailhead {
    * `window.shell.navigation.navigate()`) don't need to know the deployment's base path.
    */
   private navigate(path: string): void {
-    window.location.href = this.appBasePath + path;
+    const target = this.appBasePath + path;
+    if (!isSafeHref(target, false)) {
+      console.warn("[Trailhead] Refusing to navigate to an unsafe or off-origin path:", path);
+      return;
+    }
+    window.location.href = target;
   }
 
   /**
@@ -435,7 +527,10 @@ export class Trailhead {
       };
 
       script.onerror = () => {
-        root.innerHTML = `<div class="shell-error">Failed to load application: ${appName}</div>`;
+        const error = document.createElement("div");
+        error.className = "shell-error";
+        error.textContent = `Failed to load application: ${appName}`;
+        root.replaceChildren(error);
       };
 
       document.body.appendChild(script);
