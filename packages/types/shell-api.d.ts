@@ -52,7 +52,72 @@ export interface AuthAPI {
      * ```
      */
     reauthenticate(attempt: (username: string, password: string) => Promise<boolean>): Promise<boolean>;
+    /**
+     * Recovers an expired session according to the shell's configured {@link AuthStrategyConfig}.
+     *
+     * Strategy-aware counterpart to {@link reauthenticate}: use it when the app can't collect
+     * credentials itself because login is a redirect to a hosted identity provider (e.g. Cognito
+     * Managed Login behind the jwt-auth-gateway). It asks the edge to refresh the session; if that
+     * fails it redirects to sign-in and comes back to the current path.
+     *
+     * - `"cognito"` strategy: `POST`s the refresh endpoint; a `2xx` resolves `true` (retry your
+     *   request); a failure redirects to sign-in and the promise never resolves (page unloads).
+     * - `"credentials"` strategy (the default): there is nothing to recover without a prompt, so
+     *   this resolves `false` immediately and you should call {@link reauthenticate} instead. The
+     *   shell's HTTP client never calls `recoverSession` automatically under this strategy.
+     *
+     * `shell.http` invokes this for you once on a `401` when a redirect strategy is configured, so
+     * most apps using the gateway never call it directly.
+     *
+     * @returns `true` when the session was refreshed in place (retry the original request);
+     *   `false` when nothing could be recovered without a redirect (or the strategy is
+     *   credentials). On the redirect path in a real browser it does not resolve.
+     * @example
+     * ```typescript
+     * const result = await shell.http.get('/orders'); // auto-recovers on 401 under "cognito"
+     * // Manual use:
+     * if (!result.success && result.error.status === 401) {
+     *   if (await shell.auth.recoverSession()) retryOriginalRequest();
+     * }
+     * ```
+     */
+    recoverSession(): Promise<boolean>;
 }
+/**
+ * How the shell recovers an expired session. Set explicitly on {@link ShellConfig.auth} — the
+ * shell never auto-detects the strategy from the presence of `/_auth/*` endpoints.
+ *
+ * - `"credentials"` (the default): in-place username/password re-authentication via the design
+ *   system adapter — the app owns its login endpoint (nginx/Lucee). `shell.http` does not
+ *   auto-recover; apps call {@link AuthAPI.reauthenticate} themselves.
+ * - `"cognito"`: redirect-based recovery for a hosted-UI identity provider fronted by the
+ *   jwt-auth-gateway. `shell.http` auto-recovers once on a `401` by refreshing at the edge and,
+ *   failing that, redirecting to sign-in.
+ */
+export type AuthStrategyKind = "credentials" | "cognito";
+/**
+ * Credentials strategy — current in-place re-authentication behaviour. Carries no options; it is
+ * entirely driven by the adapter's credential prompt.
+ */
+export interface CredentialsAuthConfig {
+    strategy: "credentials";
+}
+/**
+ * Cognito (redirect) strategy — recovers against the jwt-auth-gateway's `/_auth/*` endpoints.
+ * Both endpoints default to the gateway's own paths and are overridable for a non-default mount.
+ */
+export interface CognitoAuthConfig {
+    strategy: "cognito";
+    /** Endpoint `POST`ed to refresh the session. Default `"/_auth/refresh"`. */
+    refreshPath?: string;
+    /** Endpoint redirected to when refresh fails; current path is appended as `?return=`. Default `"/_auth/signin"`. */
+    signinPath?: string;
+}
+/**
+ * Session-recovery strategy for {@link ShellConfig.auth}. Omitting `auth` entirely is equivalent
+ * to `{ strategy: "credentials" }`.
+ */
+export type AuthStrategyConfig = CredentialsAuthConfig | CognitoAuthConfig;
 /**
  * Contract implemented by applications that can be hosted by the Shell.
  *

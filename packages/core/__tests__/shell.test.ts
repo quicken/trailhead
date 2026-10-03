@@ -467,3 +467,35 @@ describe('Trailhead shell — start-up', () => {
     expect(document.getElementById('shell-content')!.textContent).toContain('Failed to start the application shell');
   });
 });
+
+describe('Trailhead shell API — auth.recoverSession strategy wiring', () => {
+  it('credentials strategy (default): recoverSession resolves false and makes no refresh request', async () => {
+    const refresh = vi.fn();
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      if (typeof url === 'string' && url.includes('/_auth/refresh')) refresh();
+      return { json: async () => ({ apps: [], nav: [] }), ok: true } as any;
+    }));
+    const { adapter } = createFakeAdapter();
+    await Trailhead.create({ adapter }); // no `auth` → credentials
+
+    const result = await window.shell.auth.recoverSession();
+
+    expect(result).toBe(false);
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it('cognito strategy: recoverSession POSTs the refresh endpoint and resolves true on 2xx', async () => {
+    const fetchMock = vi.fn(async (url: string) => {
+      if (typeof url === 'string' && url.includes('/_auth/refresh')) return { ok: true } as Response;
+      return { json: async () => ({ apps: [], nav: [] }), ok: true } as any;
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { adapter } = createFakeAdapter();
+    await Trailhead.create({ adapter, auth: { strategy: 'cognito' } });
+
+    const result = await window.shell.auth.recoverSession();
+
+    expect(result).toBe(true);
+    expect(fetchMock).toHaveBeenCalledWith('/_auth/refresh', { method: 'POST' });
+  });
+});

@@ -22,4 +22,8 @@ export type {
   AppEntry,
   ShellManifest,
   AuthAPI,
+  AuthStrategyConfig,
+  AuthStrategyKind,
+  CredentialsAuthConfig,
+  CognitoAuthConfig,
 } from "./shell-api.js";

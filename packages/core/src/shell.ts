@@ -1,11 +1,12 @@
 /**
  * Trailhead Core Shell - Design system agnostic orchestration
  */
-import type { ShellAPI, NavItem, NavLink, AppEntry, ShellManifest } from "./types/shell-api.js";
+import type { ShellAPI, NavItem, NavLink, AppEntry, ShellManifest, AuthStrategyConfig } from "./types/shell-api.js";
 import type { DesignSystemAdapter } from "./adapters/types.js";
 import * as http from "./lib/http.js";
 import * as requestManager from "./lib/requestManager.js";
 import { createReauthenticator, type Reauthenticator } from "./lib/reauth.js";
+import { createRedirectSessionRecovery, type SessionRecoverer } from "./lib/session-recovery.js";
 
 /**
  * Configuration passed to {@link Trailhead.create}.
@@ -22,6 +23,15 @@ export interface ShellConfig {
 
   /** URL from which the shell bundle and static assets (e.g., `shell.json`) are fetched. Defaults to `appBasePath`. */
   shellUrl?: string;
+
+  /**
+   * Session-recovery strategy. Explicit — the shell never auto-detects it from the presence of
+   * `/_auth/*` endpoints. Omit it for the default `{ strategy: "credentials" }` (in-place
+   * username/password re-authentication via the adapter; `shell.http` does not auto-recover).
+   * Pass `{ strategy: "cognito" }` for redirect-based recovery behind the jwt-auth-gateway, where
+   * `shell.http` auto-recovers once on a `401`. See {@link AuthStrategyConfig}.
+   */
+  auth?: AuthStrategyConfig;
 }
 
 /**
@@ -59,12 +69,25 @@ export class Trailhead {
   /** Backs `window.shell.auth.reauthenticate` — built from `adapter.auth`. */
   private readonly reauthenticator: Reauthenticator;
 
+  /**
+   * Backs `window.shell.auth.recoverSession` and `shell.http`'s 401 auto-recovery. `null` under
+   * the credentials strategy (the default), where there's nothing to recover without a prompt.
+   */
+  private readonly sessionRecoverer: SessionRecoverer | null;
+
   private constructor(config: ShellConfig) {
     this.appBasePath = config.appBasePath || "";
     this.shellUrl = config.shellUrl || this.appBasePath;
     this.apiUrl = config.apiUrl || "";
     this.adapter = config.adapter;
     this.reauthenticator = createReauthenticator(this.adapter.auth);
+
+    // Default strategy is credentials: no redirect recoverer, http does not auto-recover.
+    const auth = config.auth ?? { strategy: "credentials" };
+    this.sessionRecoverer =
+      auth.strategy === "cognito"
+        ? createRedirectSessionRecovery({ refreshPath: auth.refreshPath, signinPath: auth.signinPath })
+        : null;
   }
 
   /**
@@ -92,7 +115,7 @@ export class Trailhead {
     }
 
     requestManager.init(shell.adapter.feedback);
-    http.init(shell.apiUrl);
+    http.init(shell.apiUrl, shell.sessionRecoverer ? () => shell.sessionRecoverer!.recoverSession() : null);
     window.shell = shell.createAPI();
 
     await shell.loadNavigation();
@@ -225,6 +248,7 @@ export class Trailhead {
       },
       auth: {
         reauthenticate: (attempt) => this.reauthenticator.reauthenticate(attempt),
+        recoverSession: () => (this.sessionRecoverer ? this.sessionRecoverer.recoverSession() : Promise.resolve(false)),
       },
     };
   }
