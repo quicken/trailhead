@@ -12,19 +12,19 @@ const appBasePath = import.meta.env.VITE_APP_BASE_PATH || "";
 const shellUrl = (window as any).SHELL_DEV_URL || appBasePath;
 const apiUrl = (window as any).APP_CONFIG?.apiUrl || "";
 
+// Redirect root to first app (before start-up: no point booting a shell we're leaving)
+const currentPath = window.location.pathname;
+if (currentPath === appBasePath || currentPath === appBasePath + '/') {
+  window.location.href = appBasePath + '/demo';
+}
+
 // Initialize shell with CloudScape adapter
-const shell = new Trailhead({
+const shell = await Trailhead.create({
   adapter: new CloudScapeAdapter(),
   appBasePath,
   shellUrl,
   apiUrl,
 });
-
-// Redirect root to first app
-const currentPath = window.location.pathname;
-if (currentPath === appBasePath || currentPath === appBasePath + '/') {
-  window.location.href = appBasePath + '/demo';
-}
 
 // Render React app
 const root = createRoot(document.getElementById('app')!);

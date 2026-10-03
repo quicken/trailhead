@@ -10,10 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@herdingbits/trailhead-core": "^0.4.0",
-    "@herdingbits/trailhead-cloudscape": "^0.4.0",
     "@cloudscape-design/components": "^3.0.1377",
     "@cloudscape-design/global-styles": "^1.0.70",
+    "@herdingbits/trailhead-cloudscape": "^0.5.0",
+    "@herdingbits/trailhead-core": "^0.5.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
