@@ -3,7 +3,7 @@
  */
 import ky, { type KyInstance, type Options } from "ky";
 import type { RequestOptions, Result, HttpError, SuccessResult, ErrorResult } from "../types/shell-api";
-import * as requestManager from "./requestManager";
+import * as requestManager from "./requestManager.js";
 
 let kyInstance: KyInstance;
 
