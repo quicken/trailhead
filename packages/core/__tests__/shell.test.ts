@@ -45,19 +45,13 @@ function createFakeAdapter() {
   };
 }
 
-/** Constructs a Trailhead shell and waits for its async init chain to expose window.shell. */
+/** Creates a Trailhead shell with an empty shell.json and returns the `window.shell` API it exposes. */
 async function createShell(adapter: DesignSystemAdapter) {
   vi.stubGlobal(
     'fetch',
     vi.fn().mockResolvedValue({ json: async () => ({ apps: [], nav: [] }) })
   );
-  new Trailhead({ adapter });
-  // window.shell is assigned partway through the constructor's async init chain, right
-  // after `await adapter.init()` resolves — a couple of microtask flushes is enough since
-  // our fake adapter's init() resolves immediately.
-  await Promise.resolve();
-  await Promise.resolve();
-  await Promise.resolve();
+  await Trailhead.create({ adapter });
   return window.shell;
 }
 
@@ -74,9 +68,6 @@ afterEach(() => {
   Object.defineProperty(window, 'location', { configurable: true, value: realLocation });
   window.history.replaceState(null, '', '/');
 });
-
-/** Lets every pending microtask (adapter init, fetch, .json()) settle. */
-const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('Trailhead shell API — confirmation dialogs', () => {
   it('confirm() shows a Cancel/Confirm dialog and resolves true only for "confirm"', async () => {
@@ -233,14 +224,8 @@ describe('Trailhead shell API — navigation under a non-root appBasePath', () =
     );
     document.body.innerHTML = '<nav id="shell-navigation"></nav><div id="shell-content"></div>';
     const { adapter } = createFakeAdapter();
-    new Trailhead({ adapter, appBasePath });
-    // Extra ticks beyond createShell()'s: loadNavigation() awaits both the fetch and its
-    // .json() call before renderNavigation() runs, each adding its own microtask hop.
-    await Promise.resolve();
-    await Promise.resolve();
-    await Promise.resolve();
-    await Promise.resolve();
-    await Promise.resolve();
+    const trailhead = await Trailhead.create({ adapter, appBasePath });
+    trailhead.start();
     return window.shell;
   }
 
@@ -287,12 +272,8 @@ describe('Trailhead shell API — navigation under a non-root appBasePath', () =
     );
     document.body.innerHTML = '<nav id="shell-navigation"></nav><div id="shell-content"></div>';
     const { adapter } = createFakeAdapter();
-    new Trailhead({ adapter, appBasePath: '/sample/trailhead/webawesome' });
-    await Promise.resolve();
-    await Promise.resolve();
-    await Promise.resolve();
-    await Promise.resolve();
-    await Promise.resolve();
+    const trailhead = await Trailhead.create({ adapter, appBasePath: '/sample/trailhead/webawesome' });
+    trailhead.start();
 
     const link = document.querySelector('#shell-navigation a[data-path="/legacy/dashboard/"]') as HTMLAnchorElement | null;
     expect(link?.getAttribute('href')).toBe('/legacy/dashboard/');
@@ -311,14 +292,14 @@ describe('Trailhead shell — routing', () => {
     { type: 'link', label: 'Docs', order: 3, href: 'https://example.com/docs' },
   ];
 
-  /** Starts a shell at `path` under appBasePath `/base` and waits for its first route. */
+  /** Creates and starts a shell at `path` under appBasePath `/base`. */
   async function startShell(path: string, content = '') {
     window.history.replaceState(null, '', path);
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: async () => ({ apps, nav }) }));
     document.body.innerHTML = `<nav id="shell-navigation"></nav><div id="shell-content">${content}</div>`;
     const { adapter } = createFakeAdapter();
-    const trailhead = new Trailhead({ adapter, appBasePath: '/base' });
-    await flush();
+    const trailhead = await Trailhead.create({ adapter, appBasePath: '/base' });
+    trailhead.start();
     return trailhead;
   }
 
@@ -392,27 +373,77 @@ describe('Trailhead shell — routing', () => {
 });
 
 describe('Trailhead shell — start-up', () => {
-  it('ready resolves once window.shell is available', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: async () => ({ apps: [], nav: [] }) }));
+  const apps = [{ id: 'demo', basePath: '/demo', src: 'demo' }];
+  const nav = [{ type: 'link', label: 'Demo', order: 1, href: '/demo' }];
+
+  function givenPage(path = '/demo') {
+    window.history.replaceState(null, '', path);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: async () => ({ apps, nav }) }));
+    document.body.innerHTML = '<nav id="shell-navigation"></nav><div id="shell-content"></div>';
+  }
+
+  const appScripts = () => document.querySelectorAll('script[src="/demo/app.js"]');
+
+  it('create() resolves with shell.json loaded and window.shell exposed, without touching the page', async () => {
+    givenPage();
     const { adapter } = createFakeAdapter();
 
-    const trailhead = new Trailhead({ adapter });
-    await trailhead.ready;
+    const trailhead = await Trailhead.create({ adapter });
 
+    expect(adapter.init).toHaveBeenCalledTimes(1);
     expect(window.shell).toBeDefined();
+    expect(trailhead.getNavigation()).toEqual(nav);
+    expect(trailhead.getApps()).toEqual(apps);
+    expect(document.getElementById('shell-navigation')!.children).toHaveLength(0);
+    expect(appScripts()).toHaveLength(0);
   });
 
-  it('shows an error instead of a blank page when the adapter fails to initialise', async () => {
+  it('start() renders navigation and loads the app for the current route', async () => {
+    givenPage();
+    const { adapter } = createFakeAdapter();
+    const trailhead = await Trailhead.create({ adapter });
+
+    trailhead.start();
+
+    expect(document.querySelector('#shell-navigation a[data-path="/demo"]')).not.toBeNull();
+    expect(appScripts()).toHaveLength(1);
+  });
+
+  it('start() only takes effect once, so a second call adds no duplicate nav handlers or route listeners', async () => {
+    givenPage();
+    const { adapter } = createFakeAdapter();
+    const trailhead = await Trailhead.create({ adapter });
+    // Count registrations rather than dispatching popstate: shells from earlier tests are
+    // still listening on the shared window and would respond too.
+    const addListener = vi.spyOn(window, 'addEventListener');
+
+    trailhead.start();
+    trailhead.start();
+
+    expect(appScripts()).toHaveLength(1);
+    expect(addListener.mock.calls.filter(([type]) => type === 'popstate')).toHaveLength(1);
+  });
+
+  it('create() still resolves, with empty navigation, when shell.json cannot be loaded', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    document.body.innerHTML = '<div id="shell-content"></div>';
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+    const { adapter } = createFakeAdapter();
+
+    const trailhead = await Trailhead.create({ adapter });
+
+    expect(trailhead.getNavigation()).toEqual([]);
+    expect(trailhead.getApps()).toEqual([]);
+  });
+
+  it('create() rejects, and shows the failure instead of a blank page, when the adapter fails to initialise', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    givenPage();
     const { adapter } = createFakeAdapter();
     adapter.init = vi.fn(async () => {
       throw new Error('theme failed to load');
     });
 
-    const trailhead = new Trailhead({ adapter });
-
-    await expect(trailhead.ready).resolves.toBeUndefined();
+    await expect(Trailhead.create({ adapter })).rejects.toThrow('theme failed to load');
     expect(document.getElementById('shell-content')!.textContent).toContain('Failed to start the application shell');
   });
 });

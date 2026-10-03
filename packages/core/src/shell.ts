@@ -8,7 +8,7 @@ import * as requestManager from "./lib/requestManager.js";
 import { createReauthenticator, type Reauthenticator } from "./lib/reauth.js";
 
 /**
- * Configuration passed to the `Trailhead` constructor.
+ * Configuration passed to {@link Trailhead.create}.
  */
 export interface ShellConfig {
   /** Design system adapter that backs all shell UI — toasts, dialogs, and busy overlays. */
@@ -28,12 +28,18 @@ export interface ShellConfig {
  * The Trailhead shell. Bootstraps the micro-frontend host by loading navigation config,
  * mounting SPAs on route activation, and exposing `window.shell` to every hosted application.
  *
+ * Start-up is two explicit steps: {@link Trailhead.create} does the async work (adapter
+ * initialisation, loading `shell.json`, exposing `window.shell`) and resolves with a fully
+ * loaded shell; {@link Trailhead.start} then wires it to the page once the layout is in the
+ * DOM. Adapters' `ShellApp.mount(shell)` calls `start()` for you.
+ *
  * @example
  * ```typescript
  * import { Trailhead } from '@herdingbits/trailhead-core';
- * import { WebAwesomeAdapter } from '@herdingbits/trailhead-webawesome';
+ * import { WebAwesomeAdapter, ShellApp } from '@herdingbits/trailhead-webawesome';
  *
- * new Trailhead({ adapter: createAdapter() });
+ * const shell = await Trailhead.create({ adapter: new WebAwesomeAdapter() });
+ * ShellApp.mount(shell);
  * ```
  */
 export class Trailhead {
@@ -44,6 +50,8 @@ export class Trailhead {
   /** URL prefix under which SPAs are hosted. Empty string when hosted at the root. */
   public readonly appBasePath: string;
   private readonly shellUrl: string;
+  private readonly apiUrl: string;
+  private started = false;
 
   /** The active design system adapter supplying UI components to the shell. */
   public readonly adapter: DesignSystemAdapter;
@@ -51,31 +59,58 @@ export class Trailhead {
   /** Backs `window.shell.auth.reauthenticate` — built from `adapter.auth`. */
   private readonly reauthenticator: Reauthenticator;
 
-  /**
-   * Resolves once start-up has finished: the adapter is initialised, `window.shell` is
-   * exposed, navigation is rendered and the initial route is handled. Never rejects — a
-   * failed start-up is logged and shown in `#shell-content` instead.
-   */
-  public readonly ready: Promise<void>;
+  private constructor(config: ShellConfig) {
+    this.appBasePath = config.appBasePath || "";
+    this.shellUrl = config.shellUrl || this.appBasePath;
+    this.apiUrl = config.apiUrl || "";
+    this.adapter = config.adapter;
+    this.reauthenticator = createReauthenticator(this.adapter.auth);
+  }
 
   /**
-   * Creates the shell and immediately begins async initialisation (adapter setup,
-   * navigation load, initial route handling). Await {@link ready} to know when it's done.
+   * Creates the shell: initialises the design system adapter, exposes `window.shell` and
+   * loads `shell.json`. The returned shell is fully loaded — {@link getNavigation} and
+   * {@link getApps} are populated — but hasn't touched the page yet; call {@link start}
+   * (or an adapter's `ShellApp.mount`) once the layout is in the DOM.
+   *
+   * A missing or unreadable `shell.json` is logged and leaves navigation empty. If the
+   * adapter fails to initialise, the error is shown in `#shell-content` (when it exists)
+   * and the returned promise rejects.
    *
    * @param config - Shell configuration
    */
-  constructor(config: ShellConfig) {
-    this.appBasePath = config.appBasePath || "";
-    this.shellUrl = config.shellUrl || this.appBasePath;
-    this.adapter = config.adapter;
-    this.reauthenticator = createReauthenticator(this.adapter.auth);
-    this.ready = this.init(config.apiUrl).catch((error) => {
-      console.error("[Trailhead] Shell failed to start:", error);
+  public static async create(config: ShellConfig): Promise<Trailhead> {
+    const shell = new Trailhead(config);
+    try {
+      await shell.initAdapter();
+    } catch (error) {
       const root = document.getElementById("shell-content");
       if (root) {
         root.innerHTML = `<div class="shell-error">Failed to start the application shell</div>`;
       }
-    });
+      throw error;
+    }
+
+    requestManager.init(shell.adapter.feedback);
+    http.init(shell.apiUrl);
+    window.shell = shell.createAPI();
+
+    await shell.loadNavigation();
+    return shell;
+  }
+
+  /**
+   * Wires the shell to the page: renders navigation into `#shell-navigation`, starts
+   * listening for route changes and loads the app for the current URL into
+   * `#shell-content`. Call it once the layout is in the DOM; later calls do nothing.
+   */
+  public start(): void {
+    if (this.started) return;
+    this.started = true;
+
+    this.setupRouting();
+    this.renderNavigation();
+    this.handleRoute();
   }
 
   /**
@@ -92,33 +127,6 @@ export class Trailhead {
    */
   public getApps(): AppEntry[] {
     return this.apps;
-  }
-
-  /**
-   * Initialize shell
-   */
-  private async init(apiUrl?: string): Promise<void> {
-    // Initialize design system adapter
-    await this.initAdapter();
-
-    // Initialize request manager and HTTP client with adapter
-    requestManager.init(this.adapter.feedback);
-    http.init(apiUrl || "");
-
-    // Expose shell API globally
-    window.shell = this.createAPI();
-
-    // Load navigation
-    await this.loadNavigation();
-
-    // Setup routing
-    this.setupRouting();
-
-    // Render navigation
-    this.renderNavigation();
-
-    // Load initial route
-    this.handleRoute();
   }
 
   /**

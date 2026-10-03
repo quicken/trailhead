@@ -31,15 +31,21 @@ npm install @herdingbits/trailhead-core
 
 ```typescript
 import { Trailhead } from '@herdingbits/trailhead-core';
-import { YourAdapter } from '@herdingbits/trailhead-your-design-system';
+import { YourAdapter, ShellApp } from '@herdingbits/trailhead-your-design-system';
 
-const shell = new Trailhead({
+// Async: initialises the adapter, exposes window.shell and loads shell.json.
+const shell = await Trailhead.create({
   adapter: new YourAdapter(),
   appBasePath: '/app',       // URL prefix where SPAs are hosted
   shellUrl: '/app',          // URL where shell.js and shell.json are served (defaults to appBasePath)
   apiUrl: 'https://api.example.com'
 });
+
+// Renders the shell UI, then calls shell.start() to render navigation and load the current app.
+ShellApp.mount(shell);
 ```
+
+`Trailhead.create()` rejects if the adapter fails to initialise; a missing `shell.json` only leaves navigation empty. Upgrading from 0.4? See the [changelog](https://github.com/quicken/trailhead/blob/master/CHANGELOG.md).
 
 ## Available Adapters
 
