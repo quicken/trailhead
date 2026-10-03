@@ -1,6 +1,6 @@
 {
   "name": "@herdingbits/trailhead-webawesome",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Web Awesome web components adapter for Trailhead. Vanilla TypeScript, no React required.",
   "type": "module",
   "main": "./dist/index.js",
