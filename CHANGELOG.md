@@ -2,6 +2,14 @@
 
 Notable changes to the Trailhead packages, newest first, with upgrade notes for existing shells and apps. Versions follow [semver](https://semver.org/); while Trailhead is on 0.x, a minor bump (0.4 → 0.5) can be breaking.
 
+## 0.5.1 — 2026-10-03
+
+`@herdingbits/trailhead-core` only. No upgrade steps: `^0.5.0` ranges pick it up with `npm update`.
+
+### Fixed
+
+- The current app's nav link is now highlighted (`shell-nav-item-active`) when its `href` in `shell.json` and the app's `basePath` differ only by a trailing slash — e.g. a link to `/apps/connote/` for an app at `/apps/connote`. Previously the exact-match comparison never highlighted it, so shells that style the active section (such as one built from dropdowns) showed nothing as active.
+
 ## 0.5.0 — 2026-10-03
 
 Released together: `@herdingbits/trailhead-core`, `@herdingbits/trailhead-cloudscape` and `@herdingbits/trailhead-webawesome` 0.5.0, and `@herdingbits/create-trailhead` 0.2.0, which scaffolds new shells with the API below. `@herdingbits/trailhead-types` is unchanged at 0.4.x; apps keep using it as before.
