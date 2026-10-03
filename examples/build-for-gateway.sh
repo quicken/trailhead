@@ -77,7 +77,17 @@ build_site() {
   ( cd "$site_dir/shell" && VITE_APP_BASE_PATH="$APP_BASE_PATH" npm run build >/dev/null )
   cp -R "$site_dir/shell/dist/." "$dest/"
 
-  # 2) Each app named in the shell's shell.json -> built and placed at <basePath>/app.js + CSS.
+  # 2) Inject APP_CONFIG into the shell index.html NOW, before copying it per app (below), so
+  #    every route's index carries the same runtime config (apiUrl + authMode).
+  inject_app_config "$dest/index.html"
+
+  # 3) Each app named in the shell's shell.json -> built and placed at <basePath>/.
+  #    CRITICAL: the gateway gate rewrites an extensionless deep link `<APP_BASE_PATH>/<app>` to
+  #    the S3 key `<APP_BASE_PATH>/<app>/index.html` (resolveAppShell in the gate's routing.ts).
+  #    S3-behind-OAC has no directory index, so without that object CloudFront returns 403 Access
+  #    Denied. Trailhead's model is "every route has its own index.html" — a copy of the shell
+  #    page; the shell boots there, reads the URL and loads the matching app. So each app folder
+  #    gets: app.js, <src>.css, AND a copy of the (configured) shell index.html.
   local manifest="$site_dir/shell/public/shell.json"
   [[ -f "$manifest" ]] || die "[$site] shell.json not found at $manifest"
 
@@ -97,13 +107,12 @@ build_site() {
     local css
     css=$(find "$app_dir/dist" -maxdepth 1 -name '*.css' | head -1 || true)
     [[ -n "$css" ]] && cp "$css" "$app_out/${src}.css"
+    # The deep-link index.html the gate rewrites to — a copy of the configured shell page.
+    cp "$dest/index.html" "$app_out/index.html"
   done < <(node -e '
     const m = require(process.argv[1]);
     for (const a of (m.apps || [])) process.stdout.write(`${a.id}\t${a.basePath}\t${a.src}\n`);
   ' "$manifest")
-
-  # 3) Inject APP_CONFIG into the shell index.html copy.
-  inject_app_config "$dest/index.html"
 
   log "[$site] staged at $dest"
 }
