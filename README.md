@@ -114,9 +114,9 @@ if (rootEl) window.AppMount(rootEl, '');
 |---|---|---|
 | `appBasePath` | URL prefix for SPA routing, asset loading, and nav links | `""` |
 | `shellUrl` | Where `shell.json` and shell assets are served from | `appBasePath` |
-| `apiUrl` | Base URL for all HTTP requests via `shell.http` | `""` |
+| `apiUrl` | Base URL prepended to **relative** `shell.http` paths; absolute URLs (`http(s)://…`) are used as-is | `""` |
 
-Set `appBasePath` when deploying to a subdirectory (e.g. `VITE_APP_BASE_PATH=/app`). Leave empty for root deployments.
+Set `appBasePath` when deploying to a subdirectory. The recommended prefix is `/app` (e.g. `VITE_APP_BASE_PATH=/app`), which keeps the site root free for a public landing page and matches the default used by the [aws-static-hosting](https://github.com/herdingbits/aws-static-hosting) gateway. Leave empty for root deployments.
 
 ### Adapter config
 
@@ -134,14 +134,17 @@ Set `appBasePath` when deploying to a subdirectory (e.g. `VITE_APP_BASE_PATH=/ap
 
 ## Developing Locally
 
-```bash
-# SPA standalone (port 3000, hot reload)
-cd examples/webawesome-site/apps/demo && npm install && npm start
+The shell runs on port **3001** and each SPA runs standalone on port **3000**. In dev the SPA's Vite config proxies `shell.json` and the shell's assets back to 3001, so you develop the app with the real shell chrome around it — no copying build output:
 
-# Test with shell: build the SPA, copy it, then start the shell (port 3001)
-npm run build && cp dist/app.js ../shell/public/demo/
-cd ../shell && npm install && npm start
+```bash
+# 1. Start the shell (serves shell.json, nav, and shell assets on :3001)
+cd examples/webawesome-site/shell && npm install && npm run dev
+
+# 2. In another terminal, start the SPA standalone with hot reload (:3000)
+cd examples/webawesome-site/apps/demo && npm install && npm start
 ```
+
+Visit **http://localhost:3000** — the app loads, pulling the shell from :3001. Add or remove SPAs by editing `shell/public/shell.json`; no rebuild needed.
 
 ## Preview Server
 
@@ -156,12 +159,23 @@ npm run build:both && npm start
 
 Sessions expire. When one does, the last thing you want is for a user's work to just vanish behind a silent failure — or to bounce them to a full-page login that throws away whatever they were doing.
 
-Trailhead gives every app a shared way to handle this in place:
+Trailhead supports two session-recovery strategies, chosen explicitly on the shell config (no auto-detection):
+
+```typescript
+new Trailhead({ adapter, auth: { strategy: "credentials" } }); // default — app-owned login (nginx/Lucee)
+new Trailhead({ adapter, auth: { strategy: "cognito" } });      // hosted-UI identity provider at the edge
+```
+
+Omitting `auth` keeps the `credentials` strategy, so existing shells are unchanged.
+
+### Credentials strategy — in-place prompt
+
+For an app that owns its own login endpoint. `shell.auth.reauthenticate()` collects a username and password and retries your action in place:
 
 ```typescript
 async function fetchOrder(id: string) {
-  const res = await fetch(`/api/orders/${id}`);
-  if (res.status === 401) {
+  const res = await window.shell.http.get(`/orders/${id}`);
+  if (!res.success && res.error.status === 401) {
     const attempt = (username: string, password: string) => tryLogin(username, password);
     const ok = await window.shell.auth.reauthenticate(attempt);
     if (ok) return fetchOrder(id); // retry now that the session is fresh
@@ -173,6 +187,24 @@ async function fetchOrder(id: string) {
 `reauthenticate()` asks the adapter to show a credential prompt, calls your `attempt` function with whatever the user types, and keeps re-prompting (with an error message) until it succeeds or the user cancels. If a second tab logs back in first, every other tab's prompt closes itself automatically — nobody has to solve the same login twice.
 
 Each design system adapter renders this prompt with its own native components (a real `<wa-dialog>` for Web Awesome, a real `<Modal>` for CloudScape), so it looks and feels like the rest of your app. Building your own adapter and not ready to deal with a login UI yet? A `NoopAuthAdapter` is included — it just declines every re-authentication attempt, so requests fail the way they always did until you're ready to add a real prompt.
+
+### Cognito strategy — redirect / refresh
+
+For a hosted-UI identity provider (e.g. AWS Cognito Managed Login) sitting at the edge, where the app never sees credentials and tokens live in `HttpOnly` cookies — the layout the [aws-static-hosting](https://github.com/herdingbits/aws-static-hosting) gateway provides. Here the only levers are "ask the edge to refresh" and "redirect to sign-in", so a username/password prompt doesn't apply.
+
+Under this strategy `shell.http` recovers automatically: a `401` triggers one `POST` to the refresh endpoint (default `/_auth/refresh`); on success the original request is retried once; otherwise the browser is redirected to the sign-in endpoint (default `/_auth/signin?return=<current path>`). Apps make calls exactly as before — no 401 handling in app code:
+
+```typescript
+const result = await window.shell.http.get("/orders"); // 401 → refresh+retry, or redirect to sign-in
+```
+
+To drive recovery manually, call `shell.auth.recoverSession()`: it resolves `true` when the session was refreshed in place (retry your request) and otherwise redirects (and never resolves, because the page is navigating away). The refresh and sign-in endpoints are overridable:
+
+```typescript
+new Trailhead({ adapter, auth: { strategy: "cognito", refreshPath: "/_auth/refresh", signinPath: "/_auth/signin" } });
+```
+
+Core stays identity-provider-agnostic — the only Cognito-shaped knowledge is those two overridable default paths.
 
 ## Navigation
 
