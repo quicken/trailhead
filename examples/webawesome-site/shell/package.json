@@ -12,8 +12,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@herdingbits/trailhead-core": "^0.5.2",
-    "@herdingbits/trailhead-webawesome": "^0.5.1"
+    "@herdingbits/trailhead-core": "^0.5.3",
+    "@herdingbits/trailhead-webawesome": "^0.5.2"
   },
   "devDependencies": {
     "@awesome.me/webawesome": "^3.14.0",

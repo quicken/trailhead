@@ -12,8 +12,8 @@
   "dependencies": {
     "@cloudscape-design/components": "^3.0.1391",
     "@cloudscape-design/global-styles": "^1.0.71",
-    "@herdingbits/trailhead-cloudscape": "^0.5.2",
-    "@herdingbits/trailhead-core": "^0.5.2",
+    "@herdingbits/trailhead-cloudscape": "^0.5.3",
+    "@herdingbits/trailhead-core": "^0.5.3",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
