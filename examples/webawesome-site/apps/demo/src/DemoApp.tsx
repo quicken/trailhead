@@ -63,6 +63,18 @@ export const DemoApp: React.FC = () => {
     setResult(`Re-authentication ${ok ? "succeeded" : "was cancelled"}`);
   };
 
+  // Redirect-based (Cognito/gateway) session recovery demo. Under the "cognito" strategy this
+  // POSTs /_auth/refresh and, on failure, redirects to the hosted-UI sign-in. Under the default
+  // credentials strategy it resolves false (nothing to recover without a prompt).
+  const handleRecoverSession = async () => {
+    const recovered = await window.shell.auth.recoverSession();
+    setResult(
+      recovered
+        ? "Session refreshed in place — retry your request."
+        : "Could not refresh (credentials strategy, or redirecting to sign-in)."
+    );
+  };
+
   // HTTP Client Demos
   const handleHttpGet = async () => {
     const result = await window.shell.http.get("https://jsonplaceholder.typicode.com/users/1", {
@@ -179,6 +191,9 @@ export const DemoApp: React.FC = () => {
         <div style={buttonGroupStyle}>
           <button onClick={handleReauth} style={buttonStyle}>
             Simulate Session Expiry
+          </button>
+          <button onClick={handleRecoverSession} style={buttonStyle}>
+            Recover Session (Cognito)
           </button>
         </div>
       </section>

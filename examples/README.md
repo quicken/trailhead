@@ -113,6 +113,45 @@ window.AppMount = (container: HTMLElement, _basePath: string) => {
 
 Because the shell loads the Web Awesome autoloader, `wa-*` components are available in every hosted SPA at no bundle cost.
 
+## Deploying behind the JWT Auth Gateway (Cognito)
+
+Both example shells are deployable to the [`jwt-auth-gateway`](https://github.com/quicken/trailhead) (Cognito hosted-UI login at the CloudFront edge, tokens in `HttpOnly` cookies) out of the box. The shell picks its session-recovery strategy from a `window.APP_CONFIG` injected by the host page — there is no auto-detection, so nothing changes on an nginx/Lucee deployment.
+
+Inject `APP_CONFIG` from the host HTML **before** the shell module loads:
+
+```html
+<!-- index.html, above <script type="module" src="/src/shell.ts"> -->
+<script>
+  window.APP_CONFIG = {
+    apiUrl: "/api",        // same-origin gateway proxy → Authorization: Bearer <id-token>
+    authMode: "cognito"    // omit (or any other value) to keep the default credentials strategy
+  };
+</script>
+```
+
+The shell then passes the matching strategy into `Trailhead.create`:
+
+```typescript
+const authMode = (window as any).APP_CONFIG?.authMode;
+
+const shell = await Trailhead.create({
+  adapter: new WebAwesomeAdapter(),
+  appBasePath,
+  apiUrl: (window as any).APP_CONFIG?.apiUrl || "",
+  auth: authMode === "cognito" ? { strategy: "cognito" } : { strategy: "credentials" },
+});
+```
+
+Under `{ strategy: "cognito" }`:
+
+- `shell.http` auto-recovers once on a `401`: it `POST`s `/_auth/refresh`; a `204` refreshes the session in place and the request is retried; a failure redirects to `/_auth/signin?return=<current path>`.
+- Apps can also recover explicitly with `await shell.auth.recoverSession()` (the demo's **Recover Session (Cognito)** button).
+- Both endpoints are overridable: `{ strategy: "cognito", refreshPath: "/edge/refresh", signinPath: "/edge/login" }`.
+
+The example `shell.json` manifests include a `/_auth/signout` nav link marked `"external": true` so the shell leaves it unprefixed — harmless on nginx, where that path simply 404s.
+
+> Note: `shell.auth.recoverSession` and the `auth` config require `@herdingbits/trailhead-core` with this change built in. The examples pin a published core version; bump that dependency once the new core is published for the Cognito path to work at runtime.
+
 ## Learn More
 
 See the [main Trailhead documentation](https://github.com/quicken/trailhead) for architecture details and best practices.

@@ -31,6 +31,7 @@ if (!window.shell) {
     },
     auth: {
       reauthenticate: async () => { console.log("[Mock] reauthenticate"); return true; },
+      recoverSession: async () => { console.log("[Mock] recoverSession"); return true; },
     },
     http: {
       get: async (url: string) => { console.log("[Mock] GET:", url); return { success: true, data: {} }; },

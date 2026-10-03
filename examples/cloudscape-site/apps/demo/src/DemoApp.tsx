@@ -45,6 +45,17 @@ export function DemoApp() {
     setAuthResult(`Re-authentication ${ok ? "succeeded" : "was cancelled"}`);
   };
 
+  // Redirect-based (Cognito/gateway) session recovery. Under "cognito" this POSTs /_auth/refresh
+  // and redirects to sign-in on failure; under the default credentials strategy it resolves false.
+  const handleRecoverSession = async () => {
+    const recovered = await window.shell.auth.recoverSession();
+    setAuthResult(
+      recovered
+        ? "Session refreshed in place — retry your request."
+        : "Could not refresh (credentials strategy, or redirecting to sign-in)."
+    );
+  };
+
   const handleApiCall = async () => {
     setLoading(true);
     window.shell.feedback.busy("Loading data...");
@@ -130,6 +141,7 @@ export function DemoApp() {
       >
         <SpaceBetween size="m">
           <Button onClick={handleReauth}>Simulate Session Expiry</Button>
+          <Button onClick={handleRecoverSession}>Recover Session (Cognito)</Button>
           {authResult && <div>{authResult}</div>}
         </SpaceBetween>
       </Container>

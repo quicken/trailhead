@@ -13,6 +13,14 @@
         { "type": "link", "label": "Demo", "icon": "🎨", "order": 1, "href": "/demo" },
         { "type": "link", "label": "SaaS Demo", "icon": "💼", "order": 2, "href": "/saas-demo" }
       ]
+    },
+    {
+      "type": "link",
+      "label": "Sign out",
+      "icon": "🚪",
+      "order": 99,
+      "href": "/_auth/signout",
+      "external": true
     }
   ]
 }
