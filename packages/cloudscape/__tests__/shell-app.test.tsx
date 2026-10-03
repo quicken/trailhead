@@ -74,3 +74,26 @@ describe('CloudScape ShellApp', () => {
     expect(document.getElementById('shell-content')!.textContent).toContain('Loading...');
   });
 });
+
+describe('CloudScape ShellApp — credential prompt (L-2)', () => {
+  it('clears the password from component state as soon as the prompt is submitted', async () => {
+    await renderShell();
+    const resolve = vi.fn();
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('cloudscape-auth', { detail: { resolve } }));
+    });
+
+    const password = document.querySelector<HTMLInputElement>('input[type="password"]')!;
+    await act(async () => {
+      const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
+      setValue.call(password, 'hunter2');
+      password.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () => {
+      password.closest('form')!.requestSubmit();
+    });
+
+    expect(resolve).toHaveBeenCalledWith({ username: '', password: 'hunter2' });
+    expect(document.querySelector<HTMLInputElement>('input[type="password"]')?.value ?? '').toBe('');
+  });
+});

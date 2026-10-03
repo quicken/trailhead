@@ -131,8 +131,11 @@ export function ShellApp({ shell }: ShellAppProps) {
   // Submitting closes the modal immediately (optimistic) — if the attempt turns out to be
   // wrong, the core reauthenticator calls promptCredentials() again, which reopens it with
   // an error. Mirrors the webawesome adapter's dialog lifecycle.
+  // The password is cleared as soon as it's handed over rather than lingering in state until
+  // the next prompt.
   const handleAuthSubmit = () => {
     authState.resolve?.({ username: authUsername, password: authPassword });
+    setAuthPassword('');
     setAuthState({ visible: false });
   };
 
