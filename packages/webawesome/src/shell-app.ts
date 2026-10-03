@@ -1,16 +1,17 @@
 /**
  * Web Awesome Shell App
- * Minimal wrapper for consistency with other adapters
+ * Starts the shell against the static layout in the page's HTML
  */
 import type { Trailhead } from '@herdingbits/trailhead-core';
 
 export class ShellApp {
   /**
-   * Mount the shell (no-op for Web Awesome since the adapter handles everything)
+   * Mount the shell. Web Awesome's layout (`#shell-navigation`, `#shell-content`) is static
+   * HTML that's already in the DOM, so this starts the shell straight away: when it returns,
+   * navigation is rendered and the current app is loading.
    */
   static mount(shell: Trailhead): void {
-    // Web Awesome adapter handles all UI via web components
-    // This is just a consistent API surface
+    shell.start();
     console.log('[Trailhead] Web Awesome shell mounted');
   }
 }

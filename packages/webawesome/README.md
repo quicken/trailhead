@@ -25,7 +25,7 @@ import { Trailhead } from '@herdingbits/trailhead-core';
 import { WebAwesomeAdapter, ShellApp } from '@herdingbits/trailhead-webawesome';
 import '@herdingbits/trailhead-webawesome/shell.css';
 
-const shell = new Trailhead({
+const shell = await Trailhead.create({
   adapter: new WebAwesomeAdapter(),
   appBasePath: '/app',
   apiUrl: 'https://api.example.com'
@@ -37,7 +37,7 @@ ShellApp.mount(shell);
 By default, Web Awesome is served from `${shellUrl}/webawesome`. To load from a CDN instead:
 
 ```typescript
-const shell = new Trailhead({
+const shell = await Trailhead.create({
   adapter: new WebAwesomeAdapter({
     webAwesomeUrl: 'https://cdn.webawesome.com/3.6.0'
   }),
@@ -48,7 +48,7 @@ const shell = new Trailhead({
 ## What's Included
 
 - **WebAwesomeAdapter** — implements the Trailhead adapter interface, including a `<wa-dialog>`-based re-authentication prompt for expired sessions
-- **ShellApp** — minimal mounting wrapper for API consistency
+- **ShellApp** — `ShellApp.mount(shell)` starts the shell against your page's static layout (`#shell-navigation`, `#shell-content`)
 - **shell.css** — base styles for the shell UI
 
 ## Web Awesome in SPAs
