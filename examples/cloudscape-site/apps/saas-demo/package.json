@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@herdingbits/trailhead-types": "^0.4.3",
+    "@herdingbits/trailhead-types": "^0.4.4",
     "@testing-library/react": "^16.3.3",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
