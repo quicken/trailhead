@@ -135,8 +135,8 @@ class WebAwesomeFeedbackAdapter implements FeedbackAdapter {
       // Escape, the header close button, and light-dismiss all fire wa-hide — treat as no selection.
       dialog.addEventListener("wa-hide", () => settleOnce(null));
 
-      dialog.querySelectorAll("wa-button[data-value]").forEach((btn) => {
-        btn.addEventListener("click", () => settleOnce(btn.getAttribute("data-value") as T));
+      dialog.querySelectorAll<HTMLElement>("wa-button[data-value]").forEach((btn) => {
+        btn.addEventListener("click", () => settleOnce(btn.dataset.value as T));
       });
 
       document.body.appendChild(dialog);
@@ -234,11 +234,7 @@ export class WebAwesomeAdapter implements DesignSystemAdapter {
     try {
       const waPath = this.config?.webAwesomeUrl ?? `${shellUrl}/webawesome`;
 
-      // Inject theme CSS dynamically so it resolves correctly regardless of where the page is served from
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = `${waPath}/styles/themes/default.css`;
-      document.head.appendChild(link);
+      ensureThemeStylesheet(`${waPath}/styles/themes/default.css`);
 
       const { setBasePath } = await import(/* @vite-ignore */ `${waPath}/webawesome.js`);
       setBasePath(waPath);
@@ -248,4 +244,38 @@ export class WebAwesomeAdapter implements DesignSystemAdapter {
       throw error;
     }
   }
+}
+
+/**
+ * Adds the Web Awesome theme stylesheet to `<head>`, correctly and at most once.
+ *
+ * The adapter is the only place that knows the resolved `waPath` (config override, or
+ * `${shellUrl}/webawesome`), so it owns loading the theme CSS — a static `<link>` in the page's
+ * HTML can't know that path and tends to be either a duplicate or, when it hard-codes a base,
+ * a 404. To keep first paint fast we don't block on it the way a parser-discovered `<link
+ * rel="stylesheet">` would: we add `rel="preload" as="style"` and flip it to `stylesheet`
+ * `onload`, so the fetch starts immediately but doesn't hold up rendering (the Web Awesome
+ * components stay unstyled for a frame, then style in — far better than a blank blocked paint).
+ *
+ * Idempotent: a second init (or a page that already declares the correct link) is a no-op,
+ * matched on the resolved href, so we never inject a duplicate request.
+ */
+function ensureThemeStylesheet(href: string): void {
+  if (typeof document === "undefined") return;
+
+  const resolved = new URL(href, document.baseURI).href;
+  const alreadyLoaded = Array.from(document.querySelectorAll<HTMLLinkElement>("link[href]")).some(
+    (link) => (link.rel === "stylesheet" || link.rel === "preload") && link.href === resolved
+  );
+  if (alreadyLoaded) return;
+
+  const link = document.createElement("link");
+  link.rel = "preload";
+  link.as = "style";
+  link.href = href;
+  // Flip preload -> stylesheet once fetched so it applies without ever being render-blocking.
+  link.addEventListener("load", () => {
+    link.rel = "stylesheet";
+  });
+  document.head.appendChild(link);
 }

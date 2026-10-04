@@ -3,6 +3,7 @@ import { WebAwesomeAdapter } from '../src/adapter.js';
 
 afterEach(() => {
   document.body.innerHTML = '';
+  document.head.innerHTML = '';
   vi.useRealTimers();
 });
 
@@ -289,5 +290,55 @@ describe('XSS hardening — caller-supplied text is never parsed as markup', () 
     const callout = document.querySelector('.shell-auth-error')!;
     expect(callout.querySelector('img')).toBeNull();
     expect(callout.textContent).toContain(PAYLOAD);
+  });
+});
+
+describe('WebAwesomeAdapter — init() theme stylesheet injection (first-render perf)', () => {
+  const themeHref = (base: string) => new URL(`${base}/styles/themes/default.css`, document.baseURI).href;
+
+  // init() dynamically imports webawesome.js/.loader.js, which don't exist under jsdom, so init()
+  // rejects — but the theme-CSS injection runs first. We await-catch the expected rejection and
+  // then assert on the <head> the injection left behind.
+  async function initAndIgnoreImportError(adapter: WebAwesomeAdapter, shellUrl: string) {
+    await adapter.init(shellUrl).catch(() => {});
+  }
+
+  it('injects the theme as a non-blocking preload (not a render-blocking stylesheet)', async () => {
+    const adapter = new WebAwesomeAdapter({ webAwesomeUrl: '/assets/wa' });
+    await initAndIgnoreImportError(adapter, '/ignored');
+
+    const links = Array.from(document.head.querySelectorAll('link'));
+    const themeLink = links.find((l) => l.href === themeHref('/assets/wa'));
+    expect(themeLink).toBeTruthy();
+    // Preload, not a parser-blocking stylesheet — this is the first-render win.
+    expect(themeLink!.rel).toBe('preload');
+    expect(themeLink!.as).toBe('style');
+  });
+
+  it('is idempotent: a second init adds no duplicate theme link', async () => {
+    const adapter = new WebAwesomeAdapter({ webAwesomeUrl: '/assets/wa' });
+    await initAndIgnoreImportError(adapter, '/ignored');
+    await initAndIgnoreImportError(adapter, '/ignored');
+
+    const themeLinks = Array.from(document.head.querySelectorAll('link')).filter(
+      (l) => l.href === themeHref('/assets/wa')
+    );
+    expect(themeLinks).toHaveLength(1);
+  });
+
+  it('does not inject when the page already declares the theme stylesheet', async () => {
+    const existing = document.createElement('link');
+    existing.rel = 'stylesheet';
+    existing.href = '/assets/wa/styles/themes/default.css';
+    document.head.appendChild(existing);
+
+    const adapter = new WebAwesomeAdapter({ webAwesomeUrl: '/assets/wa' });
+    await initAndIgnoreImportError(adapter, '/ignored');
+
+    const themeLinks = Array.from(document.head.querySelectorAll('link')).filter(
+      (l) => l.href === themeHref('/assets/wa')
+    );
+    expect(themeLinks).toHaveLength(1); // the pre-existing one only
+    expect(themeLinks[0]).toBe(existing);
   });
 });
