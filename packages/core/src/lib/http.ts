@@ -52,6 +52,43 @@ export function init(apiUrl: string = "", onRecoverSession: (() => Promise<boole
   });
 }
 
+/** Methods whose request body (`data`) is sent as JSON. */
+function sendsJsonBody(method: string): boolean {
+  return method === "POST" || method === "PUT" || method === "PATCH";
+}
+
+/** Assembles the ky request options, attaching a JSON body only for the methods that carry one. */
+function buildKyOptions(method: string, data: any, headers: Record<string, string>): Options {
+  const kyOptions: Options = { method, headers };
+  if (data && sendsJsonBody(method)) {
+    kyOptions.json = data;
+  }
+  return kyOptions;
+}
+
+/**
+ * Builds the normalised {@link HttpError} from a thrown ky error, reading the response body as
+ * JSON for a richer `message`/`data` when the response carries one.
+ */
+async function buildError(err: any): Promise<HttpError> {
+  const error: HttpError = {
+    name: err.name || "HttpError",
+    message: err.message || "Request failed",
+    status: err.response?.status,
+  };
+
+  if (err.response) {
+    try {
+      error.data = await err.response.json();
+      error.message = error.data.message || error.message;
+    } catch {
+      // Response not JSON — keep the ky-derived message.
+    }
+  }
+
+  return error;
+}
+
 /**
  * Make HTTP request with feedback orchestration
  */
@@ -62,91 +99,46 @@ async function request<T>(
   options: RequestOptions = {},
   isRetry = false
 ): Promise<Result<T>> {
-  const {
-    requestKey,
-    busyMessage,
-    successMessage,
-    showSuccess = false,
-    noFeedback = false,
-    headers = {},
-  } = options;
+  const { requestKey, busyMessage, successMessage, showSuccess = false, noFeedback = false, headers = {} } = options;
 
   // On a 401, if a recovery strategy is configured and this is the first attempt, suppress this
   // attempt's error feedback — we're about to try to recover and retry, so a transient 401 toast
   // would be noise. The retry (or a genuine post-recovery failure) handles feedback normally.
   const canRecover = recoverSession !== null && !isRetry;
 
+  requestManager.startRequest(requestKey, busyMessage, noFeedback);
   try {
-    requestManager.startRequest(requestKey, busyMessage, noFeedback);
-
-    const kyOptions: Options = {
-      method,
-      headers,
-    };
-
-    if (data && (method === "POST" || method === "PUT" || method === "PATCH")) {
-      kyOptions.json = data;
-    }
-
     // Prepend the configured base to RELATIVE paths only; absolute/protocol-relative URLs are
     // used verbatim so they never get mangled into `${apiUrl}/https://…`.
     const resolvedUrl = isAbsoluteUrl(url) ? url : `${baseUrl}${url}`;
-    const response = await kyInstance(resolvedUrl, kyOptions);
+    const response = await kyInstance(resolvedUrl, buildKyOptions(method, data, headers));
     const result = await response.json<T>();
-
-    requestManager.endRequest(requestKey, noFeedback);
 
     if (!noFeedback && showSuccess && successMessage) {
       requestManager.showSuccess(successMessage);
     }
 
-    return {
-      success: true,
-      data: result,
-      requestKey,
-    } as SuccessResult<T>;
+    return { success: true, data: result, requestKey } as SuccessResult<T>;
   } catch (err: any) {
-    requestManager.endRequest(requestKey, noFeedback);
-
-    const error: HttpError = {
-      name: err.name || "HttpError",
-      message: err.message || "Request failed",
-      status: err.response?.status,
-    };
-
-    if (err.response) {
-      try {
-        error.data = await err.response.json();
-        error.message = error.data.message || error.message;
-      } catch {
-        // Response not JSON
-      }
-    }
+    const error = await buildError(err);
 
     // Auto-recovery: a 401 under a configured recovery strategy gets exactly one recovery +
-    // retry. We suppress this first 401's toast; the single retry runs with recovery disabled
-    // (isRetry = true) so it can never loop.
-    if (error.status === 401 && canRecover && recoverSession) {
-      const recovered = await recoverSession();
-      if (recovered) {
-        return request<T>(method, url, data, options, true);
-      }
-      // recoverSession() resolving false means it could not recover without a redirect and
-      // did not navigate; fall through and surface the original 401 to the caller.
+    // retry. The single retry runs with recovery disabled (isRetry = true) so it can never loop.
+    if (error.status === 401 && canRecover && recoverSession && (await recoverSession())) {
+      return request<T>(method, url, data, options, true);
     }
+    // recoverSession() resolving false means it could not recover without a redirect and did not
+    // navigate; fall through and surface the original 401 to the caller.
 
     // Suppress feedback for the first 401 on an auto-recovered path (we attempted recovery just
     // above); every other failure shows the error toast as before unless feedback is disabled.
-    const suppressFeedback = noFeedback || (error.status === 401 && canRecover);
-    if (!suppressFeedback) {
+    if (!noFeedback && !(error.status === 401 && canRecover)) {
       requestManager.showError(error.message);
     }
 
-    return {
-      success: false,
-      error,
-      requestKey,
-    } as ErrorResult;
+    return { success: false, error, requestKey } as ErrorResult;
+  } finally {
+    requestManager.endRequest(requestKey, noFeedback);
   }
 }
 

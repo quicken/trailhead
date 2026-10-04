@@ -18,27 +18,14 @@ beforeEach(() => {
 });
 
 describe('http URL resolution (apiUrl prefix)', () => {
-  it('prepends apiUrl to a relative path', async () => {
-    http.init('/api');
-    await http.get('/orders');
-    expect(fakeInstance).toHaveBeenCalledWith('/api/orders', expect.anything());
-  });
-
-  it('leaves an absolute https URL untouched (no apiUrl prefix)', async () => {
-    http.init('/api');
-    await http.get('https://jsonplaceholder.typicode.com/users/1');
-    expect(fakeInstance).toHaveBeenCalledWith('https://jsonplaceholder.typicode.com/users/1', expect.anything());
-  });
-
-  it('leaves a protocol-relative URL untouched', async () => {
-    http.init('/api');
-    await http.get('//cdn.example.com/data.json');
-    expect(fakeInstance).toHaveBeenCalledWith('//cdn.example.com/data.json', expect.anything());
-  });
-
-  it('with an empty apiUrl, a relative path is used as-is', async () => {
-    http.init('');
-    await http.get('/orders');
-    expect(fakeInstance).toHaveBeenCalledWith('/orders', expect.anything());
+  it.each([
+    ['prepends apiUrl to a relative path', '/api', '/orders', '/api/orders'],
+    ['leaves an absolute https URL untouched (no apiUrl prefix)', '/api', 'https://jsonplaceholder.typicode.com/users/1', 'https://jsonplaceholder.typicode.com/users/1'],
+    ['leaves a protocol-relative URL untouched', '/api', '//cdn.example.com/data.json', '//cdn.example.com/data.json'],
+    ['with an empty apiUrl, a relative path is used as-is', '', '/orders', '/orders'],
+  ])('%s', async (_name, apiUrl, requestUrl, expectedUrl) => {
+    http.init(apiUrl);
+    await http.get(requestUrl);
+    expect(fakeInstance).toHaveBeenCalledWith(expectedUrl, expect.anything());
   });
 });
