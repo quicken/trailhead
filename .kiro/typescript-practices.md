@@ -8,185 +8,171 @@
 - No boilerplate unless required for functionality
 
 ### TypeScript Conventions
-- Use explicit type imports: `import type { ShellAPI } from "./types/shell-api"`
+- Use explicit type imports: `import type { ShellAPI } from '@herdingbits/trailhead-types'`
+  (inside core: `import type { ShellAPI } from './types/shell-api.js'` — note the `.js` extension,
+  required for Node ESM resolution even from `.ts` source)
 - Define interfaces for public APIs and contracts
 - Use type inference where obvious, explicit types for public interfaces
 - Prefer `interface` over `type` for object shapes
+- No `any` in public APIs; use type guards for runtime checks; strict mode on
 
 ### Module System
-- Use ES modules exclusively (`type: "module"` in package.json)
-- Use Vite's `import.meta.env` for environment variables
-- Dynamic imports with `/* @vite-ignore */` comment when loading runtime paths
+- ES modules exclusively (`"type": "module"` in every package.json)
+- Relative imports within a package carry the `.js` extension (ESM), e.g. `./lib/http.js`
+- `import.meta.env` for Vite environment variables
+- Dynamic imports that load a runtime path carry `/* @vite-ignore */` (adapter asset loading,
+  dev-mode app import)
+
+### Public-API Documentation
+- Public classes, functions, and exported constants with business meaning get a JSDoc block
+- Document the **domain** (what/why), never the mechanics the signature already shows
+- See the adapters and `core/src/lib/*` for the house style
 
 ### File Organization
 ```
 package/
 ├── src/
-│   ├── lib/           # Reusable utilities
-│   ├── types/         # Type definitions
-│   └── index.ts       # Main entry point
-├── translations/      # i18n files (de.json, template.json)
-├── vite.config.js     # Build configuration
+│   ├── lib/           # Reusable services (http, requestManager, reauth, session-recovery)
+│   ├── adapters/      # Adapter contract (core only)
+│   ├── types/         # Type definitions / API contract
+│   └── index.ts       # Public entry point (re-exports)
+├── __tests__/         # vitest specs (NOT under src/)
 └── package.json
 ```
 
 ### Example Structures
 
-**Shell Package:**
+**Adapter package (Web Awesome — web components, tsc only):**
 ```
 packages/webawesome/
 ├── src/
-│   ├── adapter.ts     # Web Awesome adapter implementation
-│   └── ShellApp.ts    # Shell mounting logic
-├── shell.css          # Shell styles
+│   ├── adapter.ts     # WebAwesomeAdapter — feedback + auth + theme CSS loading
+│   ├── shell-app.ts   # ShellApp.mount(shell) — static layout already in the DOM
+│   └── index.ts
+├── __tests__/
 └── package.json
 ```
 
-**SPA:**
+**Adapter package (CloudScape — React):**
+```
+packages/cloudscape/
+├── src/
+│   ├── adapter.tsx       # CloudScapeAdapter — bridges to React via window CustomEvents
+│   ├── shell-app.tsx     # ShellApp React component — renders feedback UI, calls shell.start()
+│   ├── shell-layout.tsx  # ShellLayout — AppLayout + SideNavigation chrome
+│   └── index.ts
+└── __tests__/
+```
+
+**SPA (example app):**
 ```
 examples/webawesome-site/apps/demo/
 ├── src/
-│   ├── index.tsx      # Entry point — assigns window.AppMount(root, basePath)
-│   └── DemoApp.tsx    # App component
-├── translations/      # i18n files
-├── vite.config.js
+│   ├── index.tsx      # Entry — assigns window.AppMount(root, basePath); mocks shell for standalone
+│   └── DemoApp.tsx
+├── vite.config.ts
 └── package.json
 ```
 
 ## Build Configuration
 
 ### Vite Setup
-- Use `defineConfig` with mode-based environment loading
-- Configure `base` path from `VITE_BASE_PATH` env variable
-- Enable CORS for dev server when building micro-frontends
+- `defineConfig` with mode-based env loading
+- Base path from `VITE_APP_BASE_PATH` (empty = root)
+- Enable CORS on the SPA dev server (micro-frontend cross-origin dev)
+- `define` React's `process.env.NODE_ENV` to `"production"` so it doesn't leak into the browser bundle
 
 ### Library Build (SPAs)
+Single-file ES output. On Vite 8 / Rolldown use `codeSplitting: false`
+(`inlineDynamicImports: true` is the Vite ≤7 equivalent):
+
 ```javascript
 build: {
   lib: {
-    entry: "src/index.tsx",
-    formats: ["es"],
-    fileName: () => "app.js",
+    entry: 'src/index.tsx',
+    formats: ['es'],
+    fileName: () => 'app.js',
   },
   rollupOptions: {
-    output: {
-      inlineDynamicImports: true,  // Single file output
-    },
+    output: { codeSplitting: false },  // single app.js
   },
 }
 ```
 
-### Shell Build
-```javascript
-build: {
-  rollupOptions: {
-    output: {
-      entryFileNames: "shell.js",
-      assetFileNames: "shell.[ext]",
-    },
-  },
-  copyPublicDir: true,  // Copy public assets
-}
-```
+### Shell / Package Build
+- `packages/*` compile with **tsc** (not Vite); `core`'s build also regenerates `packages/types`
+- The example **shells** build with Vite; the Web Awesome shell additionally copies
+  `@awesome.me/webawesome/dist-cdn` into `dist/webawesome/`
 
 ## Internationalization (i18n)
 
-### Build-Time Translation
-- Use custom `i18nPlugin` for zero runtime overhead
-- Translations replaced at build time: `t("key")` → `"translated value"`
-- One build per language (e.g., `vite.config.de.js` for German)
-
-### Translation Files
-- `translations/template.json` - Source strings extracted from code
-- `translations/de.json` - German translations
-- Scripts: `i18n:extract` and `i18n:validate`
-
-### Usage in Code
-```typescript
-import { t } from "./lib/i18n";
-
-// In code
-const message = t("Loading...");
-```
+Build-time only — the `tools/vite-i18n-plugin` replaces `t("key")` at build time (zero runtime
+overhead, one build per language). Not currently wired into the example sites.
 
 ## Testing
+
+The published packages have real vitest suites — write and maintain tests alongside behavioural
+changes (don't wait to be asked). Keep tests **hermetic**: no real network, no reliance on timeouts;
+mock `ky` for HTTP paths (see `packages/core/__tests__/http*.test.ts`).
 
 ### Vitest Configuration
 ```javascript
 test: {
   globals: true,
-  environment: "jsdom",
+  environment: 'jsdom',
 }
 ```
 
 ### Test Files
-- Place in `__tests__/` directories
-- Name pattern: `*.test.ts` or `*.test.tsx`
-- Only write tests when explicitly requested
+- Live in `packages/<pkg>/__tests__/` (not under `src/`)
+- Name pattern `*.test.ts` / `*.test.tsx`
+- Run: `npx vitest run` (core/webawesome) or `npm test` (webawesome/cloudscape)
 
 ## Dependencies
 
 ### Published Packages
-- Use published NPM packages: `@herdingbits/trailhead-core`, `@herdingbits/trailhead-types`, etc.
-- For development: `npm install -D @herdingbits/trailhead-types`
-- For shell: `npm install @herdingbits/trailhead-core @herdingbits/trailhead-webawesome`
+- Examples and consumers use the **published** `@herdingbits/*` packages from npm, not local source —
+  publish first, then bump the examples
+- SPA dev dep: `npm install -D @herdingbits/trailhead-types`
+- Shell deps: `npm install @herdingbits/trailhead-core @herdingbits/trailhead-webawesome`
+  (or `-cloudscape`)
 
 ### External Libraries
-- Shell uses: `@awesome.me/webawesome (for Web Awesome adapter)) or `@cloudscape-design/components` (for CloudScape)
-- SPAs bundle their own frameworks (React, Vue, etc.)
-- No externalization - SPAs are self-contained
-
-### Design Systems
-- **Web Awesome**: Web components, framework-agnostic
-- **CloudScape**: React components, React-first architecture
+- Web Awesome adapter: `@awesome.me/webawesome`; CloudScape adapter: `@cloudscape-design/components`
+- SPAs bundle their own frameworks (React, Vue, …) — no externalisation, each SPA is self-contained
+- `core` depends only on `ky` (HTTP)
 
 ## Environment Variables
 
-### Development
 - `.env.development` for dev-specific config
-- `VITE_BASE_PATH` - Base URL path for deployment
-
-### Production
-- Environment variables baked into build
-- No runtime configuration needed
+- `VITE_APP_BASE_PATH` — base URL path for deployment (empty = root)
+- Runtime deployment config (`apiUrl`, `authMode`) comes via `window.APP_CONFIG`, injected into the
+  deployed `index.html` — not a build-time Vite var
 
 ## Code Quality
 
 ### Error Handling
-- Use try-catch for async operations
-- Log errors with context: `console.error("Failed to load:", error)`
-- Provide user-friendly fallbacks
+- try/catch around async I/O; log with context (`console.error('Failed to load:', error)`)
+- `shell.http` returns a `Result<T>` and never throws — callers branch on `result.success`
+- User-friendly fallbacks (visible shell error state on start-up failure, not a blank page)
 
 ### Async Patterns
-- Use async/await consistently
-- Return promises from async functions
-- Handle promise rejections explicitly
+- async/await consistently; return promises from async functions; handle rejections explicitly
 
 ### Type Safety
-- No `any` types in public APIs
-- Use type guards for runtime checks
-- Leverage TypeScript's strict mode
+- No `any` in public APIs; type guards for runtime checks; leverage strict mode
 
 ## Performance
 
-### Bundle Optimization
-- Single file output per SPA (`inlineDynamicImports: true`)
-- Tree-shaking enabled by default
-- No code splitting for SPAs (each is self-contained)
-
-### Loading Strategy
-- Shell loads first (21 KB / 8 KB gzipped)
-- SPAs loaded on-demand via ES module imports
-- Design system components (Web Awesome/CloudScape) loaded once by shell
+- Single-file SPA output (`codeSplitting: false`); tree-shaking on
+- Shell loads once; SPAs load on demand via ES module import
+- Design-system assets load once; the Web Awesome theme CSS is injected **non-blocking**
+  (`preload`→`stylesheet`) by the adapter — never a render-blocking `<link>` in HTML
 
 ## Security
 
-### No Secrets in Code
-- Never commit API keys or tokens
-- Use environment variables for sensitive config
-- Placeholder values in examples: `<api-key>`, `<token>`
-
-### Content Security
-- CORS enabled for cross-origin dev servers
-- Validate external data before use
-- Sanitize user inputs in UI components
+- Never commit secrets; placeholders in examples (`<api-key>`, `<token>`)
+- Treat `shell.json` and all external data as untrusted: nav hrefs and app `basePath`/`src` are
+  validated through the URL parser / safe-path regexes before use; adapter feedback text is escaped
+  before any `innerHTML` interpolation
+- `auth` endpoints from `shell.json` must be same-origin paths

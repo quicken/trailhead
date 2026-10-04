@@ -2,223 +2,209 @@
 
 ## What is Trailhead?
 
-Trailhead is an application shell that orchestrates multiple single page applications (SPAs) within a shared layout (chrome) - the classic SaaS pattern where you have a main menu and dozens of independent modules. Built on browser-native ES modules, the shell (21 KB / 8 KB gzipped) provides core services to independent SPAs. Each SPA can use any framework and deploys independently.
+Trailhead is a micro-frontend orchestration framework — a lightweight application shell that
+coordinates multiple independent single-page applications (SPAs) within a shared layout (chrome).
+It is the classic SaaS pattern: a persistent menu/chrome plus many independently-built, independently-
+deployed modules. Built on browser-native ES modules. Each SPA can use any framework and deploys on
+its own. Published as NPM packages under `@herdingbits/`.
 
 ## Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────┐
-│            Application Shell (21 KB)             │
-│  - Navigation Management                         │
-│  - HTTP Client with feedback orchestration       │
-│  - User Feedback (toasts, dialogs, loading)      │
-│  - Design System Integration (Web Awesome/CloudScape)│
-│  - Routing & SPA Loading                         │
-└─────────────────────────────────────────────────┘
-                      │
-        ┌─────────────┼─────────────┐
-        ▼             ▼             ▼
-   ┌─────────┐  ┌─────────┐  ┌─────────┐
-   │  SPA 1  │  │  SPA 2  │  │  SPA N  │
-   │ (React) │  │  (Vue)  │  │(Vanilla)│
-   └─────────┘  └─────────┘  └─────────┘
+┌─────────────────────────────────────────────────────┐
+│                 Application Shell                     │
+│  - Navigation management (from shell.json)            │
+│  - HTTP client with feedback orchestration            │
+│  - User feedback (toasts, dialogs, busy overlay)      │
+│  - Session recovery (credentials or cognito/redirect) │
+│  - Design-system integration (Web Awesome / CloudScape)│
+│  - Routing & SPA loading                              │
+└─────────────────────────────────────────────────────┘
+                       │
+        ┌──────────────┼──────────────┐
+        ▼              ▼              ▼
+   ┌─────────┐   ┌─────────┐    ┌─────────┐
+   │  SPA 1  │   │  SPA 2  │    │  SPA N  │
+   │ (React) │   │  (Vue)  │    │(Vanilla)│
+   └─────────┘   └─────────┘    └─────────┘
 ```
+
+The shell is design-system agnostic (`packages/core`); a design-system **adapter** supplies the
+actual UI components for feedback and auth. Two adapters ship: Web Awesome (web components) and
+CloudScape (React).
 
 ## Monorepo Structure
 
+No root `package.json` — each directory is independent with its own `npm install`.
+
 ```
 trailhead/
-├── packages/                      # Published NPM packages
-│   ├── core/                     # @herdingbits/trailhead-core
+├── packages/                       # Published NPM packages
+│   ├── core/                       # @herdingbits/trailhead-core (tsc only)
 │   │   ├── src/
-│   │   │   ├── shell.ts          # Main shell orchestrator
-│   │   │   ├── lib/              # Core services
-│   │   │   │   ├── http.ts      # HTTP client
-│   │   │   │   ├── feedback.ts  # User feedback
-│   │   │   │   └── requestManager.ts
+│   │   │   ├── shell.ts            # Trailhead orchestrator (create/start, routing, SPA loading)
+│   │   │   ├── lib/
+│   │   │   │   ├── http.ts         # HTTP client (ky) with feedback + 401 auto-recovery
+│   │   │   │   ├── requestManager.ts  # Busy/feedback request bookkeeping
+│   │   │   │   ├── reauth.ts       # In-place credential re-auth (BroadcastChannel cross-tab)
+│   │   │   │   └── session-recovery.ts # Redirect/refresh recovery (cognito strategy)
+│   │   │   ├── adapters/
+│   │   │   │   └── types.ts        # DesignSystemAdapter contract + NoopAuthAdapter
 │   │   │   └── types/
-│   │   │       └── shell-api.ts # Shell API contract
-│   │   └── package.json
+│   │   │       └── shell-api.ts    # Shell API contract + manifest/nav types
+│   │   └── __tests__/              # vitest + jsdom (NOT under src/)
 │   │
-│   ├── types/                    # @herdingbits/trailhead-types
-│   │   └── index.d.ts           # Auto-generated from core
+│   ├── types/                      # @herdingbits/trailhead-types (type-only, generated from core build)
+│   │   └── shell-api.d.ts          # + adapters/types.d.ts, public-api.d.ts
 │   │
-│   ├── webawesome/                 # @herdingbits/trailhead-webawesome
+│   ├── webawesome/                 # @herdingbits/trailhead-webawesome (tsc only)
 │   │   ├── src/
-│   │   │   ├── adapter.ts       # Web Awesome adapter
-│   │   │   └── ShellApp.ts      # Shell mounting
-│   │   └── shell.css
+│   │   │   ├── adapter.ts          # WebAwesomeAdapter (feedback + auth via web components)
+│   │   │   └── shell-app.ts        # ShellApp.mount(shell) — static layout already in the DOM
+│   │   └── __tests__/
 │   │
-│   └── cloudscape/               # @herdingbits/trailhead-cloudscape
-│       ├── src/
-│       │   ├── adapter.ts       # CloudScape adapter
-│       │   └── ShellApp.tsx     # React shell component
-│       └── shell.css
+│   ├── cloudscape/                 # @herdingbits/trailhead-cloudscape (TypeScript + React)
+│   │   ├── src/
+│   │   │   ├── adapter.tsx         # CloudScapeAdapter (bridges to React via window events)
+│   │   │   ├── shell-app.tsx       # ShellApp React component (renders feedback UI, calls start())
+│   │   │   └── shell-layout.tsx    # ShellLayout — AppLayout + SideNavigation chrome
+│   │   └── __tests__/
+│   │
+│   └── create-trailhead/           # @herdingbits/create-trailhead (CLI scaffolder)
+│       └── templates/{webawesome,cloudscape}-{shell,app}
 │
-├── examples/                     # Example implementations
+├── examples/                       # Reference implementations — consume the PUBLISHED packages
 │   ├── webawesome-site/
-│   │   ├── shell/               # Web Awesome shell implementation
-│   │   │   ├── src/
-│   │   │   │   └── index.ts    # Shell entry point
-│   │   │   └── public/
-│   │   │       └── shell.json  # Dynamic menu config
-│   │   └── apps/
-│   │       ├── demo/            # React demo SPA
-│   │       └── saas-demo/       # SaaS example SPA
+│   │   ├── shell/                  # Vite; src/shell.ts entry; port 3001
+│   │   │   └── public/shell.json   # { apps, nav } menu + SPA registry
+│   │   ├── apps/{demo,saas-demo}/   # React SPAs; port 3000
+│   │   └── build.js                # `npm run deploy`: assembles shell + app dists into dist/
 │   │
 │   └── cloudscape-site/
-│       ├── shell/               # CloudScape shell (React)
-│       └── apps/
-│           ├── demo/
-│           └── saas-demo/
+│       ├── shell/                  # Vite; src/index.tsx entry; port 3001
+│       ├── apps/{demo,saas-demo}/
+│       └── build.js
 │
 └── tools/
-    ├── vite-i18n-plugin/        # Build-time i18n
-    └── preview-server/          # Production preview
-        ├── build.js             # Builds all sites
-        └── server.js            # Local preview server
+    ├── vite-i18n-plugin/           # Build-time i18n plugin (not wired into the examples)
+    └── preview-server/             # Express, port 8081 — builds both sites, serves at /sample/trailhead
 ```
 
-## Shell API Contract
+## Shell Lifecycle (the core contract)
 
-The shell exposes a global API via `window.shell`:
+Start-up is **two explicit steps**. The constructor is private — always go through `create()`.
+
+```typescript
+import { Trailhead } from '@herdingbits/trailhead-core';
+import { WebAwesomeAdapter, ShellApp } from '@herdingbits/trailhead-webawesome';
+
+// 1) create(): async — initialises the adapter, loads shell.json, wires shell.http + the auth
+//    strategy, exposes window.shell. Resolves with a fully-loaded (but not-yet-rendered) shell.
+const shell = await Trailhead.create({
+  adapter: new WebAwesomeAdapter(),
+  appBasePath: import.meta.env.VITE_APP_BASE_PATH || '',   // '' = served at root
+  apiUrl: window.APP_CONFIG?.apiUrl || '',                 // optional; else shell.json
+  auth: window.APP_CONFIG?.authMode === 'cognito'          // optional; else shell.json; else credentials
+    ? { strategy: 'cognito' }
+    : { strategy: 'credentials' },
+});
+
+// 2) start(): mounts to the page — renders nav, binds routing, loads the current app into
+//    #shell-content. The adapter's ShellApp does this for you.
+ShellApp.mount(shell);                                     // Web Awesome: layout is static HTML
+// CloudScape: createRoot(el).render(<ShellApp shell={shell} />) — start() runs on mount effect
+```
+
+`create()` config wins; `shell.json` supplies deployment defaults; then built-in defaults.
+`start()` is idempotent (repeat calls, e.g. React StrictMode double-effects, are no-ops).
+
+## Shell API (`window.shell`)
 
 ```typescript
 interface ShellAPI {
-  feedback: FeedbackAPI;    // User notifications
-  http: HttpAPI;            // HTTP client
-  navigation: NavigationAPI; // Routing
+  feedback: FeedbackAPI;      // busy/clear, success/error/warning/info/alert, confirm/yesNo/yesNoCancel/custom
+  http: HttpAPI;              // get/post/put/patch/delete → Result<T> (never throws)
+  navigation: NavigationAPI;  // navigate, getCurrentPath, onRouteChange
+  auth: AuthAPI;              // reauthenticate(attempt), recoverSession()
 }
 ```
 
-### Feedback API
-```typescript
-window.shell.feedback.busy("Loading...");
-window.shell.feedback.success("Saved!");
-window.shell.feedback.error("Failed!");
-const confirmed = await window.shell.feedback.confirm("Delete?");
-const choice = await window.shell.feedback.yesNoCancel("Save changes?");
-```
+### HTTP
 
-### HTTP API
 ```typescript
-const result = await window.shell.http.get("/api/users", {
-  busyMessage: "Loading users...",
-  successMessage: "Users loaded!",
+const result = await window.shell.http.post('/api/users', data, {
+  requestKey: 'create-user',     // de-dupes concurrent identical requests in the busy tracker
+  busyMessage: 'Creating user...',
+  successMessage: 'User created!',
   showSuccess: true,
+  noFeedback: false,             // true suppresses busy + toasts for this call
 });
-
-if (result.success) {
-  console.log(result.data);
-} else {
-  console.error(result.error);
-}
+if (result.success) { /* result.data */ } else { /* result.error — toast already shown */ }
 ```
 
-### Navigation API
+- Relative paths get `apiUrl` prepended; absolute/protocol-relative URLs are used verbatim.
+- Under the `cognito` strategy a `401` triggers one `recoverSession()` + a single retry; the first
+  401's toast is suppressed. Under `credentials` a 401 is surfaced to the caller.
+
+### Navigation / Auth
+
 ```typescript
-window.shell.navigation.navigate("/demo");
-const path = window.shell.navigation.getCurrentPath();
-const unsubscribe = window.shell.navigation.onRouteChange((path) => {
-  console.log("Route changed:", path);
-});
+window.shell.navigation.navigate('/demo');                 // vetted (same-origin, http(s)) then full reload
+const off = window.shell.navigation.onRouteChange(p => {}); // returns an unsubscribe fn
+await window.shell.auth.reauthenticate(attempt);            // in-place credential prompt (credentials strategy)
+await window.shell.auth.recoverSession();                   // refresh-or-redirect (cognito strategy)
 ```
 
-## Building a Trailhead SPA
+## SPA Contract
 
-### 1. SPA Entry Point (index.tsx)
-
-Every SPA assigns a `window.AppMount` function; the shell calls it with the container element and base path after dynamic-importing the app's `app.js`. The shell itself is exposed as `window.shell`:
+Every SPA assigns `window.AppMount` and reads services off `window.shell`:
 
 ```typescript
 import type { ShellAPI } from '@herdingbits/trailhead-types';
-import ReactDOM from "react-dom/client";
-import { MyApp } from "./MyApp";
-
-declare global {
-  interface Window { shell: ShellAPI; AppMount?: (root: HTMLElement, basePath: string) => void; }
-}
-
-// Called by the shell after it loads your app.js
-window.AppMount = (root: HTMLElement, basePath: string) => {
-  const reactRoot = ReactDOM.createRoot(root);
-  reactRoot.render(<MyApp basePath={basePath} />);
-};
-
-// Standalone dev mode - provide mock shell
-if (!window.shell) {
-  window.shell = {
-    feedback: {
-      busy: (msg) => console.log("[Mock] busy:", msg),
-      success: (msg) => console.log("[Mock] success:", msg),
-      error: (msg) => console.error("[Mock] error:", msg),
-      clear: () => {},
-      confirm: async () => true,
-    },
-    http: {
-      get: async (url) => ({ success: true, data: {} }),
-      post: async (url, data) => ({ success: true, data: {} }),
-      put: async (url, data) => ({ success: true, data: {} }),
-      delete: async (url) => ({ success: true, data: {} }),
-    },
-    navigation: {
-      navigate: (path) => console.log("[Mock] navigate:", path),
-      getCurrentPath: () => "/my-app",
-      onRouteChange: () => () => {},
-    },
-  };
-  
-  // Auto-mount for standalone dev
-  init(window.shell);
-}
-```
-
-### 2. Vite Configuration
-
-SPAs build as ES modules with single-file output:
-
-```javascript
-export default defineConfig({
-  server: {
-    port: 3001,  // Unique port per SPA
-    cors: true,
-  },
-  build: {
-    lib: {
-      entry: "src/index.tsx",
-      formats: ["es"],
-      fileName: () => "app.js",
-    },
-    rollupOptions: {
-      output: {
-        inlineDynamicImports: true,  // Single file
-      },
-    },
-  },
-});
-```
-
-### 3. Type Definitions
-
-Import shell types from published package:
-
-```typescript
-import type { ShellAPI } from "@herdingbits/trailhead-types";
+import ReactDOM from 'react-dom/client';
+import { MyApp } from './MyApp';
 
 declare global {
   interface Window {
     shell: ShellAPI;
+    AppMount?: (root: HTMLElement, basePath: string) => void;
   }
 }
 
-window.AppMount = (root: HTMLElement, basePath: string) => {
-  // Your SPA logic — render into `root`
+// The shell dynamic-imports <basePath>/app.js, then calls this with the container + base path.
+window.AppMount = (root, basePath) => {
+  ReactDOM.createRoot(root).render(<MyApp basePath={basePath} />);
 };
+
+// Standalone dev (no shell): mock window.shell and auto-mount to #root.
+if (!window.shell) {
+  // ...minimal mock of feedback/http/navigation...
+  const root = document.getElementById('root');
+  if (root) window.AppMount(root, '');
+}
 ```
 
-## Navigation Configuration
+### Vite config (SPA)
 
-Update `examples/webawesome-site/shell/public/shell.json` to add SPAs. It has two parts: `apps` (the SPAs the shell can mount) and `nav` (the menu):
+Single-file ES library build. On Vite 8 / Rolldown use `rollupOptions.output.codeSplitting: false`
+(the older `inlineDynamicImports: true` is equivalent on Vite ≤7). React's `process.env.NODE_ENV`
+is `define`d to `"production"` so the reference doesn't leak into the browser bundle.
+
+```javascript
+export default defineConfig({
+  define: { 'process.env.NODE_ENV': JSON.stringify('production') },
+  server: { port: 3000, cors: true /* , proxy: shell.json/webawesome/trailhead → 3001 (WA only) */ },
+  build: {
+    lib: { entry: 'src/index.tsx', formats: ['es'], fileName: () => 'app.js' },
+    rollupOptions: { output: { codeSplitting: false } },
+  },
+});
+```
+
+## shell.json
+
+Read at **runtime** — add/remove SPAs with no rebuild. Shape is `{ apps, nav }`, optionally with
+`apiUrl` and `auth` (both must be **same-origin paths**, used only when not passed to `create()`):
 
 ```json
 {
@@ -226,329 +212,108 @@ Update `examples/webawesome-site/shell/public/shell.json` to add SPAs. It has tw
     { "id": "my-app", "basePath": "/my-app", "src": "my-app" }
   ],
   "nav": [
-    { "type": "link", "label": "My App", "icon": "star", "order": 1, "href": "/my-app" }
-  ]
+    { "type": "link", "label": "My App", "icon": "star", "order": 1, "href": "/my-app" },
+    { "type": "section", "label": "Group", "icon": "folder", "order": 2, "children": [ /* links */ ] },
+    { "type": "divider", "order": 3 }
+  ],
+  "apiUrl": "/api",
+  "auth": { "strategy": "cognito", "refreshPath": "/_auth/refresh", "signinPath": "/_auth/signin" }
 }
 ```
 
-Changes take effect immediately - no rebuild needed.
+`apps` is the SPA registry (`id`, `basePath`, `src`); `nav` is the menu tree. Entries with an unsafe
+`basePath`/`src` (path traversal, `//`, markup) or a nav `href` that isn't a safe same-origin
+`http(s)` target are dropped with a console warning — a hostile manifest can't inject markup or
+off-origin links.
 
-## Development Workflow
+## Auth strategies
 
-### Starting Development
+Explicit — never auto-detected from the presence of `/_auth/*`.
 
-**Standalone SPA Development (Recommended):**
+- **`credentials`** (default): in-place username/password re-auth via the adapter's `promptCredentials`
+  (see `lib/reauth.ts`); `shell.http` does not auto-recover — apps call `shell.auth.reauthenticate`.
+- **`cognito`**: redirect/refresh recovery behind the jwt-auth-gateway (`lib/session-recovery.ts`);
+  `shell.http` auto-retries once on a `401` (POST `/_auth/refresh`; on failure redirect to
+  `/_auth/signin?return=<path>`). The example shells pick the strategy from
+  `window.APP_CONFIG.authMode`.
 
-```bash
-# Develop SPA with hot reload
-cd examples/webawesome-site/apps/demo
-npm start  # Port 3001
+## Design-System Integration
 
-# Visit http://localhost:3001
-```
-
-**Testing with Shell:**
-
-```bash
-# 1. Build the SPA
-cd examples/webawesome-site/apps/demo
-npm run build
-
-# 2. Copy to shell public directory
-mkdir -p ../shell/public/demo
-cp dist/app.js ../shell/public/demo/
-
-# 3. Start shell
-cd ../shell
-npm start  # Port 3000
-
-# Visit http://localhost:3000
-```
-
-### Environment Configuration
-
-Create `examples/webawesome-site/shell/.env.development`:
-
-```bash
-# App base path for local development (usually empty for root)
-VITE_APP_BASE_PATH=
-```
-
-The shell loads SPAs from their built output in the `public/` directory. For rapid development with hot reload, develop SPAs in standalone mode using the mock shell API.
-
-## Production Build
-
-### Building All Sites
-
-```bash
-cd tools/preview-server
-
-# Build Web Awesome site
-npm run build:webawesome
-
-# Build CloudScape site
-npm run build:cloudscape
-
-# Preview
-npm start  # http://localhost:8081/sample/trailhead
-```
-
-### Build Process
-
-1. Reads `shell.json` to discover SPAs
-2. Builds shell → `public/sample/trailhead/`
-3. For each SPA:
-   - Builds SPA → `public/sample/trailhead/<app-path>/app.js`
-   - Copies `index.html` → `public/sample/trailhead/<app-path>/index.html`
-
-### Deployment Structure
-
-```
-public/sample/trailhead/
-├── index.html           # Shell HTML
-├── shell.js             # Shell bundle (21 KB / 8 KB gzipped)
-├── shell.css            # Shell styles
-├── shell.json      # Menu config
-├── webawesome/            # Design system (Web Awesome assets)
-├── demo/
-│   ├── index.html       # Copy of shell HTML
-│   └── app.js           # Demo SPA bundle
-└── saas-demo/
-    ├── index.html
-    └── app.js
-```
+- **Web Awesome** (web components): `WebAwesomeAdapter.init()` is the single source of the theme
+  stylesheet — it injects `styles/themes/default.css` from `${shellUrl}/webawesome` (override with
+  `webAwesomeUrl`) as a **non-blocking `preload`→`stylesheet`**, idempotently. Do **not** add a
+  static `<link>` for it in the shell HTML (the adapter owns it, and a hard-coded base path 404s).
+  The shell's `build` copies `@awesome.me/webawesome/dist-cdn` into `dist/webawesome/`.
+- **CloudScape** (React): `CloudScapeAdapter` is a bridge — `feedback`/`auth` dispatch `window`
+  CustomEvents that the `ShellApp` React component renders (Flashbar, Modal, Spinner). The adapter
+  only works mounted inside `ShellApp`.
 
 ## Routing & Loading
 
-### Page-Based Routing
+Full page reload between SPAs — deliberate, for CSS/JS isolation and static-host compatibility.
 
-Trailhead uses full page reloads for navigation between SPAs:
-- Provides automatic CSS/JS isolation
-- No complex client-side routing between SPAs
-- Works on any static file server (S3, Netlify, etc.)
-- Each SPA can use its own internal routing (React Router, etc.)
+1. User navigates to `/<basePath>`.
+2. CloudFront/host serves `<basePath>/index.html` (a copy of the shell page).
+3. Shell boots, reads `shell.json`, finds the matching app by `basePath`.
+4. Shell injects `<basePath>/<src>.css` and dynamic-imports `<basePath>/app.js`.
+5. The app assigns `window.AppMount`; the shell calls `AppMount(root, basePath)`.
+6. Navigating away reloads the page — automatic cleanup.
 
-### SPA Loading Flow
+Every route has its own `index.html` (each site's `build.js` creates them from `shell.json`'s
+`apps`). The deep-link `index.html` is required because S3-behind-OAC has no directory index.
 
-1. User navigates to `/demo`
-2. Shell loads `demo/index.html` (contains shell)
-3. Shell reads `shell.json`
-4. Shell finds route: `{ path: "/demo", app: "demo" }`
-5. Shell loads `/demo/app.js` as ES module
-6. SPA assigns `window.AppMount` function
-7. Shell calls `window.AppMount(root, basePath)` with the container and base path
-8. SPA renders into container
+## Development Workflow
 
-### Unmounting
+Dev ports: **shell 3001, SPAs 3000** (SPAs proxy `/shell.json`, `/webawesome`, `/trailhead/shell`
+to 3001 — Web Awesome only; CloudScape SPAs run purely against their `window.shell` mock).
 
-When navigating away, the page reloads - automatic cleanup.
+```bash
+# Shell dev server (port 3001)
+cd examples/webawesome-site/shell && npm run dev   # WA: `npm start` is build + vite preview, NOT dev
+cd examples/cloudscape-site/shell && npm start     # CS: start IS the dev server (no `dev` script)
 
-## Shared Services
+# SPA standalone with hot reload (port 3000)
+cd examples/webawesome-site/apps/demo && npm start
 
-### HTTP Client Features
-
-- Automatic loading indicators
-- Success/error feedback
-- Request deduplication via `requestKey`
-- Centralized error handling
-
-```typescript
-const result = await window.shell.http.post("/api/users", userData, {
-  requestKey: "create-user",  // Prevents duplicate requests
-  busyMessage: "Creating user...",
-  successMessage: "User created!",
-  showSuccess: true,
-});
+# Build an SPA → dist/app.js
+cd examples/webawesome-site/apps/demo && npm run build
 ```
 
-### Feedback System
+Base path for a non-root deployment comes from `VITE_APP_BASE_PATH` (empty = root).
 
-- **Toasts**: `success()`, `error()`, `warning()`, `info()`
-- **Loading**: `busy()`, `clear()`
-- **Dialogs**: `confirm()`, `yesNo()`, `yesNoCancel()`, `custom()`
-- **Alerts**: `alert()` with variants
+## Build & Preview
 
-All use design system components (Web Awesome or CloudScape) loaded by shell.
+```bash
+# Packages (core build also regenerates packages/types)
+cd packages/core && npm run build
+cd packages/webawesome && npm run build
+cd packages/cloudscape && npm run build
 
-## Design System Integration
-
-### Web Awesome (Web Components)
-
-Shell loads Web Awesome once — all SPAs use the same components:
-
-```typescript
-// In any SPA - no imports needed
-<wa-button variant="primary" onClick={handleClick}>
-  Click Me
-</wa-button>
+# Both example sites at their real base paths
+cd tools/preview-server && npm run build   # builds shells + apps, runs each site's deploy, copies to public/
+cd tools/preview-server && npm start       # http://localhost:8081/sample/trailhead/{webawesome,cloudscape}
 ```
 
-### CloudScape (React)
+## Tests
 
-Shell and SPAs share CloudScape React components:
-
-```typescript
-import { Button } from '@cloudscape-design/components';
-
-<Button variant="primary" onClick={handleClick}>
-  Click Me
-</Button>
+```bash
+cd packages/core && npx vitest run
+cd packages/core && npx vitest run __tests__/http.test.ts
+cd packages/webawesome && npm test
+cd packages/cloudscape && npm test
 ```
 
-## Internationalization
-
-### Build-Time Translation
-
-- Zero runtime overhead
-- One build per language
-- Strings replaced at build time
-
-```typescript
-// Source code
-const msg = t("Hello, world!");
-
-// After build (English)
-const msg = "Hello, world!";
-
-// After build (German)
-const msg = "Hallo, Welt!";
-```
-
-### Translation Workflow
-
-1. Write code with `t("key")`
-2. Run `npm run i18n:extract` → generates `translations/template.json`
-3. Translate to `translations/de.json`
-4. Run `npm run build:de` → German build
-5. Run `npm run i18n:validate` → check for missing translations
-
-## Adding a New SPA
-
-1. **Create SPA directory**
-   ```bash
-   mkdir -p examples/webawesome-site/apps/my-app/src
-   cd examples/webawesome-site/apps/my-app
-   npm init -y
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install react react-dom
-   npm install -D vite typescript @types/react @types/react-dom
-   npm install -D @herdingbits/trailhead-types
-   ```
-
-3. **Create entry point** (`src/index.tsx`)
-   - Assign `window.AppMount(root, basePath)` function
-   - Add mock shell for dev
-   - Auto-mount for standalone mode
-
-4. **Configure Vite** (`vite.config.js`)
-   - Library mode with ES format
-   - Output: `app.js`
-   - Enable CORS
-
-5. **Add to navigation** (`examples/webawesome-site/shell/public/shell.json`)
-   ```json
-   {
-     "id": "my-app",
-     "path": "/my-app",
-     "app": "my-app",
-     "icon": "star",
-     "label": "My App",
-     "order": 3
-   }
-   ```
-
-6. **Configure shell dev port** (`examples/webawesome-site/shell/.env.development`)
-   ```bash
-   VITE_APP_PORT_MYAPP=3002
-   ```
-
-6. **Start developing**
-   ```bash
-   # Standalone mode with hot reload
-   npm start  # Port 3002
-   
-   # To test with shell, build and copy:
-   npm run build
-   mkdir -p ../shell/public/my-app
-   cp dist/app.js ../shell/public/my-app/
-   ```
+Package tests live in `packages/<pkg>/__tests__/` (not under `src/`), vitest + jsdom. Each changed
+package is also built, tested, and Sonar-scanned in CI on push/PR.
 
 ## Key Principles
 
-1. **Framework Agnostic**: SPAs choose their own framework
-2. **Independent Deployment**: Deploy one SPA without touching others
-3. **True Isolation**: Page reloads provide CSS/JS isolation between SPAs
-4. **Shared Infrastructure**: Shell handles common concerns (navigation, HTTP, feedback)
-5. **Zero Configuration**: No URL rewrites between SPAs, works on static hosts
-6. **Runtime Updates**: Change navigation without rebuilding SPAs
-7. **Design System Consistency**: Shell and SPAs share the same design system
-
-## Common Patterns
-
-### Using Shell Services
-
-```typescript
-export const MyComponent = () => {
-  const handleSave = async () => {
-    const result = await window.shell.http.post("/api/save", data, {
-      busyMessage: "Saving...",
-      successMessage: "Saved successfully!",
-      showSuccess: true,
-    });
-    
-    if (result.success) {
-      // Handle success
-    }
-  };
-  
-  return <button onClick={handleSave}>Save</button>;
-};
-```
-
-### Design System Components
-
-**Web Awesome (Web Components):**
-```typescript
-return (
-  <wa-button variant="primary" onClick={handleClick}>
-    Click Me
-  </wa-button>
-);
-```
-
-**CloudScape (React):**
-```typescript
-import { Button } from '@cloudscape-design/components';
-
-return (
-  <Button variant="primary" onClick={handleClick}>
-    Click Me
-  </Button>
-);
-```
-
-### Error Handling
-
-```typescript
-const result = await window.shell.http.get("/api/data");
-
-if (!result.success) {
-  // Error already shown by shell
-  console.error(result.error);
-  return;
-}
-
-// Use result.data
-```
-
-## Performance Considerations
-
-- Shell: 21 KB (8 KB gzipped) - loads once
-- SPAs: Self-contained bundles (React SPA ~74 KB)
-- Page reload between SPAs: ~70-150ms (imperceptible on fast connections)
-- No client-side routing complexity between SPAs
-- Automatic code splitting per SPA
-- Design system loaded once, shared across all SPAs
+1. **Framework agnostic** — SPAs choose their own stack.
+2. **Independent deployment** — ship one SPA without touching others.
+3. **True isolation** — page reloads give CSS/JS isolation; no shared React context or cross-SPA routing.
+4. **Shared infrastructure** — the shell owns navigation, HTTP, feedback, and session recovery.
+5. **Static hosting first** — no URL rewrites, no SSR; every route has its own `index.html`.
+6. **Runtime nav updates** — change `shell.json` without rebuilding.
+7. **The only coupling point** is the contract: `window.shell` + `window.AppMount`.
+8. **Untrusted manifest** — `shell.json` fields are validated/escaped; co-hosting mutually-untrusted
+   apps on one origin is out of scope (they share `window.shell`).
