@@ -60,7 +60,9 @@ export function ShellApp({ shell }: ShellAppProps) {
     return path;
   };
 
-  const [currentPath, setCurrentPath] = useState(getCurrentPath());
+  // The shell navigates by full page reload (handleNavigate -> window.location.href), so the
+  // path is read once at mount and never updated in place — a plain value, not reactive state.
+  const currentPath = getCurrentPath();
 
   useEffect(() => {
     // Connect adapter to React state
