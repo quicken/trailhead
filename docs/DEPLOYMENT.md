@@ -88,13 +88,13 @@ When the site needs authentication and you don't want to run a server, the [aws-
 - The shell served under **`APP_BASE_PATH`** (default `/app`) — the gateway's `.env` and the shell's build base **must match**.
 - **Every route is its own `index.html` object.** The gate rewrites an extensionless deep link `<APP_BASE_PATH>/<app>` to the S3 key `<APP_BASE_PATH>/<app>/index.html` (because S3-behind-OAC has no directory index — without that object CloudFront returns 403). This is the same per-route-`index.html` rule as above, now mandatory.
 - The gateway exposes `/_auth/*`: `POST /_auth/refresh` (refresh the session cookie at the edge), `/_auth/signin` (redirect to the hosted UI), `/_auth/signout`. The shell's `cognito` strategy targets `/_auth/refresh` and `/_auth/signin` by default; both are overridable on the shell config.
-- `window.APP_CONFIG` is injected into each `index.html` with `apiUrl` (the gateway's same-origin API proxy, e.g. `/api`) and `authMode: "cognito"`, which the shell reads to select the strategy.
+- The shell's `shell.json` carries `apiUrl` (the gateway's same-origin API proxy, e.g. `/api`) and `auth: { "strategy": "cognito" }`. No inline `<script>`, so the pages also work under a strict `script-src 'self'` Content-Security-Policy if your hosting adds one (see the security review, H-2).
 
 ### Build and deploy with the example scripts
 
 The example sites ship two scripts that do exactly this assembly and sync. They are the reference for building any Trailhead site for the gateway.
 
-**`examples/build-for-gateway.sh`** builds both example shells with `base = APP_BASE_PATH/`, injects `window.APP_CONFIG`, and lays out `examples/.deploy/<site>/` per the gateway's expectations — including copying the configured shell `index.html` into every app folder:
+**`examples/build-for-gateway.sh`** builds both example shells with `base = APP_BASE_PATH/`, writes `apiUrl` and `auth` into the staged `shell.json`, and lays out `examples/.deploy/<site>/` per the gateway's expectations — including copying the shell `index.html` into every app folder:
 
 ```bash
 # both sites, APP_BASE_PATH=/app, authMode=cognito (the defaults)
@@ -124,7 +124,7 @@ After syncing, reach the site **through CloudFront** (not the bucket URL): `<APP
 - [ ] Each app placed at `<basePath>/app.js` + `<basePath>/<src>.css`.
 - [ ] Each app folder has its own `index.html` (a copy of the shell page).
 - [ ] Design-system assets present (`webawesome/` for Web Awesome sites).
-- [ ] Behind the gateway: `APP_BASE_PATH` matches the gateway `.env`; `APP_CONFIG.authMode` is `cognito`; `/_auth/*` reachable.
+- [ ] Behind the gateway: `APP_BASE_PATH` matches the gateway `.env`; `shell.json` has `auth: { "strategy": "cognito" }`; `/_auth/*` reachable.
 
 ## See also
 

@@ -146,8 +146,8 @@ test: {
 
 - `.env.development` for dev-specific config
 - `VITE_APP_BASE_PATH` — base URL path for deployment (empty = root)
-- Runtime deployment config (`apiUrl`, `authMode`) comes via `window.APP_CONFIG`, injected into the
-  deployed `index.html` — not a build-time Vite var
+- Runtime deployment config (`apiUrl`, `auth`, `allowedOrigins`) comes from `shell.json` — not a
+  build-time Vite var, and never an inline `<script>` (it would break a `script-src 'self'` CSP)
 
 ## Code Quality
 

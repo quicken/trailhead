@@ -2,6 +2,42 @@
 
 Notable changes to the Trailhead packages, newest first, with upgrade notes for existing shells and apps. Versions follow [semver](https://semver.org/); while Trailhead is on 0.x, a minor bump (0.4 → 0.5) can be breaking.
 
+## 0.7.0 — unreleased
+
+`@herdingbits/trailhead-core` only. Backward compatible: a deployment that sets no `allowedOrigins` behaves as before, apart from the 401-recovery scoping under **Changed**.
+
+### Added: `allowedOrigins` — scope `shell.http` to known origins
+
+Absolute URLs (vanity API domains and the like) stay a first-class feature; what's new is that you can say *which* origins `shell.http` may talk to. Set it in `shell.json` (no rebuild to add a domain) or pass it to `Trailhead.create()` (which wins):
+
+```json
+{
+  "apiUrl": "https://api.example.com",
+  "allowedOrigins": ["https://api.example.com", "https://reports.example.com"],
+  "apps": [ … ],
+  "nav": [ … ]
+}
+```
+
+- **Always allowed:** the page's own origin and the origin of an absolute `apiUrl`.
+- **When set:** a request to any other origin is refused before it is sent. The caller gets `{ success: false, error: { name: "OriginNotAllowedError", … } }` and an error toast (unless `noFeedback`). Origins compare exactly — scheme, host and port — so `//evil.example`, look-alike hosts and `http://` downgrades of a listed `https://` origin are refused.
+- **When unset:** requests go out as before, with one `[Trailhead]` console warning per unlisted origin, telling you exactly what to list. Expect this to become mandatory for cross-origin calls at 1.0.
+- **Validated:** entries must be bare `http(s)` origins (`https://api.example.com`, optionally with a port or trailing `/`). A path, script URL, bare host or non-string entry is dropped with a warning; a non-array `allowedOrigins` is ignored with a warning.
+- **Absolute `apiUrl` in `shell.json`:** now accepted when its origin is in `allowedOrigins` (previously any absolute `shell.json` `apiUrl` was ignored). Without a matching entry it is still ignored with a warning.
+- If your host sends a Content-Security-Policy, mirror the list in its `connect-src`.
+
+Closes security review M-3; see `docs/SECURITY_REVIEW.md`.
+
+### Changed
+
+- **401 auto-recovery (cognito strategy) only runs for the page's origin, the `apiUrl` origin and listed origins.** A `401` from any other origin is returned to the caller without triggering `/_auth/refresh` or the sign-in redirect, so a third-party endpoint can't bounce your users to the login page. If you call a second API of your own under the cognito strategy and rely on auto-recovery for it, list its origin in `allowedOrigins`.
+
+### Upgrading
+
+- No code changes required.
+- To lock `shell.http` down, open each app with the console visible, collect the `[Trailhead] shell.http request to … which is not in allowedOrigins` warnings, and add those origins to `shell.json` `allowedOrigins`.
+- If the shell's host page sets `window.APP_CONFIG` (or any other config) in an inline `<script>`, move it into `shell.json` — the example shells and `examples/build-for-gateway.sh` now do this — so the page works under a `script-src 'self'` CSP.
+
 ## 0.6.0 — 2026-10-03
 
 `@herdingbits/trailhead-core` only. Backward compatible for shells that pass their config to `Trailhead.create()`; see **Upgrading** for the `shell.json` entries that are now rejected.

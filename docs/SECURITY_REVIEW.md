@@ -194,6 +194,35 @@ to *our* API", but it will talk to anywhere.
 (allowlist of permitted origins, or refuse anything that is not same-origin or under `apiUrl`). Pair
 with a CSP `connect-src` allowlist (H-2) as the enforcement backstop.
 
+**Resolution (decided 2026-10-04): an origin allowlist, not a same-origin restriction.** Absolute URLs
+are a core feature — deployments put APIs on vanity domains, and keeping those as plain URLs in config
+is what keeps Trailhead easy to administer — so "same-origin or `apiUrl` only" is off the table. The
+gap was never *absolute* URLs, it was *any* origin. The fix scopes `shell.http` to a known list:
+
+- **`allowedOrigins`** — a list of `scheme://host[:port]` origins, set in `shell.json` (runtime config,
+  so adding a domain needs no rebuild) or passed to `Trailhead.create()` (which wins, like `apiUrl` and
+  `auth`). Entries that aren't a bare `http(s)` origin (a path, a script URL, a non-string) are dropped
+  with a warning.
+- **Implicitly allowed:** the page's own origin and the origin of an absolute `apiUrl`, so nobody lists
+  their own API twice.
+- **Enforced when configured:** a request to any other origin is refused before it is sent — the
+  caller gets an `ErrorResult` named `OriginNotAllowedError` naming the origin. Origins compare
+  exactly (scheme, host and port), resolved through the URL parser, so `//evil.example`,
+  `https://api.example.com.evil.net` and `http://` downgrades of a listed `https://` origin are all
+  refused.
+- **Not configured (0.x compatibility):** requests go out as before, with one console warning per
+  cross-origin target so admins can see exactly which origins to list. Intended to become mandatory
+  for cross-origin calls at 1.0.
+- **401 recovery is scoped** to the page's origin, the `apiUrl` origin and listed origins — never an
+  origin let through only by the compatibility mode — so a third-party endpoint can't trigger the
+  session-recovery redirect.
+- **Absolute `apiUrl` in `shell.json`** is accepted when its origin is in `allowedOrigins` (previously
+  any absolute `shell.json` `apiUrl` was ignored). Whoever controls `shell.json` already controls which
+  app scripts load, so this doesn't widen the trust boundary; without a matching entry it is still
+  ignored.
+- **One source for the CSP:** when hosting adds the H-2 CSP, its `connect-src` should be generated
+  from this same list, so the JS check and the browser-enforced backstop can't drift apart.
+
 ---
 
 ## M-4 — Reflected `return` param in session-recovery redirect
@@ -332,7 +361,7 @@ mutually-untrusted apps on one Trailhead origin.**
 
 ---
 
-## Remediation status (2026-10-03)
+## Remediation status (updated 2026-10-04)
 
 Each change below went test-first: characterisation tests for the current behaviour were added and
 passing before the code was touched, then the failing security tests, then the fix.
@@ -343,10 +372,11 @@ passing before the code was touched, then the failing security tests, then the f
 | M-2 | **Fixed** (core + CloudScape) | Nav hrefs resolved with `new URL(href, document.baseURI)`; anything not `http(s)` is dropped, and internal links must stay same-origin. External links get `rel="noopener noreferrer"` (core). `shell.navigation.navigate()` refuses non-`http(s)`/off-origin targets. CloudScape now also honours `external: true` like core. | core as above; `cloudscape/__tests__/shell-layout.test.tsx` |
 | M-1 | **Fixed** (core, validation only) | `shell.json` app entries with a `basePath` that isn't `/`-rooted segments (no `..`, `//`, scheme) or a `src` that isn't a single safe segment are dropped with a warning. No allowlist/SRI — revisit after H-2. | "app manifest validation (M-1)" |
 | L-2 | **Fixed** (CloudScape) | Password state cleared on submit. Web Awesome already removes the dialog on hide. | `cloudscape/__tests__/shell-app.test.tsx` |
-| M-3 | Open — needs decision | Scoping `shell.http` to same-origin/`apiUrl` is a breaking change (absolute URLs are currently a tested, supported feature). | — |
-| M-4 | No core change needed | `currentPath()` is already `pathname + search` only. The gateway-side validation of `return` is still to be checked in `aws-static-hosting`. | existing `session-recovery.test.ts` |
-| H-2 | In progress | Plan: strict `script-src 'self'` policy via a CloudFront response headers policy in `aws-static-hosting`. Prerequisite done in core 0.6.0: `apiUrl`/`auth` can come from `shell.json`, so the inline `window.APP_CONFIG` script can go. Remaining: migrate the example shells and `build-for-gateway.sh`, then roll out Report-Only → enforce. Accepted: CloudScape global styles from `unpkg.com` and Web Awesome icons from `ka-f.fontawesome.com` (allowlisted rather than self-hosted). | `core/__tests__/shell-config.test.ts` |
-| L-1, L-3, L-4, I-1, I-2 | Open | Documentation and deploy-script hygiene; can't be covered by unit tests. | — |
+| M-3 | **Fixed** (core) | Origin allowlist (`allowedOrigins` in `shell.json` / `create()`): unlisted cross-origin requests refused when configured, warned otherwise; 401 recovery scoped to own/listed origins; absolute `shell.json` `apiUrl` accepted when listed. See the M-3 resolution above. | `core/__tests__/http-origins.test.ts`, `core/__tests__/shell-config.test.ts` — "allowedOrigins" |
+| M-4 | **Fixed** (gateway) | `currentPath()` is already `pathname + search` only. Gateway side confirmed in `aws-static-hosting` `3ecf12e`: `return=` goes through `safeReturnPath`, with tests proving `//`, `/\` and CRLF are refused at `/_auth/signin`. | existing `session-recovery.test.ts`; `aws-static-hosting` `auth-routes.test.ts` |
+| H-2 | Open — hosting concern | Delivering a CSP is the host's job (CloudFront, nginx, Netlify…), not Trailhead code, so it stays out of the shell and out of `aws-static-hosting` for now. Trailhead's side is done: the example shells no longer read `window.APP_CONFIG`, and `build-for-gateway.sh` writes `apiUrl`/`auth` into the staged `shell.json` instead of injecting an inline `<script>`, so every page is inline-script-free. Recommended policy, measured with zero `securitypolicyviolation` events across all four example pages under enforcement (`tools/preview-server` sends it): `default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' data: <allowedOrigins>; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'`. No `unsafe-inline` needed; Web Awesome needs `https://ka-f.fontawesome.com` in `connect-src` for icons, plus `data:` for the system icons `<wa-icon>` `fetch()`es; the unpkg allowlist is no longer needed. Pair with `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy` and HSTS. | Playwright run against `tools/preview-server` |
+| L-4 | Partly fixed | The `build-for-gateway.sh` injection point is gone: `API_URL`/`AUTH_MODE` are now written to `shell.json` by node as JSON (and `AUTH_MODE` is checked against `cognito`/`credentials`), never spliced into markup. The `--delete` sync hazard stands as documented. | — |
+| L-1, L-3, I-1, I-2 | Open | Documentation and deploy-script hygiene; can't be covered by unit tests. | — |
 
 The CloudScape guard is a local copy of core's `isSafeHref` because the adapter builds against the
 published `@herdingbits/trailhead-core`. Fold it into a core export at the next coordinated release.

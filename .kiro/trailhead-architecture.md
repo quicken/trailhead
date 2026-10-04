@@ -103,10 +103,7 @@ import { WebAwesomeAdapter, ShellApp } from '@herdingbits/trailhead-webawesome';
 const shell = await Trailhead.create({
   adapter: new WebAwesomeAdapter(),
   appBasePath: import.meta.env.VITE_APP_BASE_PATH || '',   // '' = served at root
-  apiUrl: window.APP_CONFIG?.apiUrl || '',                 // optional; else shell.json
-  auth: window.APP_CONFIG?.authMode === 'cognito'          // optional; else shell.json; else credentials
-    ? { strategy: 'cognito' }
-    : { strategy: 'credentials' },
+  // apiUrl, auth, allowedOrigins: optional here; else shell.json; else "", credentials, all allowed
 });
 
 // 2) start(): mounts to the page — renders nav, binds routing, loads the current app into
@@ -234,8 +231,8 @@ Explicit — never auto-detected from the presence of `/_auth/*`.
   (see `lib/reauth.ts`); `shell.http` does not auto-recover — apps call `shell.auth.reauthenticate`.
 - **`cognito`**: redirect/refresh recovery behind the jwt-auth-gateway (`lib/session-recovery.ts`);
   `shell.http` auto-retries once on a `401` (POST `/_auth/refresh`; on failure redirect to
-  `/_auth/signin?return=<path>`). The example shells pick the strategy from
-  `window.APP_CONFIG.authMode`.
+  `/_auth/signin?return=<path>`). The example shells read the strategy from
+  `shell.json`.
 
 ## Design-System Integration
 

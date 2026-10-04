@@ -70,13 +70,15 @@ Package tests live in `packages/<pkg>/__tests__/` (not under `src/`), using vite
 
 **SPA contract:** SPAs assign `window.AppMount(root: HTMLElement, basePath: string)` — the shell calls this global after loading `<basePath>/app.js` (and `<basePath>/<src>.css`). The shell is accessed via `window.shell`. SPAs also mock `window.shell` for standalone dev and auto-mount to `#root` when running without the shell.
 
-**Shell config:** `shell/public/shell.json` is read at runtime — no rebuild needed to add/remove SPAs. Shape is `{ apps, nav }`: `apps` is the SPA registry (`{ id, basePath, src }`), `nav` is the menu tree (`section`/`link` items). It may also carry `apiUrl` and `auth`, used when not passed to `Trailhead.create` (both must be same-origin paths).
+**Shell config:** `shell/public/shell.json` is read at runtime — no rebuild needed to add/remove SPAs. Shape is `{ apps, nav }`: `apps` is the SPA registry (`{ id, basePath, src }`), `nav` is the menu tree (`section`/`link` items). It may also carry `apiUrl`, `auth` and `allowedOrigins`, used when not passed to `Trailhead.create`. From `shell.json`, `apiUrl` must be a same-origin path or an absolute URL whose origin is in `allowedOrigins`; `auth` endpoints must be same-origin paths.
 
 **Shell instantiation:** `const shell = await Trailhead.create({ adapter, appBasePath, shellUrl, apiUrl, auth })`, then mount the adapter's `ShellApp`, which calls `shell.start()` once the layout is in the DOM. The constructor is private.
 - Web Awesome: `ShellApp.mount(shell)` — see `examples/webawesome-site/shell/src/shell.ts`.
 - CloudScape: `ShellApp` is a React component — `createRoot(...).render(<ShellApp shell={shell} />)`, see `examples/cloudscape-site/shell/src/index.tsx`.
 
-**Auth strategy:** `auth: { strategy: "credentials" }` (default — in-place username/password re-auth via the adapter) or `{ strategy: "cognito" }` (redirect-based recovery behind the jwt-auth-gateway; `shell.http` auto-retries once on 401). Never auto-detected. The example shells pick it from `window.APP_CONFIG.authMode`.
+**Auth strategy:** `auth: { strategy: "credentials" }` (default — in-place username/password re-auth via the adapter) or `{ strategy: "cognito" }` (redirect-based recovery behind the jwt-auth-gateway; `shell.http` auto-retries once on 401). Never auto-detected. The example shells read it from `shell.json` (no inline `window.APP_CONFIG` script any more, so pages stay compatible with a `script-src 'self'` CSP). A CSP itself is the host's job, not Trailhead's — see security review H-2.
+
+**Origin allowlist:** `allowedOrigins` (in `shell.json` or `create()`) scopes `shell.http` to known origins besides the page's own and the `apiUrl` origin; unset means everything is allowed with a one-time warning per origin. If the host sends a CSP, mirror it in `connect-src`. See security review M-3.
 
 **Adapter pattern:** `packages/core` is design-system agnostic. Adapters implement `DesignSystemAdapter` from `packages/core/src/adapters/types.ts`.
 

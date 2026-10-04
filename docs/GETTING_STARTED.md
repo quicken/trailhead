@@ -50,14 +50,13 @@ import '@herdingbits/trailhead-webawesome/shell.css';
 
 const appBasePath = import.meta.env.VITE_APP_BASE_PATH || '';
 const shellUrl    = (window as any).SHELL_DEV_URL || appBasePath;
-const apiUrl      = (window as any).APP_CONFIG?.apiUrl || '';
 
 const shell = await Trailhead.create({
   adapter: new WebAwesomeAdapter(),
   appBasePath,
   shellUrl,
-  apiUrl,
-  // Omit `auth` for the default credentials strategy; see Step 6.
+  // apiUrl, auth and allowedOrigins come from shell.json (or pass them here to fix them at
+  // build time). Omitting auth gives the default credentials strategy; see Step 6.
 });
 
 ShellApp.mount(shell);
@@ -370,7 +369,7 @@ const result = await window.shell.http.get('/orders'); // 401 → refresh+retry,
 if (result.success) render(result.data);
 ```
 
-To drive it manually, `window.shell.auth.recoverSession()` resolves `true` when the session was refreshed in place (retry your request) and otherwise redirects away. The example shell picks the strategy from `window.APP_CONFIG.authMode` injected at deploy time (`cognito` behind the gateway, `credentials` otherwise), so the same build runs in both places.
+To drive it manually, `window.shell.auth.recoverSession()` resolves `true` when the session was refreshed in place (retry your request) and otherwise redirects away. The example shell reads the strategy from `shell.json` (`build-for-gateway.sh` writes `cognito` behind the gateway; without it the default is `credentials`), so the same build runs in both places.
 
 ---
 

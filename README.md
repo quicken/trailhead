@@ -60,7 +60,6 @@ const shell = await Trailhead.create({
   adapter: new WebAwesomeAdapter(),
   appBasePath: import.meta.env.VITE_APP_BASE_PATH || '',
   shellUrl: (window as any).SHELL_DEV_URL || '',
-  apiUrl: (window as any).APP_CONFIG?.apiUrl || '',
 });
 
 ShellApp.mount(shell);
@@ -78,7 +77,6 @@ const shell = await Trailhead.create({
   adapter: new CloudScapeAdapter(),
   appBasePath: import.meta.env.VITE_APP_BASE_PATH || '',
   shellUrl: (window as any).SHELL_DEV_URL || '',
-  apiUrl: (window as any).APP_CONFIG?.apiUrl || '',
 });
 
 createRoot(document.getElementById('app')!).render(<ShellApp shell={shell} />);
@@ -115,6 +113,22 @@ if (rootEl) window.AppMount(rootEl, '');
 | `appBasePath` | URL prefix for SPA routing, asset loading, and nav links | `""` |
 | `shellUrl` | Where `shell.json` and shell assets are served from | `appBasePath` |
 | `apiUrl` | Base URL prepended to **relative** `shell.http` paths; absolute URLs (`http(s)://…`) are used as-is | `""` |
+| `auth` | Session recovery: `{ strategy: "credentials" }` (in-place re-auth prompt) or `{ strategy: "cognito" }` (refresh/redirect behind the gateway) | `{ strategy: "credentials" }` |
+| `allowedOrigins` | Origins `shell.http` may call besides the page's own and the `apiUrl` origin, e.g. `["https://api.example.com"]`. When set, other origins are refused | unset (all allowed, warned once each) |
+
+`apiUrl`, `auth` and `allowedOrigins` can also come from `shell.json`, which is how one built shell is configured per deployment without a rebuild or an inline `<script>` (a `script-src 'self'` Content-Security-Policy blocks inline scripts). A value passed to `Trailhead.create()` wins:
+
+```json
+{
+  "apiUrl": "https://api.example.com",
+  "auth": { "strategy": "cognito" },
+  "allowedOrigins": ["https://api.example.com", "https://reports.example.com"],
+  "apps": [ … ],
+  "nav": [ … ]
+}
+```
+
+From `shell.json`, `apiUrl` must be a same-origin path (`/api`) or an absolute URL whose origin is in `allowedOrigins`. If your host sends a Content-Security-Policy, mirror `allowedOrigins` in its `connect-src`.
 
 Set `appBasePath` when deploying to a subdirectory. The recommended prefix is `/app` (e.g. `VITE_APP_BASE_PATH=/app`), which keeps the site root free for a public landing page and matches the default used by the [aws-static-hosting](https://github.com/herdingbits/aws-static-hosting) gateway. Leave empty for root deployments.
 
@@ -129,7 +143,6 @@ Set `appBasePath` when deploying to a subdirectory. The recommended prefix is `/
 
 | Global | Purpose |
 |---|---|
-| `window.APP_CONFIG.apiUrl` | Runtime API base URL, set via a `<script>` tag in your HTML |
 | `window.SHELL_DEV_URL` | Overrides `shellUrl` — points asset/navigation fetches at a local shell dev server |
 
 ## Developing Locally
