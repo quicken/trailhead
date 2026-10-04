@@ -3,5 +3,5 @@
   "compilerOptions": {
     "noUnusedLocals": false
   },
-  "include": ["src", "../../core/shell/src"]
+  "include": ["src"]
 }

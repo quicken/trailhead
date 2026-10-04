@@ -12,13 +12,13 @@
   "dependencies": {
     "@cloudscape-design/components": "^3.0.1391",
     "@cloudscape-design/global-styles": "^1.0.71",
-    "@herdingbits/trailhead-cloudscape": "^0.5.4",
-    "@herdingbits/trailhead-core": "^0.6.0",
+    "@herdingbits/trailhead-cloudscape": "^0.5.5",
+    "@herdingbits/trailhead-core": "^0.6.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
-    "@herdingbits/trailhead-types": "^0.4.4",
+    "@herdingbits/trailhead-types": "^0.4.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",
