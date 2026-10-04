@@ -297,10 +297,13 @@ describe('WebAwesomeAdapter — init() theme stylesheet injection (first-render 
   const themeHref = (base: string) => new URL(`${base}/styles/themes/default.css`, document.baseURI).href;
 
   // init() dynamically imports webawesome.js/.loader.js, which don't exist under jsdom, so init()
-  // rejects — but the theme-CSS injection runs first. We await-catch the expected rejection and
-  // then assert on the <head> the injection left behind.
+  // rejects — but the theme-CSS injection runs first. We await-catch the expected rejection (and
+  // silence the console.error init() logs for it) and then assert on the <head> the injection
+  // left behind.
   async function initAndIgnoreImportError(adapter: WebAwesomeAdapter, shellUrl: string) {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     await adapter.init(shellUrl).catch(() => {});
+    consoleError.mockRestore();
   }
 
   it('injects the theme as a non-blocking preload (not a render-blocking stylesheet)', async () => {
