@@ -7,3 +7,6 @@ dist/
 dev_config.js
 .scannerwork
 **/coverage/
+
+# Editor / tooling local state (keep .kiro steering docs tracked, ignore per-machine settings)
+.kiro/settings/
