@@ -33,12 +33,46 @@ function isSafeHref(href: string, allowCrossOrigin: boolean): boolean {
 const isSameOriginPath = (value: unknown): value is string =>
   typeof value === "string" && value.startsWith("/") && isSafeHref(value, false);
 
-/** `shell.json`'s `apiUrl`, or `undefined` (with a warning) when absent or unsafe. */
-function manifestApiUrl(manifest: Partial<ShellManifest> | null): string | undefined {
+/**
+ * The valid entries of an `allowedOrigins` list — each a bare `http(s)://host[:port]` origin — or
+ * `undefined` when the list is absent. Invalid entries, or a non-array, are dropped with a warning.
+ */
+function validOrigins(value: unknown, source: string): string[] | undefined {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value)) {
+    console.warn(`[Trailhead] Ignoring ${source} allowedOrigins — it must be an array of origins such as "https://api.example.com":`, value);
+    return undefined;
+  }
+  return value.filter((entry): entry is string => {
+    let url: URL | null = null;
+    try {
+      url = typeof entry === "string" ? new URL(entry) : null;
+    } catch {
+      // Not an absolute URL (e.g. a bare host) — rejected below.
+    }
+    const ok =
+      url !== null &&
+      (url.protocol === "http:" || url.protocol === "https:") &&
+      /^https?:\/\/[^/?#]+\/?$/i.test(entry) &&
+      !url.username &&
+      !url.password;
+    if (!ok) console.warn(`[Trailhead] Ignoring ${source} allowedOrigins entry — it must be a bare origin such as "https://api.example.com":`, entry);
+    return ok;
+  }).map((entry) => new URL(entry).origin);
+}
+
+/**
+ * `shell.json`'s `apiUrl`, or `undefined` (with a warning) when absent or unsafe: a same-origin
+ * path, or an absolute URL whose origin is in `allowedOrigins`.
+ */
+function manifestApiUrl(manifest: Partial<ShellManifest> | null, allowedOrigins: string[] | undefined): string | undefined {
   const value = manifest?.apiUrl;
   if (value === undefined) return undefined;
   if (isSameOriginPath(value)) return value;
-  console.warn("[Trailhead] Ignoring shell.json apiUrl — it must be a same-origin path such as \"/api\":", value);
+  if (typeof value === "string" && /^https?:\/\//i.test(value) && isSafeHref(value, true) && allowedOrigins?.includes(new URL(value).origin)) {
+    return value;
+  }
+  console.warn("[Trailhead] Ignoring shell.json apiUrl — it must be a same-origin path such as \"/api\", or an absolute URL whose origin is in allowedOrigins:", value);
   return undefined;
 }
 
@@ -93,6 +127,15 @@ export interface ShellConfig {
    * present. See {@link AuthStrategyConfig}.
    */
   auth?: AuthStrategyConfig;
+
+  /**
+   * Origins (`"https://api.example.com"`) `shell.http` may send requests to besides the page's own
+   * origin and an absolute `apiUrl`'s origin. When set, a request to any other origin is refused
+   * with an `OriginNotAllowedError` result; when unset (here and in `shell.json`), requests go out
+   * as before with a one-time console warning per unlisted origin. Overrides `allowedOrigins` in
+   * `shell.json`. Also the list to mirror in a CSP `connect-src`.
+   */
+  allowedOrigins?: string[];
 }
 
 /**
@@ -172,7 +215,10 @@ export class Trailhead {
 
     // create() config wins; shell.json supplies deployment defaults; then the built-in defaults.
     // Default strategy is credentials: no redirect recoverer, http does not auto-recover.
-    const apiUrl = config.apiUrl || manifestApiUrl(manifest) || "";
+    const allowedOrigins = config.allowedOrigins
+      ? validOrigins(config.allowedOrigins, "create()")
+      : validOrigins(manifest?.allowedOrigins, "shell.json");
+    const apiUrl = config.apiUrl || manifestApiUrl(manifest, allowedOrigins) || "";
     const auth = config.auth ?? manifestAuth(manifest) ?? { strategy: "credentials" };
     const recoverer =
       auth.strategy === "cognito"
@@ -181,7 +227,7 @@ export class Trailhead {
     shell.sessionRecoverer = recoverer;
 
     requestManager.init(shell.adapter.feedback);
-    http.init(apiUrl, recoverer ? () => recoverer.recoverSession() : null);
+    http.init(apiUrl, recoverer ? () => recoverer.recoverSession() : null, allowedOrigins ?? null);
     window.shell = shell.createAPI();
 
     return shell;

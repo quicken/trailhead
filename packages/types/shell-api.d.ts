@@ -564,10 +564,17 @@ export interface ShellManifest {
     nav: NavItem[];
     /**
      * Deployment default for {@link ShellConfig.apiUrl}, used when `Trailhead.create()` isn't given
-     * one. Must be a same-origin path starting with `/` (e.g. `"/api"`); anything else is ignored
-     * with a warning.
+     * one. Must be a same-origin path starting with `/` (e.g. `"/api"`), or an absolute `http(s)` URL
+     * whose origin is listed in {@link allowedOrigins}; anything else is ignored with a warning.
      */
     apiUrl?: string;
+    /**
+     * Deployment default for {@link ShellConfig.allowedOrigins}: the `scheme://host[:port]` origins
+     * `shell.http` may call besides the page's own and the `apiUrl` origin. When present, requests to
+     * any other origin are refused. Entries that aren't a bare `http(s)` origin are ignored with a
+     * warning.
+     */
+    allowedOrigins?: string[];
     /**
      * Deployment default for {@link ShellConfig.auth}, used when `Trailhead.create()` isn't given
      * one. An unknown strategy, or a `refreshPath`/`signinPath` that isn't a same-origin path, is

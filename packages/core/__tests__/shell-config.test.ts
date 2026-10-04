@@ -306,3 +306,82 @@ describe('Trailhead.create() — deployment config from shell.json', () => {
     });
   });
 });
+
+describe('Trailhead.create() — allowedOrigins (M-3)', () => {
+  const manifest = (extra: object) => ({ apps: [], nav: [], ...extra });
+  /** Full URLs requested after shell.json. */
+  const requested = (calls: Array<{ url: string }>) => calls.map((c) => c.url).filter((u) => !u.endsWith('/shell.json'));
+
+  it('enforces allowedOrigins from shell.json through window.shell.http', async () => {
+    const { calls } = stubFetch(() => Response.json([]), manifest({ allowedOrigins: ['https://api.example.com'] }));
+    await create();
+
+    const listed = await window.shell.http.get('https://api.example.com/users', { noFeedback: true });
+    const unlisted = await window.shell.http.get('https://evil.example/collect', { noFeedback: true });
+
+    expect(listed.success).toBe(true);
+    expect(unlisted.success).toBe(false);
+    if (!unlisted.success) expect(unlisted.error.name).toBe('OriginNotAllowedError');
+    expect(requested(calls)).toEqual(['https://api.example.com/users']);
+  });
+
+  it('allowedOrigins passed to create() wins over shell.json', async () => {
+    const { calls } = stubFetch(() => Response.json([]), manifest({ allowedOrigins: ['https://from-manifest.example'] }));
+    await create({ allowedOrigins: ['https://from-config.example'] });
+
+    await window.shell.http.get('https://from-manifest.example/x', { noFeedback: true });
+    await window.shell.http.get('https://from-config.example/x', { noFeedback: true });
+
+    expect(requested(calls)).toEqual(['https://from-config.example/x']);
+  });
+
+  it('accepts an absolute shell.json apiUrl whose origin is in allowedOrigins', async () => {
+    const { calls } = stubFetch(() => Response.json([]), manifest({ apiUrl: 'https://api.example.com/v1', allowedOrigins: ['https://api.example.com'] }));
+    await create();
+
+    await window.shell.http.get('/orders', { noFeedback: true });
+
+    expect(requested(calls)).toEqual(['https://api.example.com/v1/orders']);
+  });
+
+  it('still ignores an absolute shell.json apiUrl whose origin is not listed', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { calls } = stubFetch(() => Response.json([]), manifest({ apiUrl: 'https://evil.example', allowedOrigins: ['https://api.example.com'] }));
+    await create();
+
+    await window.shell.http.get('/orders', { noFeedback: true });
+
+    expect(paths(calls).at(-1)).toBe('/orders');
+    expect(console.warn).toHaveBeenCalled();
+  });
+
+  it.each([
+    ['a path', 'https://api.example.com/v1'],
+    ['a script URL', 'javascript:alert(1)'],
+    ['a non-http scheme', 'ftp://files.example.com'],
+    ['a protocol-relative URL', '//api.example.com'],
+    ['a bare host', 'api.example.com'],
+    ['a non-string', 42],
+  ])('drops an allowedOrigins entry that is %s, with a warning, keeping the rest', async (_case, bad) => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { calls } = stubFetch(() => Response.json([]), manifest({ allowedOrigins: [bad, 'https://good.example'] }));
+    await create();
+
+    await window.shell.http.get('https://good.example/x', { noFeedback: true });
+
+    expect(requested(calls)).toEqual(['https://good.example/x']);
+    expect(console.warn).toHaveBeenCalled();
+  });
+
+  it('ignores a non-array allowedOrigins with a warning (compatibility mode applies)', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { calls } = stubFetch(() => Response.json([]), manifest({ allowedOrigins: 'https://api.example.com' }));
+    await create();
+
+    const result = await window.shell.http.get('https://third-party.example/x', { noFeedback: true });
+
+    expect(result.success).toBe(true);
+    expect(requested(calls)).toEqual(['https://third-party.example/x']);
+    expect(console.warn).toHaveBeenCalled();
+  });
+});
