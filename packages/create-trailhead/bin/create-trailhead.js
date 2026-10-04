@@ -94,6 +94,24 @@ if (createDemo) {
   });
 }
 
+// The shell template's shell.json is the example site's, which registers apps (saas-demo, and
+// demo under --no-demo) this project doesn't have. Keep only apps that exist under apps/, and
+// drop nav links to the rest so the menu doesn't point at 404s.
+const shellJsonPath = join(projectPath, 'shell/public/shell.json');
+const shellJson = JSON.parse(readFileSync(shellJsonPath, 'utf-8'));
+const removedPaths = new Set();
+shellJson.apps = shellJson.apps.filter(app => {
+  const keep = existsSync(join(projectPath, 'apps', app.src));
+  if (!keep) removedPaths.add(app.basePath);
+  return keep;
+});
+const pruneNav = items => items
+  .map(item => item.children ? { ...item, children: pruneNav(item.children) } : item)
+  .filter(item => !(item.type === 'link' && removedPaths.has(item.href)))
+  .filter(item => !(item.type === 'section' && item.children.length === 0));
+shellJson.nav = pruneNav(shellJson.nav);
+writeFileSync(shellJsonPath, JSON.stringify(shellJson, null, 2) + '\n');
+
 // Create deployment script
 console.log('Creating deployment script...');
 const deployScript = `#!/usr/bin/env node
@@ -132,15 +150,15 @@ mkdirSync(OUTPUT_DIR, { recursive: true });
 console.log('\\n2. Copying shell...');
 cpSync(shellDist, OUTPUT_DIR, { recursive: true });
 
-// Read navigation to determine which apps to assemble
-const navigation = JSON.parse(readFileSync(join(OUTPUT_DIR, 'navigation.json'), 'utf-8'));
+// Read the shell manifest to determine which apps to assemble
+const manifest = JSON.parse(readFileSync(join(OUTPUT_DIR, 'shell.json'), 'utf-8'));
 const indexTemplate = readFileSync(join(OUTPUT_DIR, 'index.html'), 'utf-8');
 
 // Copy each app
 let step = 3;
-navigation.forEach(route => {
-  const appName = route.app;
-  const routePath = route.path.substring(1);
+manifest.apps.forEach(app => {
+  const appName = app.src;
+  const routePath = app.basePath.substring(1);
   const appDist = join(__dirname, 'apps', appName, 'dist');
   
   if (!existsSync(appDist)) {
@@ -243,15 +261,15 @@ Output in \`dist/\` directory.
 cp -r apps/demo apps/my-app
 \`\`\`
 
-2. Update \`shell/public/navigation.json\`:
+2. Register the app and add navigation in \`shell/public/shell.json\`:
 \`\`\`json
 {
-  "id": "my-app",
-  "path": "/my-app",
-  "app": "my-app",
-  "icon": "star",
-  "label": "My App",
-  "order": 2
+  "apps": [
+    { "id": "my-app", "basePath": "/my-app", "src": "my-app" }
+  ],
+  "nav": [
+    { "type": "link", "label": "My App", "icon": "star", "order": 2, "href": "/my-app" }
+  ]
 }
 \`\`\`
 
