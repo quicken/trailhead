@@ -2,9 +2,9 @@
 
 Notable changes to the Trailhead packages, newest first, with upgrade notes for existing shells and apps. Versions follow [semver](https://semver.org/); while Trailhead is on 0.x, a minor bump (0.4 → 0.5) can be breaking.
 
-## 0.7.0 — unreleased
+## 0.6.2 — 2026-10-04
 
-`@herdingbits/trailhead-core` only. Backward compatible: a deployment that sets no `allowedOrigins` behaves as before, apart from the 401-recovery scoping under **Changed**.
+`@herdingbits/trailhead-core` 0.6.2, with `@herdingbits/trailhead-types` 0.4.6 (adds `ShellManifest.allowedOrigins`) and both adapters re-released to require core `^0.6.2`. A patch release, so `^0.6.x` ranges pick it up with `npm update`. Backward compatible: a deployment that sets no `allowedOrigins` behaves as before, apart from the 401-recovery scoping under **Changed** — read that before updating a shell that uses the cognito strategy against more than one API.
 
 ### Added: `allowedOrigins` — scope `shell.http` to known origins
 
@@ -34,7 +34,7 @@ Closes security review M-3; see `docs/SECURITY_REVIEW.md`.
 
 ### Upgrading
 
-- No code changes required.
+- No code changes required: `npm update` in the shell picks up core 0.6.2 and the matching adapter.
 - To lock `shell.http` down, open each app with the console visible, collect the `[Trailhead] shell.http request to … which is not in allowedOrigins` warnings, and add those origins to `shell.json` `allowedOrigins`.
 - If the shell's host page sets `window.APP_CONFIG` (or any other config) in an inline `<script>`, move it into `shell.json` — the example shells and `examples/build-for-gateway.sh` now do this — so the page works under a `script-src 'self'` CSP.
 

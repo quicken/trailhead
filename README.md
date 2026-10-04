@@ -114,7 +114,7 @@ if (rootEl) window.AppMount(rootEl, '');
 | `shellUrl` | Where `shell.json` and shell assets are served from | `appBasePath` |
 | `apiUrl` | Base URL prepended to **relative** `shell.http` paths; absolute URLs (`http(s)://…`) are used as-is | `""` |
 | `auth` | Session recovery: `{ strategy: "credentials" }` (in-place re-auth prompt) or `{ strategy: "cognito" }` (refresh/redirect behind the gateway) | `{ strategy: "credentials" }` |
-| `allowedOrigins` | Origins `shell.http` may call besides the page's own and the `apiUrl` origin, e.g. `["https://api.example.com"]`. When set, other origins are refused | unset (all allowed, warned once each) |
+| `allowedOrigins` | Origins `shell.http` may call besides the page's own and the `apiUrl` origin, e.g. `["https://api.example.com"]`. When set, other origins are refused. Core 0.6.2+ | unset (all allowed, warned once each) |
 
 `apiUrl`, `auth` and `allowedOrigins` can also come from `shell.json`, which is how one built shell is configured per deployment without a rebuild or an inline `<script>` (a `script-src 'self'` Content-Security-Policy blocks inline scripts). A value passed to `Trailhead.create()` wins:
 
