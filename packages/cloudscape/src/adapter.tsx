@@ -115,6 +115,16 @@ export interface CloudScapeAdapterConfig {
   cloudscapeUrl?: string;
 }
 
+/**
+ * CloudScape implementation of the Trailhead design-system adapter
+ *
+ * Backs the shell's feedback and re-authentication UI with CloudScape components. Unlike the
+ * Web Awesome adapter (which creates web-component DOM nodes directly), CloudScape UI is React,
+ * so this adapter is a bridge: `feedback`/`auth` dispatch `window` CustomEvents that the
+ * `ShellApp` React component listens for and renders (Flashbar, Modal, Spinner). It therefore
+ * only works mounted inside `ShellApp` — using the adapter without that component means the
+ * events have no listener and no feedback appears.
+ */
 export class CloudScapeAdapter implements DesignSystemAdapter {
   name = 'cloudscape';
   version = '3.0.0';

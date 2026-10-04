@@ -37,6 +37,18 @@ interface AuthState {
   resolve?: (value: Credentials | null) => void;
 }
 
+/**
+ * Root React component that mounts a Trailhead shell with the CloudScape look
+ *
+ * Renders the CloudScape layout (nav + content region) and owns the UI that `CloudScapeAdapter`
+ * drives over `window` events — Flashbar toasts, the busy overlay, modal dialogs, and the
+ * session re-authentication prompt. Calls `shell.start()` on mount (once `#shell-content`
+ * exists) so core can route the first app into the layout; `start()` ignores repeat calls, so
+ * StrictMode's double-invoked effects are harmless.
+ *
+ * @param shell - A shell returned by `Trailhead.create()` — already loaded (nav + apps), not yet
+ *   wired to the page; this component is what wires it.
+ */
 export function ShellApp({ shell }: ShellAppProps) {
   // Trailhead.create() has already loaded shell.json, so navigation is ready on first render.
   const [navigation] = useState<NavItem[]>(() => shell.getNavigation());

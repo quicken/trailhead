@@ -32,6 +32,16 @@ function isSafeHref(href: string, allowCrossOrigin: boolean): boolean {
   return allowCrossOrigin || url.origin === new URL(document.URL).origin;
 }
 
+/**
+ * CloudScape chrome around the shell's content region
+ *
+ * Renders the collapsible side navigation from the shell's nav manifest and hosts the active
+ * app in the content slot. Nav links are vetted with the same URL-parser safety guard core
+ * uses — any `shell.json` link that isn't a safe `http(s)` target (and on-origin, unless marked
+ * external) is dropped with a warning rather than rendered, so a hostile manifest can't inject a
+ * `javascript:` or off-origin nav item. Navigation is delegated to `onNavigate` (a full page
+ * reload), never client-side routing.
+ */
 export function ShellLayout({ navigation, currentPath, appBasePath, onNavigate, children }: ShellLayoutProps) {
   const [navigationOpen, setNavigationOpen] = useState(true);
 

@@ -217,6 +217,14 @@ export interface WebAwesomeAdapterConfig {
   webAwesomeUrl?: string;
 }
 
+/**
+ * Web Awesome implementation of the Trailhead design-system adapter
+ *
+ * Backs the shell's feedback and re-authentication UI with Web Awesome web components, created
+ * as DOM nodes directly (no React layer). On `init()` it registers the Web Awesome component
+ * base path and loads its theme stylesheet from `${shellUrl}/webawesome` — override that
+ * location with `webAwesomeUrl` when the assets live elsewhere (a CDN, a shared bucket).
+ */
 export class WebAwesomeAdapter implements DesignSystemAdapter {
   name = "webawesome";
   version = "1.0.0";
