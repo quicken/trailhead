@@ -10,7 +10,7 @@
     "test": "vitest"
   },
   "devDependencies": {
-    "@herdingbits/trailhead-types": "^0.4.5",
+    "@herdingbits/trailhead-types": "^0.4.6",
     "@testing-library/react": "^16.3.3",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
