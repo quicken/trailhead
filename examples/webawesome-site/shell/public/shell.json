@@ -1,4 +1,5 @@
 {
+  "allowedOrigins": ["https://jsonplaceholder.typicode.com"],
   "apps": [
     { "id": "demo", "basePath": "/demo", "src": "demo" },
     { "id": "saas-demo", "basePath": "/saas-demo", "src": "saas-demo" }

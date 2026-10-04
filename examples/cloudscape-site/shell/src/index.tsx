@@ -10,11 +10,10 @@ import '@cloudscape-design/global-styles/index.css';
 // Get configuration
 const appBasePath = import.meta.env.VITE_APP_BASE_PATH || "";
 const shellUrl = (window as any).SHELL_DEV_URL || appBasePath;
-const apiUrl = (window as any).APP_CONFIG?.apiUrl || "";
-// Deployment behind the jwt-auth-gateway sets APP_CONFIG.authMode = "cognito" so the shell uses
-// redirect-based session recovery (refresh at the edge, else redirect to hosted-UI sign-in).
-// Anything else (incl. unset) keeps the default in-place credentials strategy — harmless on nginx.
-const authMode = (window as any).APP_CONFIG?.authMode;
+// apiUrl, auth and allowedOrigins come from shell.json, so one built shell is configured per
+// deployment without an inline <script> (which a script-src 'self' CSP blocks). Behind the
+// jwt-auth-gateway, build-for-gateway.sh writes { apiUrl: "/api", auth: { strategy: "cognito" } }
+// into it; with neither set, shell.http uses relative paths and the credentials strategy.
 
 // Redirect root to first app (before start-up: no point booting a shell we're leaving)
 const currentPath = window.location.pathname;
@@ -27,8 +26,6 @@ const shell = await Trailhead.create({
   adapter: new CloudScapeAdapter(),
   appBasePath,
   shellUrl,
-  apiUrl,
-  auth: authMode === "cognito" ? { strategy: "cognito" } : { strategy: "credentials" },
 });
 
 // Render React app

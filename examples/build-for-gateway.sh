@@ -6,9 +6,9 @@
 # EXACTLY as the jwt-auth-gateway expects to find a Trailhead deployment under its APP_BASE_PATH:
 #
 #   .deploy/<site>/
-#     index.html                 the shell page (APP_CONFIG injected: apiUrl + authMode)
+#     index.html                 the shell page (no inline script, so CSP script-src 'self' works)
 #     shell.js  shell.css        the shell bundle
-#     shell.json                 nav + app manifest
+#     shell.json                 nav + app manifest, plus this deployment's apiUrl + auth
 #     webawesome/                design-system assets (webawesome site only)
 #     <app>/app.js  <app>/<app>.css   each SPA, at the basePath the shell's shell.json names
 #
@@ -47,20 +47,22 @@ log()  { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m!!\033[0m %s\n' "$*" >&2; }
 die()  { printf '\033[1;31mxx\033[0m %s\n' "$*" >&2; exit 1; }
 
-# Inject a window.APP_CONFIG <script> into the <head> of a built index.html, so the shell's
-# runtime reads apiUrl + authMode. Idempotent-ish: strips any prior injected block first.
-inject_app_config() {
-  local html="$1"
-  [[ -f "$html" ]] || die "index.html not found at $html"
-  local cfg
-  cfg=$(cat <<EOF
-<script>window.APP_CONFIG = { apiUrl: "${API_URL}", authMode: "${AUTH_MODE}" };</script>
-EOF
-)
-  # Remove a previously injected block (between the markers) if re-run on the same file.
-  perl -0pi -e 's{<!-- APP_CONFIG:start -->.*?<!-- APP_CONFIG:end -->\n?}{}gs' "$html"
-  # Insert right after <head ...> (first occurrence).
-  perl -0pi -e "s{(<head[^>]*>)}{\$1\n    <!-- APP_CONFIG:start -->\n    ${cfg}    <!-- APP_CONFIG:end -->}s" "$html"
+# Write this deployment's apiUrl + auth strategy into the staged shell.json, which core reads at
+# start-up. This replaces the old inline window.APP_CONFIG <script>: a script-src 'self' CSP blocks
+# inline scripts, and node serialises the values as JSON, so nothing is spliced into markup.
+write_shell_config() {
+  local manifest="$1"
+  [[ -f "$manifest" ]] || die "shell.json not found at $manifest"
+  [[ "$AUTH_MODE" == "cognito" || "$AUTH_MODE" == "credentials" ]] \
+    || die "AUTH_MODE must be cognito or credentials (got '$AUTH_MODE')"
+  API_URL="$API_URL" AUTH_MODE="$AUTH_MODE" node -e '
+    const fs = require("fs");
+    const file = process.argv[1];
+    const m = JSON.parse(fs.readFileSync(file, "utf8"));
+    if (process.env.API_URL) m.apiUrl = process.env.API_URL; else delete m.apiUrl;
+    m.auth = { strategy: process.env.AUTH_MODE };
+    fs.writeFileSync(file, JSON.stringify(m, null, 2) + "\n");
+  ' "$manifest"
 }
 
 build_site() {
@@ -77,9 +79,9 @@ build_site() {
   ( cd "$site_dir/shell" && VITE_APP_BASE_PATH="$APP_BASE_PATH" npm run build >/dev/null )
   cp -R "$site_dir/shell/dist/." "$dest/"
 
-  # 2) Inject APP_CONFIG into the shell index.html NOW, before copying it per app (below), so
-  #    every route's index carries the same runtime config (apiUrl + authMode).
-  inject_app_config "$dest/index.html"
+  # 2) Write the deployment config (apiUrl + auth) into the staged shell.json. Every route's
+  #    index.html is the same shell page and reads this one file.
+  write_shell_config "$dest/shell.json"
 
   # 3) Each app named in the shell's shell.json -> built and placed at <basePath>/.
   #    CRITICAL: the gateway gate rewrites an extensionless deep link `<APP_BASE_PATH>/<app>` to
@@ -119,7 +121,6 @@ build_site() {
 
 command -v node >/dev/null || die "node is required"
 command -v npm  >/dev/null || die "npm is required"
-command -v perl >/dev/null || die "perl is required (used to inject APP_CONFIG)"
 
 mkdir -p "$OUT"
 for site in "${SITES[@]}"; do

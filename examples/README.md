@@ -74,7 +74,6 @@ import { WebAwesomeAdapter, ShellApp } from '@herdingbits/trailhead-webawesome';
 const shell = await Trailhead.create({
   adapter: new WebAwesomeAdapter(),
   appBasePath: import.meta.env.VITE_APP_BASE_PATH || '',
-  apiUrl: (window as any).APP_CONFIG?.apiUrl || ''
 });
 
 ShellApp.mount(shell);
@@ -89,7 +88,6 @@ import { CloudScapeAdapter, ShellApp } from '@herdingbits/trailhead-cloudscape';
 const shell = await Trailhead.create({
   adapter: new CloudScapeAdapter(),
   appBasePath: import.meta.env.VITE_APP_BASE_PATH || '',
-  apiUrl: (window as any).APP_CONFIG?.apiUrl || ''
 });
 
 createRoot(document.getElementById('app')!).render(<ShellApp shell={shell} />);
@@ -115,32 +113,20 @@ Because the shell loads the Web Awesome autoloader, `wa-*` components are availa
 
 ## Deploying behind the JWT Auth Gateway (Cognito)
 
-Both example shells are deployable to the [`jwt-auth-gateway`](https://github.com/quicken/trailhead) (Cognito hosted-UI login at the CloudFront edge, tokens in `HttpOnly` cookies) out of the box. The shell picks its session-recovery strategy from a `window.APP_CONFIG` injected by the host page — there is no auto-detection, so nothing changes on an nginx/Lucee deployment.
+Both example shells are deployable to the [`jwt-auth-gateway`](https://github.com/quicken/trailhead) (Cognito hosted-UI login at the CloudFront edge, tokens in `HttpOnly` cookies) out of the box. The shell reads its API base and session-recovery strategy from `shell.json` — there is no auto-detection and no inline `<script>`, so nothing changes on an nginx/Lucee deployment and the page stays compatible with a strict `script-src 'self'` Content-Security-Policy.
 
-Inject `APP_CONFIG` from the host HTML **before** the shell module loads:
+`examples/build-for-gateway.sh` writes the deployment config into each staged `shell.json`:
 
-```html
-<!-- index.html, above <script type="module" src="/src/shell.ts"> -->
-<script>
-  window.APP_CONFIG = {
-    apiUrl: "/api",        // same-origin gateway proxy → Authorization: Bearer <id-token>
-    authMode: "cognito"    // omit (or any other value) to keep the default credentials strategy
-  };
-</script>
+```json
+{
+  "apiUrl": "/api",
+  "auth": { "strategy": "cognito" },
+  "apps": [ … ],
+  "nav": [ … ]
+}
 ```
 
-The shell then passes the matching strategy into `Trailhead.create`:
-
-```typescript
-const authMode = (window as any).APP_CONFIG?.authMode;
-
-const shell = await Trailhead.create({
-  adapter: new WebAwesomeAdapter(),
-  appBasePath,
-  apiUrl: (window as any).APP_CONFIG?.apiUrl || "",
-  auth: authMode === "cognito" ? { strategy: "cognito" } : { strategy: "credentials" },
-});
-```
+`/api` is the gateway's same-origin proxy (`Authorization: Bearer <id-token>`); `AUTH_MODE=credentials` keeps the default in-place strategy. The shells pass no `apiUrl`/`auth` to `Trailhead.create()`, because a value passed there would win over `shell.json`.
 
 Under `{ strategy: "cognito" }`:
 
@@ -150,7 +136,7 @@ Under `{ strategy: "cognito" }`:
 
 The example `shell.json` manifests include a `/_auth/signout` nav link marked `"external": true` so the shell leaves it unprefixed — harmless on nginx, where that path simply 404s.
 
-> Note: `shell.auth.recoverSession` and the `auth` config require `@herdingbits/trailhead-core` with this change built in. The examples pin a published core version; bump that dependency once the new core is published for the Cognito path to work at runtime.
+If your hosting sends a Content-Security-Policy, its `connect-src` must list every origin the apps call: the shell's `allowedOrigins` (the Web Awesome example lists `https://jsonplaceholder.typicode.com`) plus `https://ka-f.fontawesome.com` for Web Awesome icons. `tools/preview-server` sends the recommended policy locally, so a violation shows up there first.
 
 ## Learn More
 
